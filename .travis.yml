@@ -21,6 +21,8 @@ before_script:
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
 
+  - sh -c "rm test/dummy/config/database.yml"
+
   # pg db setup
   - sh -c "if [ '$DB' = 'pg' ]; then psql -c 'DROP DATABASE IF EXISTS dumpman_test;' -U postgres; fi"
   - sh -c "if [ '$DB' = 'pg' ]; then psql -c 'CREATE DATABASE dumpman_test;' -U postgres; fi"
