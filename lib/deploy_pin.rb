@@ -1,5 +1,8 @@
 require "deploy_pin/railtie"
+require "deploy_pin/runner"
 
 module DeployPin
-  # Your code goes here...
+  def self.tasks_path
+    'lib/deploy_pin'
+  end
 end

@@ -3,12 +3,12 @@ class DeployPin::TaskGenerator < Rails::Generators::Base
 
   desc 'This generator creates deploy_pin task at lib/deploy_pin/'
   def create_task_file
-    template 'task.rb', "lib/deploy_pin/#{file_name}.rb"
+    template 'task.rb', "#{DeployPin.tasks_path}/#{file_name}.rb"
   end
 
   private
 
     def file_name
-      'task'
+      "#{Time.now.strftime('%Y%m%d%H%M%S')}_task"
     end
 end

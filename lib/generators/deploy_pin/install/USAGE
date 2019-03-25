@@ -1,0 +1,8 @@
+Description:
+    Creates base migration to store tasks state in the DB
+
+Example:
+    rails generate deploy_pin:install
+
+    This will create:
+        db/migrate/create_deploy_pins.rb

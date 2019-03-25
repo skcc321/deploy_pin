@@ -1,4 +1,10 @@
-# desc "Explaining what the task does"
-# task :deploy_pin do
-#   # Task goes here
-# end
+namespace :deploy_pin do
+  desc "run pending tasks"
+  task run: :environment do
+    DeployPin::Runner.run
+  end
+
+  task pending: :environment do
+    puts DeployPin::Runner.pending
+  end
+end

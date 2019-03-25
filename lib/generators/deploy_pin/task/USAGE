@@ -1,8 +1,8 @@
 Description:
-    Explain the generator
+    Creates tasks for execution on deployment
 
 Example:
-    rails generate task Thing
+    rails generate deploy_pin:task
 
     This will create:
-        what/will/it/create
+        lib/deploy_pin/task.rb
