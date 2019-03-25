@@ -4,7 +4,7 @@ namespace :deploy_pin do
     DeployPin::Runner.run
   end
 
-  task pending: :environment do
-    puts DeployPin::Runner.pending
+  task list: :environment do
+    puts DeployPin::Runner.list
   end
 end

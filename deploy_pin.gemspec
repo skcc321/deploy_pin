@@ -26,11 +26,13 @@ Gem::Specification.new do |spec|
   spec.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
 
   spec.add_dependency "rails", "~> 5.2.2", ">= 5.2.2.1"
+  spec.add_dependency "parser"
+  spec.add_dependency "unparser"
 
   spec.add_development_dependency "bundler", "~> 1.17"
   spec.add_development_dependency "pry", "~> 0.12"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "minitest", "~> 5.0"
-  spec.add_development_dependency 'mysql2', '~> 0.5.2'
+  # spec.add_development_dependency 'mysql2', '~> 0.5.2'
   spec.add_development_dependency 'pg', '>= 0.18.4'
 end
