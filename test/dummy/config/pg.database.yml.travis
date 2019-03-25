@@ -1,0 +1,7 @@
+test:
+  adapter: postgresql
+  database: deploy_pin_test
+  encoding: utf8
+  host: localhost
+  username:
+  password:

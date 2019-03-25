@@ -1,10 +1,36 @@
 ---
 sudo: false
+
+env:
+  matrix:
+    - DB=pg
+    - DB=mysql
+
 language: ruby
-cache: bundler
+
 rvm:
+  - 2.2.10
+  - 2.3.7
+  - 2.4.4
   - 2.5.1
+
+cache: bundler
 before_install: gem install bundler -v 1.17.2
+
+before_script:
+  # coverage
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+
+  # pg db setup
+  - sh -c "if [ '$DB' = 'pg' ]; then psql -c 'DROP DATABASE IF EXISTS dumpman_test;' -U postgres; fi"
+  - sh -c "if [ '$DB' = 'pg' ]; then psql -c 'CREATE DATABASE dumpman_test;' -U postgres; fi"
+  - sh -c "if [ '$DB' = 'pg' ]; then cp test/dummy/config/pg.database.yml.travis test/dummy/config/database.yml; fi"
+
+  # mysql db setup
+  - sh -c "if [ '$DB' = 'mysql' ]; then mysql -e 'CREATE DATABASE IF NOT EXISTS dumpman_test;'; fi"
+  - sh -c "if [ '$DB' = 'mysql' ]; then cp test/dummy/config/mysql.database.yml.travis test/dummy/config/database.yml; fi"
 
 script:
   - bundle exec rake test
@@ -12,3 +38,7 @@ script:
 after_script:
   # coverage
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+
+services:
+  - postgresql
+  - mysql
