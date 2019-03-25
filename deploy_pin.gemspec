@@ -9,15 +9,15 @@ Gem::Specification.new do |spec|
   spec.version     = DeployPin::VERSION
   spec.authors     = ["rafael"]
   spec.email       = ["skcc321@gmail.com"]
-  spec.homepage    = "TODO"
-  spec.summary     = "TODO: Summary of DeployPin."
-  spec.description = "TODO: Description of DeployPin."
+  spec.homepage    = "https://github.com/skcc321/deploy_pin"
+  spec.summary     = "pin some task around deployment"
+  spec.description = "pin some task around deployment"
   spec.license     = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
   # to allow pushing to a single host or delete this section to allow pushing to any host.
   if spec.respond_to?(:metadata)
-    spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
+    spec.metadata["allowed_push_host"] = "https://rubygems.org"
   else
     raise "RubyGems 2.0 or newer is required to protect against " \
       "public gem pushes."
@@ -26,6 +26,10 @@ Gem::Specification.new do |spec|
   spec.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
 
   spec.add_dependency "rails", "~> 5.2.2", ">= 5.2.2.1"
+  spec.add_dependency "pg", ">= 1.1.0"
 
-  spec.add_development_dependency "sqlite3"
+  spec.add_development_dependency "bundler", "~> 1.17"
+  spec.add_development_dependency "pry", "~> 0.12"
+  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "minitest", "~> 5.0"
 end
