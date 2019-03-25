@@ -4,7 +4,7 @@
 
 # DeployPin
 
-![alt text](https://png.pngtree.com/element_origin_min_pic/16/09/02/1557c923e3b4e16.jpg "DeployPin")
+![DeployPin](http://hereisfree.com/content1//pic/zip/2009109935062477801.jpg)
 
 Sometimes we need to execute set of commands (tasks) after/before deployment.
 Most likely you use migrations for such things, but that is not what is related to migration at all.
