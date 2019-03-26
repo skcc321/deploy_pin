@@ -1,0 +1,15 @@
+plugins:
+  brakeman:
+    enabled: true
+    config:
+      app_path: spec/dummy
+  flog:
+    enabled: true
+    config:
+      score_threshold: 20.0
+  reek:
+    enabled: true
+  rubocop:
+    enabled: true
+  rubymotion:
+    enabled: true
