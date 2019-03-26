@@ -2,7 +2,10 @@
 
 # Task wrapper
 class DeployPin::Task
-  attr_reader :file
+  attr_reader :file,
+    :group,
+    :uuid,
+    :script
 
   def initialize(file)
     @file = file

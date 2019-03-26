@@ -2,16 +2,21 @@
 
 # executes tasks
 module DeployPin::Runner
-  def self.run(group: DeployPin.default_group)
+  def self.run(group:)
     pending.each do |task|
       task.run if task.group == group
     end
   end
 
-  def self.list(group: DeployPin.default_group)
-    pending.each do |task|
-      puts task.details if task.group == group
+  def self.list(group:)
+    pending.each_with_index do |task, index|
+      puts "======= Task ##{index} ========"
+      puts task.script if task.group == group
+      puts ""
     end
+
+    puts "======= summary ========"
+    puts "tasks number: #{pending.count}"
   end
 
   def self.pending
@@ -20,6 +25,7 @@ module DeployPin::Runner
     files.map do |file|
       task = DeployPin::Task.new(file)
       task.parse_file
+      task
     end
   end
 end

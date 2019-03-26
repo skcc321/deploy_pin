@@ -26,8 +26,8 @@ Gem::Specification.new do |spec|
   spec.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
 
   spec.add_dependency "rails", "~> 5.2.2", ">= 5.2.2.1"
-  spec.add_dependency "parser"
-  spec.add_dependency "unparser"
+  spec.add_dependency "parallel"
+  spec.add_dependency "ruby-progressbar"
 
   spec.add_development_dependency "bundler", "~> 1.17"
   spec.add_development_dependency "pry", "~> 0.12"
