@@ -13,7 +13,28 @@ Also sometimes you need to execute some code before migration or later, after mi
 deploy_pins is exactly what you need.
 
 ## Usage
-`rake deploy_pin:task`.
+
+To generate new task template file
+`rails g deploy_pin:task`.
+`rails g deploy_pin:task --parallel`.
+
+To list all pending tasks
+`rake deploy_pin:list`.
+
+To run all pending tasks
+`rake deploy_pin:run`.
+
+### Groupped tasks
+!!! please define allowed groups in config/initializers/deploy_pin.rb
+
+`rails g deploy_pin:task allowed_group`.
+`rails g deploy_pin:task allowed_group --parallel`.
+
+To list all pending tasks
+`rake deploy_pin:list[allowed_group]`.
+
+To run all pending tasks
+`rake deploy_pin:run[allowed_group]`.
 
 ## Installation
 Add this line to your application's Gemfile:
