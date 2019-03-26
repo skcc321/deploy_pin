@@ -2,7 +2,7 @@ plugins:
   brakeman:
     enabled: true
     config:
-      app_path: spec/dummy
+      app_path: test/dummy
   flog:
     enabled: true
     config:
