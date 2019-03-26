@@ -1,6 +1,8 @@
-require "deploy_pin/railtie"
 require "deploy_pin/runner"
 require "deploy_pin/task"
+require "deploy_pin/engine"
+require "parallel"
+require "ruby-progressbar"
 
 module DeployPin
   OPTIONS = %i(

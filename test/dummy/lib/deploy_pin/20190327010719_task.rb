@@ -1,4 +1,4 @@
-# <%= @uuid %>:<%= group %>
+# 20190327010719:post_script
 
 # === task code goes down here ===
 progressbar = ProgressBar.create(title: "Doing stuff", total: 20, format: '%t |%E | %B | %a')
@@ -10,4 +10,4 @@ progressbar = ProgressBar.create(title: "Doing stuff", total: 20, format: '%t |%
 
 
 # Create record in the DB to avoid multiple execution
-DeployPin::Record.create(uuid: "<%= @uuid %>")
+DeployPin::Record.create(uuid: "20190327010719")

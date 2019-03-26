@@ -3,8 +3,13 @@
 # executes tasks
 module DeployPin::Runner
   def self.run(group:)
-    pending.each do |task|
-      task.run if task.group == group
+    tasks = pending
+    tasks.each_with_index do |task, index|
+      if task.group == group
+        puts "[#{index + 1}/#{tasks.count}] Task UUID #{task.uuid}"
+        task.run
+        puts ""
+      end
     end
   end
 
@@ -22,10 +27,12 @@ module DeployPin::Runner
   def self.pending
     files = Dir["#{DeployPin.tasks_path}/*.rb"]
 
+    records = DeployPin::Record.pluck(:uuid)
+
     files.map do |file|
       task = DeployPin::Task.new(file)
       task.parse_file
-      task
-    end
+      task unless records.include?(task.uuid)
+    end.compact
   end
 end

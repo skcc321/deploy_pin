@@ -1,9 +1,9 @@
-# <%= @uuid %>:<%= group %>
+# 20190327011006:post_script
 
 # === parallel task code goes down here ===
-10.times { DeployPin::Record.create(uuid: "hello") }
+60.times { DeployPin::Record.create() }
 
-Parallel.each(DeployPin::Record.where(uuid: "hello"), progress: "Doing stuff") do |pin|
+Parallel.each(DeployPin::Record.all, progress: "Doing stuff") do |pin|
   ActiveRecord::Base.connection_pool.with_connection do
     pin.update_attribute(:uuid, "new uuid")
   end
@@ -13,4 +13,4 @@ end
 
 
 # Create record in the DB to avoid multiple execution
-DeployPin::Record.create(uuid: "<%= @uuid %>")
+DeployPin::Record.create(uuid: "20190327011006")

@@ -10,7 +10,7 @@ class DeployPin::InstallGenerator < Rails::Generators::Base
   end
 
   def copy_migrations
-    migration_template "create_deploy_pins.rb", "db/migrate/create_double_double.rb"
+    migration_template "create_deploy_pins.rb", "db/migrate/create_deploy_pins.rb"
   end
 
   def copy_initializer

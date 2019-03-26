@@ -4,6 +4,7 @@ PATH
     deploy_pin (0.1.0)
       parallel
       rails (~> 5.2.2, >= 5.2.2.1)
+      rake (~> 10.0)
       ruby-progressbar
 
 GEM
@@ -133,7 +134,6 @@ DEPENDENCIES
   minitest (~> 5.0)
   pg (>= 0.18.4)
   pry (~> 0.12)
-  rake (~> 10.0)
 
 BUNDLED WITH
    1.17.2
