@@ -15,26 +15,42 @@ deploy_pins is exactly what you need.
 ## Usage
 
 To generate new task template file
-`rails g deploy_pin:task`.
-`rails g deploy_pin:task --parallel`.
+```bash
+rails g deploy_pin:task
+# or
+rails g deploy_pin:task --parallel
+```
 
 To list all pending tasks
-`rake deploy_pin:list`.
+```bash
+rake deploy_pin:list
+```
 
 To run all pending tasks
-`rake deploy_pin:run`.
+```bash
+rake deploy_pin:run
+```
 
 ### Groupped tasks
-!!! please define allowed groups in config/initializers/deploy_pin.rb
+~~~ please define allowed groups in config/initializers/deploy_pin.rb ~~~
 
-`rails g deploy_pin:task allowed_group`.
-`rails g deploy_pin:task allowed_group --parallel`.
+if you want to group tasks around "allowed_group"
+
+```bash
+rails g deploy_pin:task allowed_group
+# or
+rails g deploy_pin:task allowed_group --parallel
+```
 
 To list all pending tasks
-`rake deploy_pin:list[allowed_group]`.
+```bash
+rake deploy_pin:list[allowed_group]
+```
 
 To run all pending tasks
-`rake deploy_pin:run[allowed_group]`.
+```bash
+rake deploy_pin:run[allowed_group]
+```
 
 ## Installation
 Add this line to your application's Gemfile:
@@ -51,6 +67,16 @@ $ bundle
 Or install it yourself as:
 ```bash
 $ gem install deploy_pin
+```
+
+### then generate configuration file
+```bash
+rails g deploy_pin:install
+```
+
+and run migration
+```bash
+rake db:migrate
 ```
 
 ## Contributing
