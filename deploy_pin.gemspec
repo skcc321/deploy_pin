@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.email       = ["skcc321@gmail.com"]
   spec.homepage    = "https://github.com/skcc321/deploy_pin"
   spec.summary     = "pin some task around deployment"
-  spec.description = "pin some task around deployment"
+  spec.description = "pin some task around deployment to execute them during deployment circle"
   spec.license     = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
@@ -26,13 +26,13 @@ Gem::Specification.new do |spec|
   spec.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
 
   spec.add_dependency "rails", "~> 5.2.2", ">= 5.2.2.1"
-  spec.add_dependency "parallel"
-  spec.add_dependency "ruby-progressbar"
+  spec.add_runtime_dependency 'parallel', '~> 0'
+  spec.add_dependency "ruby-progressbar", "~> 1.10"
   spec.add_dependency "rake", "~> 10.0"
 
   spec.add_development_dependency "bundler", "~> 1.17"
   spec.add_development_dependency "pry", "~> 0.12"
   spec.add_development_dependency "minitest", "~> 5.0"
   spec.add_development_dependency 'mysql2', '~> 0.5.2'
-  spec.add_development_dependency 'pg', '>= 0.18.4'
+  spec.add_development_dependency 'pg', '~> 0.18', '>= 0.18.4'
 end
