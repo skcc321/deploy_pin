@@ -12,6 +12,10 @@ Minitest.backtrace_filter = Minitest::BacktraceFilter.new
 require "rails/test_unit/reporter"
 Rails::TestUnitReporter.executable = 'bin/test'
 
+
+require 'simplecov'
+SimpleCov.start
+
 # Load fixtures from the engine
 if ActiveSupport::TestCase.respond_to?(:fixture_path=)
   ActiveSupport::TestCase.fixture_path = File.expand_path("fixtures", __dir__)

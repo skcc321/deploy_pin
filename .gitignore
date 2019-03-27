@@ -9,5 +9,6 @@ test/dummy/yarn-error.log
 test/dummy/storage/
 test/dummy/lib/deploy_pin/*
 test/dummy/tmp/
+coverage/*
 *.swp
 *.gem
