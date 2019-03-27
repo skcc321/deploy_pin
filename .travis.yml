@@ -1,5 +1,8 @@
 ---
 sudo: false
+env:
+  global:
+    - CC_TEST_REPORTER_ID=3fea8b7afdf96d5bea9013243e50f4ac98006861575a0ae3a73f170998b1671c
 
 env:
   matrix:
