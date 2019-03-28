@@ -15,6 +15,9 @@ deploy_pins is exactly what you need.
 
 ## Usage
 
+
+![DeployPin](deploy_pin.gif)
+
 To generate new task template file
 ```bash
 rails g deploy_pin:task
