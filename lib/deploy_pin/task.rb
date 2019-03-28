@@ -28,4 +28,13 @@ class DeployPin::Task
   def details
     puts @uuid, @group, @script
   end
+
+  # for sorting
+  def <=>(task_b)
+    group_index <=> task_b.group_index
+  end
+
+  def group_index
+    DeployPin.groups.index(group)
+  end
 end

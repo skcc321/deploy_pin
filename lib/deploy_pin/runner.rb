@@ -2,8 +2,8 @@
 
 # executes tasks
 module DeployPin::Runner
-  def self.run(group:)
-    tasks = pending(group: group)
+  def self.run(groups:)
+    tasks = pending(groups: groups)
     tasks.each_with_index do |task, index|
       puts "[#{index + 1}/#{tasks.count}] Task UUID #{task.uuid}"
       task.run
@@ -11,26 +11,34 @@ module DeployPin::Runner
     end
   end
 
-  def self.list(group:)
-    pending(group: group).each_with_index do |task, index|
+  def self.list(groups:)
+    pending(groups: groups).each_with_index do |task, index|
       puts "======= Task ##{index} ========"
       puts task.script
       puts ""
     end
 
     puts "======= summary ========"
-    puts "tasks number: #{pending(group: group).count}"
+    puts "tasks number: #{pending(groups: groups).count}"
   end
 
-  def self.pending(group:)
+  def self.pending(groups:)
     files = Dir["#{DeployPin.tasks_path}/*.rb"]
 
+    # get done records uuids
     records = DeployPin::Record.pluck(:uuid)
 
     files.map do |file|
       task = DeployPin::Task.new(file)
       task.parse_file
-      task unless records.include?(task.uuid) || task.group != group
-    end.compact
+
+      # task is done
+      next if records.include?(task.uuid)
+
+      # group mismatch
+      next unless groups.include?(task.group)
+
+      task
+    end.compact.sort # sort by group position in config
   end
 end
