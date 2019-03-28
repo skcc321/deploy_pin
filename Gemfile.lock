@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    deploy_pin (0.1.0)
+    deploy_pin (1.0.1)
       parallel (~> 0)
       rails (~> 5.2.2, >= 5.2.2.1)
       rake (~> 10.0)
@@ -146,4 +146,4 @@ DEPENDENCIES
   simplecov
 
 BUNDLED WITH
-   1.17.2
+   1.17.3
