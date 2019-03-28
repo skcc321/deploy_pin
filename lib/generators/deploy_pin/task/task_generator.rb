@@ -2,7 +2,7 @@
 
 class DeployPin::TaskGenerator < Rails::Generators::Base
   class_option :parallel, type: :boolean
-  argument :group, default: "post_script"
+  argument :group, default: DeployPin.fallback_group
 
   source_root File.expand_path('templates', __dir__)
 
