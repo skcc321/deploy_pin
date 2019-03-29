@@ -2,7 +2,7 @@ require 'test_helper'
 
 class DeployPin::Collector::Test < ActiveSupport::TestCase
   DeployPin.setup do
-    tasks_path 'tmp/deploy_pin/'
+    tasks_path './'
     groups ["I", "II", "III"]
     fallback_group "I"
   end
@@ -23,13 +23,13 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
 
   test "run" do
     assert_nothing_raised do
-      collector.run
+      collector.run {|x| }
     end
   end
 
   test "list" do
     assert_nothing_raised do
-      collector.list
+      collector.list {|x| }
     end
   end
 end

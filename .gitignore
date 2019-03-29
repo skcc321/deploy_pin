@@ -10,5 +10,6 @@ test/dummy/storage/
 test/dummy/lib/deploy_pin/*
 test/dummy/tmp/
 coverage/*
+task.rb
 *.swp
 *.gem

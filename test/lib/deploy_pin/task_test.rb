@@ -2,7 +2,7 @@ require 'test_helper'
 
 class DeployPin::Task::Test < ActiveSupport::TestCase
   DeployPin.setup do
-    tasks_path 'tmp/deploy_pin/'
+    tasks_path './'
     groups ["I", "II", "III"]
     fallback_group "I"
   end
