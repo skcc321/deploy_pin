@@ -1,4 +1,5 @@
 # <%= @uuid %>:<%= group %>
+# task_title: super duper task
 
 # === parallel task code goes down here ===
 10.times { DeployPin::Record.create(uuid: "hello") }
@@ -9,8 +10,3 @@ Parallel.each(DeployPin::Record.where(uuid: "hello"), progress: "Doing stuff") d
   end
   sleep(0.2)
 end
-
-
-
-# Create record in the DB to avoid multiple execution
-DeployPin::Record.create(uuid: "<%= @uuid %>")

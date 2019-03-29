@@ -1,8 +1,10 @@
 require "deploy_pin/runner"
+require "deploy_pin/collector"
 require "deploy_pin/task"
 require "deploy_pin/engine"
 require "parallel"
 require "ruby-progressbar"
+require "colorize"
 
 module DeployPin
   OPTIONS = %i(

@@ -10,5 +10,6 @@ namespace :deploy_pin do
     args.with_defaults(groups: DeployPin.groups)
 
     DeployPin::Runner.list(args)
+    DeployPin::Runner.summary(args)
   end
 end

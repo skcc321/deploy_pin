@@ -2,6 +2,6 @@
 
 DeployPin.setup do
   tasks_path "lib/deploy_pin"
-  groups ["post_script"]
-  fallback_group "post_script"
+  groups ["I", "II", "III"]
+  fallback_group "II"
 end

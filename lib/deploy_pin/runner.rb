@@ -4,43 +4,32 @@
 module DeployPin
   module Runner
     def self.run(groups:)
-      tasks = pending(groups: groups)
-      tasks.each_with_index do |task, index|
-        puts "[#{index + 1}/#{tasks.count}] Task UUID #{task.uuid}"
-        task.run
-        puts ""
+      DeployPin::Collector.new(groups: groups).run do |index, count, task|
+        puts("[#{index + 1}/#{count}] Task #{task.title} #{task.uuid}##{task.group}")
       end
     end
 
     def self.list(groups:)
-      pending(groups: groups).each_with_index do |task, index|
-        puts "======= Task ##{index} ========"
-        puts task.script
-        puts ""
-      end
+      DeployPin::Collector.new(groups: groups).list do |index, count, task|
+        puts("======= Task ##{index} ========".white)
 
-      puts "======= summary ========"
-      puts "tasks number: #{pending(groups: groups).count}"
+        # print details
+        task.details.each do |key, value|
+          puts "#{key}:\t\t#{value}"
+        end
+
+        puts("")
+        puts("<<<")
+        puts task.script.strip.green
+        puts(">>>")
+        puts("")
+      end
     end
 
-    def self.pending(groups:)
-      files = Dir["#{DeployPin.tasks_path}/*.rb"]
-
-      # get done records uuids
-      records = DeployPin::Record.pluck(:uuid)
-
-      files.map do |file|
-        task = DeployPin::Task.new(file)
-        task.parse_file
-
-        # task is done
-        next if records.include?(task.uuid)
-
-        # group mismatch
-        next unless groups.include?(task.group)
-
-        task
-      end.compact.sort # sort by group position in config
+    def self.summary(groups:)
+      # print summary
+      puts("======= summary ========")
+      puts("tasks number: #{DeployPin::Collector.new(groups: groups).tasks.count}")
     end
   end
 end

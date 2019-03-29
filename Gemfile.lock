@@ -1,7 +1,8 @@
 PATH
   remote: .
   specs:
-    deploy_pin (1.0.2)
+    deploy_pin (1.1.0)
+      colorize
       parallel (~> 1.16)
       rails (>= 4.2)
       rake (~> 12.3, >= 12.3.2)
@@ -54,6 +55,7 @@ GEM
     arel (9.0.0)
     builder (3.2.3)
     coderay (1.1.2)
+    colorize (0.8.1)
     concurrent-ruby (1.1.5)
     crass (1.0.4)
     docile (1.1.5)
@@ -79,7 +81,7 @@ GEM
     nio4r (2.3.1)
     nokogiri (1.10.2)
       mini_portile2 (~> 2.4.0)
-    parallel (1.16.0)
+    parallel (1.16.2)
     pg (0.21.0)
     pry (0.12.2)
       coderay (~> 1.1.0)
