@@ -14,7 +14,9 @@ Rails::TestUnitReporter.executable = 'bin/test'
 
 
 require 'simplecov'
-SimpleCov.start
+SimpleCov.start do
+  add_filter "lib"
+end
 
 # Load fixtures from the engine
 if ActiveSupport::TestCase.respond_to?(:fixture_path=)
