@@ -10,18 +10,26 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
   collector = DeployPin::Collector.new(groups: [DeployPin.fallback_group])
 
   test "files" do
-    assert_not_nil collector.files
+    assert_nothing_raised do
+      collector.files
+    end
   end
 
   test "tasks" do
-    assert_not_nil collector.tasks
+    assert_nothing_raised do
+      collector.tasks
+    end
   end
 
   test "run" do
-    assert_not_nil collector.run
+    assert_nothing_raised do
+      collector.run
+    end
   end
 
   test "list" do
-    assert_not_nil collector.list
+    assert_nothing_raised do
+      collector.list
+    end
   end
 end
