@@ -32,7 +32,8 @@ module DeployPin
         yield(index, count, task)
 
         # run only uniq tasks
-        task.run if tasks.none? { |_task| task.eql?(_task) }
+        # task.run if tasks.none? { |_task| task.eql?(_task) }
+        task.run
 
         # mark each task as done
         task.mark
