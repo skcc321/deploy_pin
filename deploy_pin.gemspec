@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rake", "~> 12.3", ">= 12.3.2"
   spec.add_dependency "colorize"
 
-  spec.add_development_dependency "simplecov", "~> 0.12.0"
+  spec.add_development_dependency "simplecov", "~> 0.16.0"
   spec.add_development_dependency "bundler", "~> 1.17"
   spec.add_development_dependency "pry", "~> 0.12"
   spec.add_development_dependency "minitest", "~> 5.0"

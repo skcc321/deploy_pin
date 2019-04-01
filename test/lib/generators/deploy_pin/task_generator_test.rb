@@ -3,7 +3,7 @@ require 'generators/deploy_pin/task/task_generator'
 
 class DeployPin::TaskGeneratorTest < Rails::Generators::TestCase
   DeployPin.setup do
-    tasks_path './'
+    tasks_path './tmp/'
     groups ["I", "II", "III"]
     fallback_group "I"
   end

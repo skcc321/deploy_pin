@@ -3,7 +3,7 @@ require 'rake'
 
 class DeployPinTasksTest < ActiveSupport::TestCase
   DeployPin.setup do
-    tasks_path './'
+    tasks_path './tmp/'
     groups ["I", "II", "III"]
     fallback_group "I"
   end

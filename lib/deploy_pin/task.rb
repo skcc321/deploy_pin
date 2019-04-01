@@ -54,7 +54,8 @@ module DeployPin
     end
 
     def eql?(task_b)
-      script == task_b.script
+      # same script & different uuid
+      script == task_b.script && uuid != task_b.uuid
     end
 
     protected

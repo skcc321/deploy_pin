@@ -26,14 +26,16 @@ module DeployPin
     end
 
     def run
-      count = tasks.count
-
-      tasks.each_with_index do |task, index|
-        yield(index, count, task)
-
+      # cache tasks
+      _tasks = tasks
+      _tasks.each_with_index do |task, index|
         # run only uniq tasks
-        # task.run if tasks.none? { |_task| task.eql?(_task) }
-        task.run
+        executable = _tasks[0..index].none? { |_task| task.eql?(_task) }
+
+        # run if executable
+        task.run if executable
+
+        yield(index, _tasks.count, task, executable)
 
         # mark each task as done
         task.mark
@@ -41,10 +43,9 @@ module DeployPin
     end
 
     def list
-      count = tasks.count
-
-      tasks.each_with_index do |task, index|
-        yield(index, count, task)
+      _tasks = tasks
+      _tasks.each_with_index do |task, index|
+        yield(index, _tasks.count, task)
       end
     end
   end

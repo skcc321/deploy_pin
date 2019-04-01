@@ -2,6 +2,7 @@
 # task_title: super duper task
 
 # === task code goes down here ===
-a = 2
-b = 3
+a = 1
+b = 2
+
 a > b
