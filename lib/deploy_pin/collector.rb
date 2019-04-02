@@ -48,5 +48,13 @@ module DeployPin
         yield(index, _tasks.count, task)
       end
     end
+
+    def exacutable
+      # cache tasks
+      _tasks = tasks
+      _tasks.map.with_index do |task, index|
+        task if _tasks[0..index].none? { |_task| task.eql?(_task) }
+      end.compact
+    end
   end
 end

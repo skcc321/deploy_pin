@@ -8,7 +8,26 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
       fallback_group "I"
     end
 
-    @collector = DeployPin::Collector.new(groups: [DeployPin.fallback_group])
+    # clean
+    DeployPin::Record.delete_all
+    FileUtils.rm_rf("#{DeployPin.tasks_path}/.", secure: true)
+
+    # copy files
+    FileUtils.cp 'test/support/files/task.rb', "#{DeployPin.tasks_path}taska.rb"
+    FileUtils.cp 'test/support/files/task_different.rb', "#{DeployPin.tasks_path}taskb.rb"
+    FileUtils.cp 'test/support/files/task_same.rb', "#{DeployPin.tasks_path}taskc.rb"
+
+    @collector = DeployPin::Collector.new(groups: DeployPin.groups)
+  end
+
+  teardown do
+    # clean
+    DeployPin::Record.delete_all
+    FileUtils.rm_rf("#{DeployPin.tasks_path}/.", secure: true)
+  end
+
+  test "exacutable" do
+    assert_equal(@collector.exacutable.count, 2)
   end
 
   test "files" do
