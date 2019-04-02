@@ -1,10 +1,12 @@
 require 'test_helper'
 
 class DeployPin::Task::Test < ActiveSupport::TestCase
-  DeployPin.setup do
-    tasks_path './tmp/'
-    groups ["I", "II", "III"]
-    fallback_group "I"
+  setup do
+    DeployPin.setup do
+      tasks_path './tmp/'
+      groups ["I", "II", "III"]
+      fallback_group "I"
+    end
   end
 
   task = DeployPin::Task.new('test/support/files/task.rb')

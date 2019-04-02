@@ -1,20 +1,22 @@
 require 'test_helper'
 
 class DeployPin::Runner::Test < ActiveSupport::TestCase
-  DeployPin.setup do
-    tasks_path './tmp/'
-    groups ["I", "II", "III"]
-    fallback_group "I"
+  setup do
+    DeployPin.setup do
+      tasks_path './tmp/'
+      groups ["I", "II", "III"]
+      fallback_group "I"
+    end
+
+    # clean
+    DeployPin::Record.delete_all
+    FileUtils.rm_rf("#{DeployPin.tasks_path}/.", secure: true)
+
+    # copy files
+    FileUtils.cp 'test/support/files/task.rb', "#{DeployPin.tasks_path}taska.rb"
+    FileUtils.cp 'test/support/files/task_different.rb', "#{DeployPin.tasks_path}taskb.rb"
+    FileUtils.cp 'test/support/files/task_same.rb', "#{DeployPin.tasks_path}taskc.rb"
   end
-
-  # clean
-  DeployPin::Record.delete_all
-  FileUtils.rm_rf("#{DeployPin.tasks_path}/.", secure: true)
-
-  # copy files
-  FileUtils.cp 'test/support/files/task.rb', "#{DeployPin.tasks_path}taska.rb"
-  FileUtils.cp 'test/support/files/task_different.rb', "#{DeployPin.tasks_path}taskb.rb"
-  FileUtils.cp 'test/support/files/task_same.rb', "#{DeployPin.tasks_path}taskc.rb"
 
   test "sumary" do
     assert_nothing_raised do
@@ -34,7 +36,9 @@ class DeployPin::Runner::Test < ActiveSupport::TestCase
     end
   end
 
-  # clean
-  DeployPin::Record.delete_all
-  FileUtils.rm_rf("#{DeployPin.tasks_path}/.", secure: true)
+  teardown do
+    # clean
+    DeployPin::Record.delete_all
+    FileUtils.rm_rf("#{DeployPin.tasks_path}/.", secure: true)
+  end
 end

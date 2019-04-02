@@ -2,10 +2,12 @@ require 'test_helper'
 require 'generators/deploy_pin/task/task_generator'
 
 class DeployPin::TaskGeneratorTest < Rails::Generators::TestCase
-  DeployPin.setup do
-    tasks_path './tmp/'
-    groups ["I", "II", "III"]
-    fallback_group "I"
+  setup do
+    DeployPin.setup do
+      tasks_path './tmp/'
+      groups ["I", "II", "III"]
+      fallback_group "I"
+    end
   end
 
   tests DeployPin::TaskGenerator

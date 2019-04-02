@@ -1,10 +1,12 @@
 require 'test_helper'
 
 class DeployPin::Collector::Test < ActiveSupport::TestCase
-  DeployPin.setup do
-    tasks_path './tmp/'
-    groups ["I", "II", "III"]
-    fallback_group "I"
+  setup do
+    DeployPin.setup do
+      tasks_path './tmp/'
+      groups ["I", "II", "III"]
+      fallback_group "I"
+    end
   end
 
   collector = DeployPin::Collector.new(groups: [DeployPin.fallback_group])
