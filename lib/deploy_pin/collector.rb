@@ -32,10 +32,10 @@ module DeployPin
         # run only uniq tasks
         executable = _tasks[0..index].none? { |_task| task.eql?(_task) }
 
+        yield(index, _tasks.count, task, executable)
+
         # run if executable
         task.run if executable
-
-        yield(index, _tasks.count, task, executable)
 
         # mark each task as done
         task.mark
