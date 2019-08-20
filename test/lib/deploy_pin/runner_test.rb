@@ -10,12 +10,13 @@ class DeployPin::Runner::Test < ActiveSupport::TestCase
 
     # clean
     DeployPin::Record.delete_all
-    FileUtils.rm_rf("#{DeployPin.tasks_path}/.", secure: true)
+    ::FileUtils.rm_rf(DeployPin.tasks_path, secure: true)
+    ::FileUtils.mkdir(DeployPin.tasks_path)
 
     # copy files
-    FileUtils.cp 'test/support/files/task.rb', "#{DeployPin.tasks_path}taska.rb"
-    FileUtils.cp 'test/support/files/task_different.rb', "#{DeployPin.tasks_path}taskb.rb"
-    FileUtils.cp 'test/support/files/task_same.rb', "#{DeployPin.tasks_path}taskc.rb"
+    ::FileUtils.cp 'test/support/files/task.rb', "#{DeployPin.tasks_path}taska.rb"
+    ::FileUtils.cp 'test/support/files/task_different.rb', "#{DeployPin.tasks_path}taskb.rb"
+    ::FileUtils.cp 'test/support/files/task_same.rb', "#{DeployPin.tasks_path}taskc.rb"
   end
 
   test "sumary" do
@@ -39,6 +40,6 @@ class DeployPin::Runner::Test < ActiveSupport::TestCase
   teardown do
     # clean
     DeployPin::Record.delete_all
-    FileUtils.rm_rf("#{DeployPin.tasks_path}/.", secure: true)
+    ::FileUtils.rm_rf(DeployPin.tasks_path, secure: true)
   end
 end
