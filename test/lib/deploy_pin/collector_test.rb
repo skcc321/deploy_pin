@@ -14,11 +14,16 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
     ::FileUtils.mkdir(DeployPin.tasks_path)
 
     # copy files
-    ::FileUtils.cp 'test/support/files/task.rb', "#{DeployPin.tasks_path}taska.rb"
-    ::FileUtils.cp 'test/support/files/task_different.rb', "#{DeployPin.tasks_path}taskb.rb"
-    ::FileUtils.cp 'test/support/files/task_same.rb', "#{DeployPin.tasks_path}taskc.rb"
+    ::FileUtils.cp 'test/support/files/task.rb', "#{DeployPin.tasks_path}1_task.rb"
+    ::FileUtils.cp 'test/support/files/task_different.rb', "#{DeployPin.tasks_path}2_task.rb"
+    ::FileUtils.cp 'test/support/files/task_same.rb', "#{DeployPin.tasks_path}3_task.rb"
+    ::FileUtils.cp 'test/support/files/other_task.rb', "#{DeployPin.tasks_path}4_task.rb"
 
-    @collector = DeployPin::Collector.new(groups: DeployPin.groups)
+    # create one record
+    DeployPin::Record.create(uuid: '75371573753754')
+
+    @collector = DeployPin::Collector.new(identifiers: DeployPin.groups)
+    @ids_collector = DeployPin::Collector.new(identifiers: ['75371573753753', '75371573753754!'])
   end
 
   teardown do
@@ -27,19 +32,29 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
     ::FileUtils.rm_rf(DeployPin.tasks_path, secure: true)
   end
 
-  test "exacutable" do
-    assert_equal(@collector.exacutable.count, 2)
+  test "exacutable wiht ids" do
+    assert_equal(2, @ids_collector.exacutable.count)
+  end
+
+  test "exacutable wiht group" do
+    assert_equal(2, @collector.exacutable.count)
+  end
+
+  test "tasks_count" do
+    assert_nothing_raised do
+      @collector.tasks_count
+    end
   end
 
   test "files" do
     assert_nothing_raised do
-      @collector.files
+      @collector.send(:files)
     end
   end
 
   test "tasks" do
     assert_nothing_raised do
-      @collector.tasks
+      @collector.send(:tasks)
     end
   end
 

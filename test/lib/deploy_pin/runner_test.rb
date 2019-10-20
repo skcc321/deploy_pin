@@ -14,26 +14,32 @@ class DeployPin::Runner::Test < ActiveSupport::TestCase
     ::FileUtils.mkdir(DeployPin.tasks_path)
 
     # copy files
-    ::FileUtils.cp 'test/support/files/task.rb', "#{DeployPin.tasks_path}taska.rb"
-    ::FileUtils.cp 'test/support/files/task_different.rb', "#{DeployPin.tasks_path}taskb.rb"
-    ::FileUtils.cp 'test/support/files/task_same.rb', "#{DeployPin.tasks_path}taskc.rb"
+    ::FileUtils.cp 'test/support/files/task.rb', "#{DeployPin.tasks_path}1_task.rb"
+    ::FileUtils.cp 'test/support/files/task_different.rb', "#{DeployPin.tasks_path}2_task.rb"
+    ::FileUtils.cp 'test/support/files/task_same.rb', "#{DeployPin.tasks_path}3_task.rb"
   end
 
   test "sumary" do
     assert_nothing_raised do
-      DeployPin::Runner.summary(groups: [DeployPin.fallback_group])
+      DeployPin::Runner.summary(identifiers: [DeployPin.fallback_group])
     end
   end
 
   test "run" do
     assert_nothing_raised do
-      DeployPin::Runner.run(groups: DeployPin.groups)
+      DeployPin::Runner.run(identifiers: DeployPin.groups)
+    end
+  end
+
+  test "run with uuid" do
+    assert_nothing_raised do
+      DeployPin::Runner.run(identifiers: [75371573753751])
     end
   end
 
   test "list" do
     assert_nothing_raised do
-      DeployPin::Runner.list(groups: [DeployPin.fallback_group])
+      DeployPin::Runner.list(identifiers: [DeployPin.fallback_group])
     end
   end
 

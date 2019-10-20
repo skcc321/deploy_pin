@@ -3,14 +3,14 @@
 # executes tasks
 module DeployPin
   module Runner
-    def self.run(groups:)
-      DeployPin::Collector.new(groups: groups).run do |index, count, task, executable|
+    def self.run(identifiers:)
+      DeployPin::Collector.new(identifiers: identifiers).run do |index, count, task, executable|
         self.print("[#{index + 1}/#{count}] Task #{task.title} #{task.uuid}##{task.group} (#{executable ? 'run' : 'skip'})")
       end
     end
 
-    def self.list(groups:)
-      DeployPin::Collector.new(groups: groups).list do |index, count, task|
+    def self.list(identifiers:)
+      DeployPin::Collector.new(identifiers: identifiers).list do |index, count, task|
         self.print("======= Task ##{index} ========".white)
 
         # print details
@@ -26,10 +26,10 @@ module DeployPin
       end
     end
 
-    def self.summary(groups:)
+    def self.summary(identifiers:)
       # print summary
       self.print("======= Summary ========")
-      self.print("tasks number: #{DeployPin::Collector.new(groups: groups).tasks.count}")
+      self.print("tasks number: #{DeployPin::Collector.new(identifiers: identifiers).tasks_count}")
     end
 
     def self.print(msg)
