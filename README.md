@@ -36,9 +36,9 @@ To run all pending tasks
 rake deploy_pin:run
 ```
 
-### Groupped tasks
-~~~ please define allowed groups in config/initializers/deploy_pin.rb ~~~
+## Groupped tasks
 
+Please define allowed groups in `config/initializers/deploy_pin.rb`
 if you want to group tasks around "allowed_group"
 
 ```bash
@@ -57,7 +57,24 @@ To run all pending tasks
 rake deploy_pin:run[allowed_group]
 ```
 
+## Run by uuid
+
+To run some specific task by uuid
+```bash
+rake deploy_pin:run[uuid_1, uuid_2]
+```
+Or you can combine uuid and group
+```bash
+rake deploy_pin:run[uuid, allowed_group]
+```
+In case if you want to rerun task you should add exclamation mark in the end of uuid
+```bash
+rake deploy_pin:run['uuid_1!', 'uuid_2!']
+```
+
 ## Installation
+
+
 Add this line to your application's Gemfile:
 
 ```ruby
@@ -74,7 +91,7 @@ Or install it yourself as:
 $ gem install deploy_pin
 ```
 
-### then generate configuration file
+then generate configuration file
 ```bash
 rails g deploy_pin:install
 ```

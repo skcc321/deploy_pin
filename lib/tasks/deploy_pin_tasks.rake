@@ -1,13 +1,13 @@
 namespace :deploy_pin do
   desc "run pending tasks"
-  task :run, [:groups] => :environment do |t, args|
-    args.with_defaults(groups: DeployPin.groups)
+  task :run, [:identifiers] => :environment do |t, args|
+    args.with_defaults(identifiers: DeployPin.groups)
 
     DeployPin::Runner.run(args)
   end
 
-  task :list, [:groups] => :environment  do |t, args|
-    args.with_defaults(groups: DeployPin.groups)
+  task :list, [:identifiers] => :environment  do |t, args|
+    args.with_defaults(identifiers: DeployPin.groups)
 
     DeployPin::Runner.list(args)
     DeployPin::Runner.summary(args)
