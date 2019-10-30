@@ -36,9 +36,9 @@ class DeployPinTasksTest < ActiveSupport::TestCase
     end
   end
 
-  test "deploy_pin:run[75371573753751]'" do
+  test "deploy_pin:run['75371573753751, 75371573753752']" do
     assert_nothing_raised do
-      Rake::Task["deploy_pin:run"].invoke('75371573753751')
+      Rake::Task["deploy_pin:run"].invoke('75371573753751, 75371573753752')
     end
   end
 end

@@ -1,9 +1,10 @@
 namespace :deploy_pin do
   desc "run pending tasks"
   task :run, [:identifiers] => :environment do |t, args|
-    args.with_defaults(identifiers: DeployPin.groups)
+    identifiers = args.identifiers
+    attributes = identifiers.nil? ? DeployPin.groups : identifiers.split(/\s*,\s*/)
 
-    DeployPin::Runner.run(args)
+    DeployPin::Runner.run(identifiers: attributes)
   end
 
   task :list, [:identifiers] => :environment  do |t, args|

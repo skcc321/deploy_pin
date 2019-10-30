@@ -61,15 +61,15 @@ rake deploy_pin:run[allowed_group]
 
 To run some specific task by uuid
 ```bash
-rake deploy_pin:run[uuid_1, uuid_2]
+rake deploy_pin:run['uuid_1, uuid_2']
 ```
 Or you can combine uuid and group
 ```bash
-rake deploy_pin:run[uuid, allowed_group]
+rake deploy_pin:run['uuid, allowed_group']
 ```
 In case if you want to rerun task you should add exclamation mark in the end of uuid
 ```bash
-rake deploy_pin:run['uuid_1!', 'uuid_2!']
+rake deploy_pin:run['uuid_1!, uuid_2!']
 ```
 
 ## Installation
