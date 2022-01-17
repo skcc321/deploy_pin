@@ -5,6 +5,7 @@ require 'deploy_pin/collector'
 require 'deploy_pin/task'
 require 'deploy_pin/task_criteria'
 require 'deploy_pin/engine'
+require 'deploy_pin/database'
 require 'parallel'
 require 'ruby-progressbar'
 require 'colorize'
@@ -14,6 +15,7 @@ module DeployPin
     tasks_path
     fallback_group
     groups
+    statement_timeout
   ]
 
   OPTIONS.each do |option|
