@@ -14,16 +14,16 @@ module DeployPin
     end
 
     def suitable?(task)
-      task_cover = ->(task, regexp) {
-        items = identifiers.flat_map {|x| x.to_s.scan(regexp) }.flatten
+      task_cover = lambda { |task, regexp|
+        items = identifiers.flat_map { |x| x.to_s.scan(regexp) }.flatten
 
         items & [task.group, task.uuid]
       }
 
-      return false if task_cover.(task, SKIP_REGEXEP).any?
-      return true if task_cover.(task, FORCE_REGEXP).any?
+      return false if task_cover.call(task, SKIP_REGEXEP).any?
+      return true if task_cover.call(task, FORCE_REGEXP).any?
 
-      task_cover.(task, COMMON_REGEXP).any? && !task.done?
+      task_cover.call(task, COMMON_REGEXP).any? && !task.done?
     end
   end
 end

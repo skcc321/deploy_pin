@@ -3,4 +3,3 @@
 class DeployPin::Record < DeployPin::ApplicationRecord
   self.table_name = 'deploy_pins'
 end
-

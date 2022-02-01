@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 require 'test_helper'
 
 class DeployPin::Collector::Test < ActiveSupport::TestCase
   setup do
     DeployPin.setup do
       tasks_path './tmp/'
-      groups ["I", "II", "III"]
-      fallback_group "I"
+      groups %w[I II III]
+      fallback_group 'I'
     end
 
     # clean
@@ -32,41 +34,41 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
     ::FileUtils.rm_rf(DeployPin.tasks_path, secure: true)
   end
 
-  test "exacutable wiht ids" do
+  test 'exacutable wiht ids' do
     assert_equal(2, @ids_collector.exacutable.count)
   end
 
-  test "exacutable wiht group" do
+  test 'exacutable wiht group' do
     assert_equal(2, @collector.exacutable.count)
   end
 
-  test "tasks_count" do
+  test 'tasks_count' do
     assert_nothing_raised do
       @collector.tasks_count
     end
   end
 
-  test "files" do
+  test 'files' do
     assert_nothing_raised do
       @collector.send(:files)
     end
   end
 
-  test "tasks" do
+  test 'tasks' do
     assert_nothing_raised do
       @collector.send(:tasks)
     end
   end
 
-  test "run" do
+  test 'run' do
     assert_nothing_raised do
-      @collector.run {|x| }
+      @collector.run { |x| }
     end
   end
 
-  test "list" do
+  test 'list' do
     assert_nothing_raised do
-      @collector.list {|x| }
+      @collector.list { |x| }
     end
   end
 end

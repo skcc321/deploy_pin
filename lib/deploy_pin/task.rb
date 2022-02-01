@@ -4,17 +4,17 @@
 module DeployPin
   class Task
     attr_reader :file,
-      :uuid,
-      :group,
-      :title,
-      :script
+                :uuid,
+                :group,
+                :title,
+                :script
 
     def initialize(file)
       @file = file
       @uuid = nil
       @group = nil
-      @title = ""
-      @script = ""
+      @title = ''
+      @script = ''
     end
 
     def run
@@ -35,10 +35,10 @@ module DeployPin
       File.foreach(file) do |line|
         case line.strip
         when /\A# (\d+):(\w+)/
-          @uuid = $1
-          @group = $2
+          @uuid = Regexp.last_match(1)
+          @group = Regexp.last_match(2)
         when /\A# task_title:(.+)/
-          @title = $1.strip
+          @title = Regexp.last_match(1).strip
         when /\A[^#].*/
           @script += line
         end
@@ -53,20 +53,20 @@ module DeployPin
       }
     end
 
-    def eql?(task_b)
+    def eql?(other)
       # same script & different uuid
-      script == task_b.script && uuid != task_b.uuid
+      script == other.script && uuid != other.uuid
     end
 
     protected
 
-      # for sorting
-      def <=>(task_b)
-        group_index <=> task_b.group_index
-      end
+    # for sorting
+    def <=>(other)
+      group_index <=> other.group_index
+    end
 
-      def group_index
-        DeployPin.groups.index(group)
-      end
+    def group_index
+      DeployPin.groups.index(group)
+    end
   end
 end

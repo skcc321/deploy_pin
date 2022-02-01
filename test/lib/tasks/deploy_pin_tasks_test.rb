@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'test_helper'
 require 'rake'
 
@@ -5,8 +7,8 @@ class DeployPinTasksTest < ActiveSupport::TestCase
   setup do
     DeployPin.setup do
       tasks_path './tmp/'
-      groups ["I", "II", "III"]
-      fallback_group "I"
+      groups %w[I II III]
+      fallback_group 'I'
     end
   end
 
@@ -14,31 +16,31 @@ class DeployPinTasksTest < ActiveSupport::TestCase
 
   test "deploy_pin:list'" do
     assert_nothing_raised do
-      Rake::Task["deploy_pin:list"].invoke
+      Rake::Task['deploy_pin:list'].invoke
     end
   end
 
   test "deploy_pin:list[I]'" do
     assert_nothing_raised do
-      Rake::Task["deploy_pin:list"].invoke('I')
+      Rake::Task['deploy_pin:list'].invoke('I')
     end
   end
 
   test "deploy_pin:run'" do
     assert_nothing_raised do
-      Rake::Task["deploy_pin:run"].invoke
+      Rake::Task['deploy_pin:run'].invoke
     end
   end
 
   test "deploy_pin:run[I]'" do
     assert_nothing_raised do
-      Rake::Task["deploy_pin:run"].invoke('I')
+      Rake::Task['deploy_pin:run'].invoke('I')
     end
   end
 
   test "deploy_pin:run['75371573753751, 75371573753752']" do
     assert_nothing_raised do
-      Rake::Task["deploy_pin:run"].invoke('75371573753751, 75371573753752')
+      Rake::Task['deploy_pin:run'].invoke('75371573753751, 75371573753752')
     end
   end
 end
