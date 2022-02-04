@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 require 'test_helper'
 
 class DeployPin::TaskCriteria::Test < ActiveSupport::TestCase
   setup do
     DeployPin.setup do
       tasks_path './tmp/'
-      groups ["I", "II", "III"]
-      fallback_group "I"
+      groups %w[I II III]
+      fallback_group 'I'
     end
 
     # clean
@@ -37,11 +39,11 @@ class DeployPin::TaskCriteria::Test < ActiveSupport::TestCase
     ::FileUtils.rm_rf(DeployPin.tasks_path, secure: true)
   end
 
-  test "suitable?" do
+  test 'suitable?' do
     assert_equal(true, @criteria.suitable?(@task_2))
   end
 
-  test "not suitable?" do
+  test 'not suitable?' do
     assert_equal(false, @criteria.suitable?(@task_3))
     assert_equal(false, @criteria.suitable?(@task_1))
   end

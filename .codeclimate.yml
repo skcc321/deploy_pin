@@ -1,3 +1,4 @@
+version: 2
 plugins:
   brakeman:
     enabled: true
@@ -9,7 +10,7 @@ plugins:
       score_threshold: 20.0
   reek:
     enabled: true
-  rubocop:
-    enabled: true
+  # rubocop:
+  #   enabled: true
   rubymotion:
     enabled: true

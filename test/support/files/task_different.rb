@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # 75371573753752:II
 # task_title: another super duper task
 

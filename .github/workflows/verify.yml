@@ -1,0 +1,61 @@
+name: Verify
+
+on: [pull_request]
+
+env:
+  DB_USERNAME: runner
+  DB_PASSWORD: password
+
+jobs:
+  rspec:
+    name: RSpec
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        # Due to https://github.com/actions/runner/issues/849, we have to use quotes for '3.0'
+        ruby: [2.7, '3.0', 3.1]
+        db: ["pg", "mysql"]
+    runs-on: ${{ matrix.os }}
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: ${{ env.DB_USERNAME }}
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
+        ports: ["5432:5432"]
+      mysql:
+        image: bitnami/mysql:latest
+        env:
+          MYSQL_ROOT_USER: ${{ env.DB_USERNAME }}
+          MYSQL_ROOT_PASSWORD: ${{ env.DB_PASSWORD }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+
+      - name: Setup test database
+        env:
+          RAILS_ENV: test
+          DB_USERNAME: ${{ env.DB_USERNAME }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+        run: |
+          bin/rails db:prepare
+
+      - name: Run tests
+        env:
+          RAILS_ENV: test
+          DB_ROLE: ${{ matrix.db }}
+          DB_USERNAME: ${{ env.DB_USERNAME }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+        run: |
+          bin/test

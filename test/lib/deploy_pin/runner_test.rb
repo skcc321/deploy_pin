@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 require 'test_helper'
 
 class DeployPin::Runner::Test < ActiveSupport::TestCase
   setup do
     DeployPin.setup do
       tasks_path './tmp/'
-      groups ["I", "II", "III"]
-      fallback_group "I"
+      groups %w[I II III]
+      fallback_group 'I'
     end
 
     # clean
@@ -19,25 +21,25 @@ class DeployPin::Runner::Test < ActiveSupport::TestCase
     ::FileUtils.cp 'test/support/files/task_same.rb', "#{DeployPin.tasks_path}3_task.rb"
   end
 
-  test "sumary" do
+  test 'sumary' do
     assert_nothing_raised do
       DeployPin::Runner.summary(identifiers: [DeployPin.fallback_group])
     end
   end
 
-  test "run" do
+  test 'run' do
     assert_nothing_raised do
       DeployPin::Runner.run(identifiers: DeployPin.groups)
     end
   end
 
-  test "run with uuid" do
+  test 'run with uuid' do
     assert_nothing_raised do
-      DeployPin::Runner.run(identifiers: [75371573753751])
+      DeployPin::Runner.run(identifiers: [75_371_573_753_751])
     end
   end
 
-  test "list" do
+  test 'list' do
     assert_nothing_raised do
       DeployPin::Runner.list(identifiers: [DeployPin.fallback_group])
     end

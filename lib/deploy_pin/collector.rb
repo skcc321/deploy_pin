@@ -47,22 +47,22 @@ module DeployPin
 
     private
 
-      def files
-        Dir["#{DeployPin.tasks_path}/*.rb"]
-      end
+    def files
+      Dir["#{DeployPin.tasks_path}/*.rb"]
+    end
 
-      def tasks
-        files.map do |file|
-          task = DeployPin::Task.new(file)
-          task.parse_file
+    def tasks
+      files.map do |file|
+        task = DeployPin::Task.new(file)
+        task.parse_file
 
-          # check if task is suitable
-          task if task_criteria.suitable?(task)
-        end.compact.sort # sort by group position in config
-      end
+        # check if task is suitable
+        task if task_criteria.suitable?(task)
+      end.compact.sort # sort by group position in config
+    end
 
-      def task_criteria
-        @task_criteria ||= DeployPin::TaskCriteria.new(identifiers: identifiers)
-      end
+    def task_criteria
+      @task_criteria ||= DeployPin::TaskCriteria.new(identifiers: identifiers)
+    end
   end
 end
