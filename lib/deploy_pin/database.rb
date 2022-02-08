@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module DeployPin
   module Database
     extend self
@@ -44,13 +46,14 @@ module DeployPin
 
       return call_block_under_timeout(timeout, &blk) unless params.key? :connected_to
 
-      klass = (params[:connected_to].key? :database) ? ActiveRecord::Base : ::ApplicationRecord
+      klass = params[:connected_to].key? :database ? ActiveRecord::Base : ::ApplicationRecord
       klass.connected_to(**params[:connected_to]) do
         call_block_under_timeout(timeout, &blk)
       end
     end
 
     private
+
       def call_block_under_timeout(timeout)
         set_max_timeout(timeout)
 

@@ -60,19 +60,19 @@ class DeployPin::Database::Test < ActiveSupport::TestCase
   end
 
   def task_content_with_default_timeout(sleep_in_sec)
-    <<-file
+    <<-FILE
     DeployPin::Database.execute_with_timeout do
       ActiveRecord::Base.connection.execute("#{sql_sleep(sleep_in_sec.to_f)}")
     end
-    file
+    FILE
   end
 
   def task_content_with_custom_timeout(timeout_in_sec, sleep_in_sec)
-    <<-file
+    <<-FILE
     DeployPin::Database.execute_with_timeout #{timeout_in_sec} do
       ActiveRecord::Base.connection.execute("#{sql_sleep(sleep_in_sec.to_f)}")
     end
-    file
+    FILE
   end
 
   def sql_sleep(duration_in_sec)

@@ -16,7 +16,7 @@ module DeployPin
     fallback_group
     groups
     statement_timeout
-  ]
+  ].freeze
 
   OPTIONS.each do |option|
     instance_eval %{
