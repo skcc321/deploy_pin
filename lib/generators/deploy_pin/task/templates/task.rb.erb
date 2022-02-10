@@ -7,3 +7,9 @@
 progressbar = ProgressBar.create(title: "Doing stuff", total: 20, format: '%t |%E | %B | %a')
 
 20.times { progressbar.increment; sleep(0.2) }
+
+# DeployPin::Database::execute_with_timeout 10.minutes do
+#   ActiveRecord::Base.connection.execute("select * from shipments;")
+#   or
+#   Shipment.all
+# end
