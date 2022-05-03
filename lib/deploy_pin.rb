@@ -2,6 +2,7 @@
 
 require 'deploy_pin/runner'
 require 'deploy_pin/collector'
+require 'deploy_pin/parallel_wrapper'
 require 'deploy_pin/task'
 require 'deploy_pin/task_criteria'
 require 'deploy_pin/engine'

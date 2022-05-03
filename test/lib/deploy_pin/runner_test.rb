@@ -8,6 +8,7 @@ class DeployPin::Runner::Test < ActiveSupport::TestCase
       tasks_path './tmp/'
       groups %w[I II III]
       fallback_group 'I'
+      statement_timeout 0.2.second # 200 ms
     end
 
     # clean

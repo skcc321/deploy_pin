@@ -1,0 +1,7 @@
+inherit_from: .rubocop_todo.yml
+
+AllCops:
+  NewCops: disable
+
+Layout/IndentationConsistency:
+  EnforcedStyle: indented_internal_methods
