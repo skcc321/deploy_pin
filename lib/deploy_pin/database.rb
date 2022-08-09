@@ -2,6 +2,9 @@
 
 module DeployPin
   module Database
+    PG_TIMEOUT_STATEMENT = 'SET statement_timeout TO %s'
+    MYSQL_TIMEOUT_STATEMENT = 'SET max_execution_time = %s'
+
     extend self
 
     # Run a block under a sql maximum timeout.
@@ -46,7 +49,7 @@ module DeployPin
 
       return call_block_under_timeout(timeout, &blk) unless params.key? :connected_to
 
-      klass = params[:connected_to].key? :database ? ActiveRecord::Base : ::ApplicationRecord
+      klass = params[:connected_to].key?(:database) ? ActiveRecord::Base : ::ApplicationRecord
       klass.connected_to(**params[:connected_to]) do
         call_block_under_timeout(timeout, &blk)
       end
@@ -65,28 +68,20 @@ module DeployPin
 
         timeout_statement =
           if postgresql?
-            postgresql_timeout_statement
+            PG_TIMEOUT_STATEMENT
           elsif mysql?
-            mysql_timeout_statement
+            MYSQL_TIMEOUT_STATEMENT
           end
 
-        connection.select_all "#{timeout_statement} #{connection.quote(timeout_in_milliseconds)}"
+        connection.execute timeout_statement % connection.quote(timeout_in_milliseconds)
       end
 
       def postgresql?
         connection.adapter_name =~ /postg/i
       end
 
-      def postgresql_timeout_statement
-        "SET statement_timeout TO"
-      end
-
       def mysql?
         connection.adapter_name =~ /mysql/i
-      end
-
-      def mysql_timeout_statement
-        "SET max_execution_time ="
       end
 
       def connection

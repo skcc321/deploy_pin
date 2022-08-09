@@ -3,11 +3,15 @@
 # Task wrapper
 module DeployPin
   class Task
+    extend ::DeployPin::ParallelWrapper
+    include ::DeployPin::ParallelWrapper
+
     attr_reader :file,
                 :uuid,
                 :group,
                 :title,
-                :script
+                :script,
+                :explicit_timeout
 
     def initialize(file)
       @file = file
@@ -15,6 +19,8 @@ module DeployPin
       @group = nil
       @title = ''
       @script = ''
+      @explicit_timeout = false
+      @parallel = false
     end
 
     def run
@@ -31,6 +37,14 @@ module DeployPin
       DeployPin::Record.where(uuid: uuid).exists?
     end
 
+    def explicit_timeout?
+      @explicit_timeout
+    end
+
+    def parallel?
+      @parallel
+    end
+
     def parse_file
       File.foreach(file) do |line|
         case line.strip
@@ -41,6 +55,9 @@ module DeployPin
           @title = Regexp.last_match(1).strip
         when /\A[^#].*/
           @script += line
+
+          @explicit_timeout = true if line =~ /Database.execute_with_timeout.*/
+          @parallel = true if line =~ /[Pp]arallel.*/
         end
       end
     end
@@ -60,13 +77,13 @@ module DeployPin
 
     protected
 
-    # for sorting
-    def <=>(other)
-      group_index <=> other.group_index
-    end
+      # for sorting
+      def <=>(other)
+        group_index <=> other.group_index
+      end
 
-    def group_index
-      DeployPin.groups.index(group)
-    end
+      def group_index
+        DeployPin.groups.index(group)
+      end
   end
 end

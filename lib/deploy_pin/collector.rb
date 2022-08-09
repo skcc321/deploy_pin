@@ -19,7 +19,11 @@ module DeployPin
         yield(index, _tasks.count, task, executable)
 
         # run if executable
-        task.run if executable
+        if executable
+          run_with_timeout(!task.explicit_timeout? && !task.parallel?) do
+            task.run
+          end
+        end
 
         # mark each task as done
         task.mark unless task.done?
@@ -46,23 +50,30 @@ module DeployPin
     end
 
     private
+      # :reek:UtilityFunction
+      def files
+        Dir["#{DeployPin.tasks_path}/*.rb"]
+      end
 
-    def files
-      Dir["#{DeployPin.tasks_path}/*.rb"]
-    end
+      def tasks
+        files.map do |file|
+          task = DeployPin::Task.new(file)
+          task.parse_file
 
-    def tasks
-      files.map do |file|
-        task = DeployPin::Task.new(file)
-        task.parse_file
+          # check if task is suitable
+          task if task_criteria.suitable?(task)
+        end.compact.sort # sort by group position in config
+      end
 
-        # check if task is suitable
-        task if task_criteria.suitable?(task)
-      end.compact.sort # sort by group position in config
-    end
+      def task_criteria
+        @task_criteria ||= DeployPin::TaskCriteria.new(identifiers: identifiers)
+      end
 
-    def task_criteria
-      @task_criteria ||= DeployPin::TaskCriteria.new(identifiers: identifiers)
-    end
+      # :reek:UtilityFunction and :reek:ControlParameter
+      def run_with_timeout(under_timeout, &block)
+        return yield unless under_timeout
+
+        DeployPin::Database.execute_with_timeout(DeployPin.statement_timeout, **{}, &block)
+      end
   end
 end

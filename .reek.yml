@@ -1,0 +1,12 @@
+detectors:
+  # Rubocop is already configured to check that
+  IrresponsibleModule:
+    enabled: false
+
+  DuplicateMethodCall:
+    max_calls: 2
+
+directories:
+  "test":
+    UtilityFunction:
+      enabled: false

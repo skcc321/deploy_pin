@@ -8,6 +8,7 @@ class DeployPin::Task::Test < ActiveSupport::TestCase
       tasks_path './tmp/'
       groups %w[I II III]
       fallback_group 'I'
+      statement_timeout 0.2.second # 200 ms
     end
 
     @task = DeployPin::Task.new('test/support/files/task.rb')
@@ -47,6 +48,15 @@ class DeployPin::Task::Test < ActiveSupport::TestCase
     assert_nothing_raised do
       @task.eql?(DeployPin::Task.new('test/support/files/task.rb'))
     end
+  end
+
+  test 'explicit_timeout?' do
+    @task.parse_file
+    assert_equal @task.explicit_timeout?, false
+
+    task_with_timeout = DeployPin::Task.new('test/support/files/task_with_timeout.rb')
+    task_with_timeout.parse_file
+    assert_equal task_with_timeout.explicit_timeout?, true
   end
 
   test 'group_index' do
