@@ -101,6 +101,45 @@ and run migration
 rake db:migrate
 ```
 
+## Database Timeout
+By default, deploy_pin will run all the non-parallel tasks under a database statement timeout.  
+A default value must be defined in the deploy_pin initializer. Ex.:
+```ruby
+# config/initializers/deploy_pin.rb
+DeployPin.setup do
+  statement_timeout 0.2.second # 200 ms
+end 
+```
+
+In order to not use the default value, it's required to use explicitly in the task, like:
+```ruby
+# Some deploy_pin task 
+# 20190401135040:I
+# task_title: Execute some query with timeout
+
+# === task code goes down here ===
+DeployPin::Database::execute_with_timeout do
+ ActiveRecord::Base.connection.execute("select * from shipments;")
+end
+```
+
+To know more about the params, please check the documentation [here](lib/deploy_pin/database.rb).
+
+### Parallel
+To run parallel tasks using timeout, it's required to use the parallel wrapper, which mimics parallel interface,  
+but adding the timeout option.
+
+In a deploy_pin task, instead of using `Parallel.each(1..2, in_processes: 2)`, use:
+```ruby
+parallel_each(1..2, in_processes: 2, timeout: 0.3.seconds) do |i|
+  # ActiveRecord::Base.connection_pool.with_connection it's already include in the parallel wrapper.
+  puts "Item: #{i}, Worker: #{Parallel.worker_number}"
+  ActiveRecord::Base.connection.execute("<some db query>")
+end
+```
+
+Check the documentation [here](lib/deploy_pin/parallel_wrapper.rb).
+
 ## Contributing
 Contribution directions go here.
 
