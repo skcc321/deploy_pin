@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# <%= @uuid %>:<%= group %>
-# task_title: super duper task
+# <%= @uuid %>:<%= @group %>
+# task_title: <%= @author ? "@#{@author} #{title.titleize}" : "#{title.titleize}" %>
 
 # === parallel task code goes down here ===
 10.times { DeployPin::Record.create(uuid: "hello") }
