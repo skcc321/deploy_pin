@@ -21,9 +21,14 @@ deploy_pins is exactly what you need.
 
 To generate new task template file
 ```bash
-rails g deploy_pin:task
+rails g deploy_pin:task some_task_title
 # or
-rails g deploy_pin:task --parallel
+rails g deploy_pin:task some_task_title --parallel
+```
+
+Also, you can specify author
+```bash
+rails g deploy_pin:task some_task_title -a author_name
 ```
 
 To list all pending tasks
@@ -40,11 +45,10 @@ rake deploy_pin:run
 
 Please define allowed groups in `config/initializers/deploy_pin.rb`
 if you want to group tasks around "allowed_group"
-
 ```bash
-rails g deploy_pin:task allowed_group
+rails g deploy_pin:task task_title -g allowed_group
 # or
-rails g deploy_pin:task allowed_group --parallel
+rails g deploy_pin:task task_title -g allowed_group --parallel
 ```
 
 To list all pending tasks

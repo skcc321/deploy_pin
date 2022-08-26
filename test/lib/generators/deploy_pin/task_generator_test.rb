@@ -24,7 +24,7 @@ class DeployPin::TaskGeneratorTest < Rails::Generators::TestCase
 
   test 'generator runs without errors (with group)' do
     assert_nothing_raised do
-      run_generator ['I']
+      run_generator ['title -g I -a author']
     end
   end
 

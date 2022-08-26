@@ -2,7 +2,7 @@ Description:
     Creates tasks for execution on deployment
 
 Example:
-    rails generate deploy_pin:task
+    rails generate deploy_pin:task some_name_of_task -a author -g I
 
     This will create:
-        lib/deploy_pin/task.rb
+        lib/deploy_pin/{task_id}_some_name_of_task.rb
