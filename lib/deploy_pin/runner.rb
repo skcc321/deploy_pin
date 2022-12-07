@@ -4,8 +4,14 @@
 module DeployPin
   module Runner
     def self.run(identifiers:)
-      DeployPin::Collector.new(identifiers: identifiers).run do |index, count, task, executable|
-        self.print("[#{index + 1}/#{count}] Task #{task.title} #{task.uuid}##{task.group} (#{executable ? 'run' : 'skip'})")
+      DeployPin::Collector.new(identifiers: identifiers).run do |index, count, task, executable, start:|
+        end_of_msg = if executable
+                       start ? '(Run)' : "(Done)\n\n"
+                     else
+                       "(Skip)\n\n"
+                     end
+
+        self.print("[#{index + 1}/#{count}] #{task_meta(task)} #{end_of_msg}")
       end
     end
 
@@ -34,6 +40,10 @@ module DeployPin
 
     def self.print(msg)
       puts(msg) unless Rails.env.test?
+    end
+
+    def self.task_meta(task)
+      "Task #{task.title} #{task.uuid}##{task.group}"
     end
   end
 end
