@@ -1,4 +1,4 @@
-name: Verify
+name: verify
 
 on: [pull_request]
 
@@ -8,7 +8,7 @@ env:
 
 jobs:
   rspec:
-    name: RSpec
+    name: rspec
     strategy:
       fail-fast: false
       matrix:
@@ -59,3 +59,29 @@ jobs:
           DB_PASSWORD: ${{ env.DB_PASSWORD }}
         run: |
           bin/test
+
+      - name: Upload coverage
+        if: ${{ matrix.db  == 'pg' && matrix.ruby == 3.1 }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: review.txt
+          path: coverage/review.txt
+
+  coverage:
+    name: coverage
+    needs: rspec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: review.txt
+          path: coverage/
+      - uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
+      - name: coverage
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          reviewdog -reporter=github-pr-review -runners=coverage
