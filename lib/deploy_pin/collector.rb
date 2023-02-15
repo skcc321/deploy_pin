@@ -50,6 +50,7 @@ module DeployPin
     end
 
     private
+
       # :reek:UtilityFunction
       def files
         Dir["#{DeployPin.tasks_path}/*.rb"]

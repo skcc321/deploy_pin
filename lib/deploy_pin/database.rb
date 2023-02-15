@@ -7,6 +7,8 @@ module DeployPin
 
     extend self
 
+    def dummy_method; end
+
     # Run a block under a sql maximum timeout.
     #
     # A default timeout will be get from DeployPin.setup

@@ -8,11 +8,13 @@ services:
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports: ["5432:5432"]
+    ports:
+      - "5432:5432"
   mysql:
     image: bitnami/mysql:latest
     restart: always
     environment:
       MYSQL_ROOT_USER: ${DB_USERNAME}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-    ports: ["3306:3306"]
+    ports:
+      - "3306:3306"

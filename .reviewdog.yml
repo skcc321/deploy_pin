@@ -1,0 +1,7 @@
+runner:
+  # other checks
+  coverage:
+    cmd: cat coverage/review.txt
+    level: warning
+    errorformat:
+      - "%f:%l:%c: %m"
