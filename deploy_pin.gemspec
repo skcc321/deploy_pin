@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-$:.push File.expand_path('lib', __dir__)
+$LOAD_PATH.push File.expand_path('lib', __dir__)
 
 # Maintain your gem's version:
 require 'deploy_pin/version'
@@ -15,6 +15,7 @@ Gem::Specification.new do |spec|
   spec.summary     = 'pin some task around deployment'
   spec.description = 'pin some task around deployment to execute them during deployment circle'
   spec.license     = 'MIT'
+  spec.required_ruby_version = '>= 3.0'
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
   # to allow pushing to a single host or delete this section to allow pushing to any host.
@@ -40,6 +41,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'pg'
   spec.add_development_dependency 'pry'
   spec.add_development_dependency 'rubocop'
+  spec.add_development_dependency 'rubocop-minitest'
   spec.add_development_dependency 'simplecov'
   spec.add_development_dependency 'simplecov-review'
 end

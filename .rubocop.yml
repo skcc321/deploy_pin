@@ -2,6 +2,12 @@ inherit_from: .rubocop_todo.yml
 
 AllCops:
   NewCops: disable
+  TargetRubyVersion: 3.0
 
 Layout/IndentationConsistency:
   EnforcedStyle: indented_internal_methods
+
+Style/ClassAndModuleChildren:
+  EnforcedStyle: nested
+  Exclude:
+    - test/**/*_test.rb
