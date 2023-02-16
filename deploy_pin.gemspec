@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
   spec.summary     = 'pin some task around deployment'
   spec.description = 'pin some task around deployment to execute them during deployment circle'
   spec.license     = 'MIT'
-  spec.required_ruby_version = '>= 3.0'
+  spec.required_ruby_version = '>= 2.7'
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
   # to allow pushing to a single host or delete this section to allow pushing to any host.
