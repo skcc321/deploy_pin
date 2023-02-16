@@ -1,11 +1,11 @@
 name: Publish Gem
 
 on:
-  # Manually publish
-  workflow_dispatch:
   push:
     branches:
-      - "master"
+      - master
+      - master-fix-publish
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,8 +14,8 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Release Gem
-        uses: cadwallion/publish-rubygems-action@master
+        uses: discourse/publish-rubygems-action@v2
         env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           RUBYGEMS_API_KEY: ${{secrets.RUBYGEMS_API_KEY}}
-          RELEASE_COMMAND: rake release
+          GIT_EMAIL: ci@example.com
+          GIT_NAME: Your CI
