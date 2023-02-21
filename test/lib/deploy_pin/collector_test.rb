@@ -35,12 +35,12 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
     ::FileUtils.rm_rf(DeployPin.tasks_path, secure: true)
   end
 
-  test 'exacutable wiht ids' do
-    assert_equal(2, @ids_collector.exacutable.count)
+  test 'executable with ids' do
+    assert_equal(2, @ids_collector.executable.count)
   end
 
-  test 'exacutable wiht group' do
-    assert_equal(2, @collector.exacutable.count)
+  test 'executable with group' do
+    assert_equal(2, @collector.executable.count)
   end
 
   test 'tasks_count' do
@@ -63,13 +63,13 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
 
   test 'run' do
     assert_nothing_raised do
-      @collector.run { |x| }
+      @collector.run
     end
   end
 
   test 'list' do
     assert_nothing_raised do
-      @collector.list { |x| }
+      @collector.list
     end
   end
 end
