@@ -3,9 +3,9 @@
 # check task criteria
 module DeployPin
   class TaskCriteria
-    SKIP_REGEXEP = /\A-(.+[^!])\z/.freeze
-    FORCE_REGEXP = /\A([^-].+)!\z/.freeze
-    COMMON_REGEXP = /(^[^-]*.+[^!]*$)/.freeze
+    SKIP_REGEXEP = /\A!(.+[^!])\z/
+    FORCE_REGEXP = /\A([^!].+)!\z/
+    COMMON_REGEXP = /(^[^!]?.+[^!]?$)/
 
     attr_reader :identifiers
 
@@ -17,7 +17,7 @@ module DeployPin
       task_cover = lambda { |task, regexp|
         items = identifiers.flat_map { |x| x.to_s.scan(regexp) }.flatten
 
-        items & [task.group, task.uuid]
+        items & [task.group, task.uuid.to_s]
       }
 
       return false if task_cover.call(task, SKIP_REGEXEP).any?

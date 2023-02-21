@@ -66,9 +66,9 @@ module DeployPin
       end
 
       def tasks
-        files.map do |file|
+        [*DeployPin.deployment_tasks_code, *files].map do |file|
           task = DeployPin::Task.new(file)
-          task.parse_file
+          task.parse
 
           # check if task is suitable
           task if task_criteria.suitable?(task)

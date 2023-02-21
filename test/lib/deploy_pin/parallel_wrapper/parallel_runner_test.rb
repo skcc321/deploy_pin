@@ -4,15 +4,6 @@ require 'minitest/autorun'
 require 'test_helper'
 
 class DeployPin::ParallelWrapper::ParallelRunner::Test < ActiveSupport::TestCase
-  setup do
-    DeployPin.setup do
-      tasks_path './tmp/'
-      groups %w[I II III]
-      fallback_group 'I'
-      statement_timeout 0.2.second # 200 ms
-    end
-  end
-
   test 'run with no args for parallel' do
     runner = DeployPin::ParallelWrapper::ParallelRunner.new(:each)
 

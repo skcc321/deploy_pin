@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'deploy_pin/deployment_state'
 require 'deploy_pin/runner'
 require 'deploy_pin/collector'
 require 'deploy_pin/parallel_wrapper'
@@ -20,7 +21,12 @@ module DeployPin
     run_formatter
     list_formatter
     task_wrapper
+    deployment_state_transition
   ].freeze
+
+  DEFAULTS = {
+    task_wrapper: ->(_task, task_runner) { task_runner.call }
+  }.freeze
 
   OPTIONS.each do |option|
     instance_eval %{
@@ -37,8 +43,14 @@ module DeployPin
   end
 
   def self.setup_defaults!
-    @task_wrapper = ->(_task, task_runner) { task_runner.call }
+    DEFAULTS.each do |option, value|
+      instance_variable_set(:"@#{option}", value)
+    end
   end
 
   setup_defaults!
+
+  def self.enabled?(option)
+    instance_variable_defined?("@#{option}")
+  end
 end

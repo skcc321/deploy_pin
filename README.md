@@ -187,6 +187,30 @@ DeployPin::Database::execute_with_timeout do
  ActiveRecord::Base.connection.execute("select * from shipments;")
 end
 ```
+## DeploymentStateTrack
+in the initializer
+```ruby
+    DeployPin.setup do
+      groups %w[I II III post rollback]
+      ...
+      deployment_state_transition({
+        ongoing: %w[I III],
+        pending: "rollback", # enters to pending step before "rollback"
+        ttl: 20.second, # memoize the state to avoid Redis spam
+        redis_url: "redis://localhost:6379"
+      })
+    end
+
+    # enabled next methods
+    DeployPin.ongoing_deployment?
+    DeployPin.pending_deployment?
+```
+
+around the deployment
+```bash
+    bundle exec rake deploy_pin:run[I, II, III] -  # enters to ongoing state before "I" and leaves it after "III" so all tasks in I, II, III have DeployPin.oingoing_deployment? == true
+    bundle exec rake deploy_pin:run[rollback] - enters "pending state"
+```
 
 ## Contributing
 Contribution directions go here.

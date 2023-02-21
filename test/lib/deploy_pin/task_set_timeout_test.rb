@@ -4,23 +4,12 @@ require 'minitest/autorun'
 require 'test_helper'
 
 class DeployPin::Database::Test < ActiveSupport::TestCase
-  setup do
-    DeployPin.setup do
-      tasks_path './tmp/'
-      groups %w[I II III]
-      fallback_group 'I'
-      statement_timeout 0.2.second # 200 ms
-    end
-
-    clear_db
-  end
-
   test 'should throw exception when execution time is equal to the default timeout' do
     task_content = task_content_with_default_timeout(0.3.second)
     task = DeployPin::Task.new(task_content)
 
     File.stub :foreach, true, task_content do
-      task.parse_file
+      task.parse
 
       assert_raises(timeout_exception_klass) do
         task.run
@@ -33,7 +22,7 @@ class DeployPin::Database::Test < ActiveSupport::TestCase
     task = DeployPin::Task.new(task_content)
 
     File.stub :foreach, true, task_content do
-      task.parse_file
+      task.parse
       task.run
     end
   end
@@ -43,7 +32,7 @@ class DeployPin::Database::Test < ActiveSupport::TestCase
     task = DeployPin::Task.new(task_content)
 
     File.stub :foreach, true, task_content do
-      task.parse_file
+      task.parse
       task.run
     end
   end
@@ -53,7 +42,7 @@ class DeployPin::Database::Test < ActiveSupport::TestCase
     task = DeployPin::Task.new(task_content)
 
     File.stub :foreach, true, task_content do
-      task.parse_file
+      task.parse
 
       assert_raises(timeout_exception_klass) do
         task.run
