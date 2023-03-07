@@ -3,7 +3,9 @@
 # executes tasks
 module DeployPin
   class Collector
-    attr_reader :identifiers
+    include ActionView::Helpers::DateHelper
+
+    attr_reader :identifiers, :formatter
 
     def initialize(identifiers:)
       @identifiers = identifiers
@@ -16,13 +18,15 @@ module DeployPin
         # run only uniq tasks
         executable = _tasks[0..index].none? { |_task| task.eql?(_task) }
 
-        yield(index, _tasks.count, task, executable)
+        DeployPin.run_formatter.call(index, _tasks.count, task, executable, true)
 
         # run if executable
         if executable
-          run_with_timeout(!task.explicit_timeout? && !task.parallel?) do
-            task.run
+          time = execution_time do
+            run_with_timeout(task) { task.run }
           end
+
+          DeployPin.run_formatter.call(index, _tasks.count, task, executable, false, time)
         end
 
         # mark each task as done
@@ -33,11 +37,11 @@ module DeployPin
     def list
       _tasks = tasks
       _tasks.each_with_index do |task, index|
-        yield(index, _tasks.count, task)
+        DeployPin.list_formatter.call(index, task)
       end
     end
 
-    def exacutable
+    def executable
       # cache tasks
       _tasks = tasks
       _tasks.map.with_index do |task, index|
@@ -71,10 +75,18 @@ module DeployPin
       end
 
       # :reek:UtilityFunction and :reek:ControlParameter
-      def run_with_timeout(under_timeout, &block)
-        return yield unless under_timeout
+      def run_with_timeout(task, &block)
+        return yield unless task.under_timeout?
 
         DeployPin::Database.execute_with_timeout(DeployPin.statement_timeout, **{}, &block)
+      end
+
+      def execution_time
+        start_time = Time.now
+
+        yield
+
+        time_ago_in_words(start_time)
       end
   end
 end

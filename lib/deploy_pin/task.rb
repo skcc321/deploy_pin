@@ -37,12 +37,8 @@ module DeployPin
       DeployPin::Record.where(uuid: uuid).exists?
     end
 
-    def explicit_timeout?
-      @explicit_timeout
-    end
-
-    def parallel?
-      @parallel
+    def under_timeout?
+      !explicit_timeout? && !parallel?
     end
 
     def parse_file
@@ -84,6 +80,14 @@ module DeployPin
 
       def group_index
         DeployPin.groups.index(group)
+      end
+
+      def explicit_timeout?
+        @explicit_timeout
+      end
+
+      def parallel?
+        @parallel
       end
   end
 end

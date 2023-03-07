@@ -52,11 +52,24 @@ class DeployPin::Task::Test < ActiveSupport::TestCase
 
   test 'explicit_timeout?' do
     @task.parse_file
-    assert_equal @task.explicit_timeout?, false
+    assert_equal @task.send(:explicit_timeout?), false
 
     task_with_timeout = DeployPin::Task.new('test/support/files/task_with_timeout.rb')
     task_with_timeout.parse_file
-    assert_equal task_with_timeout.explicit_timeout?, true
+    assert_equal task_with_timeout.send(:explicit_timeout?), true
+  end
+
+  test 'under_timeout?' do
+    @task.parse_file
+    assert_equal @task.under_timeout?, true
+
+    task_with_timeout = DeployPin::Task.new('test/support/files/task_with_timeout.rb')
+    task_with_timeout.parse_file
+    assert_equal task_with_timeout.under_timeout?, false
+
+    parallel_task = DeployPin::Task.new('test/support/files/parallel_task.rb')
+    parallel_task.parse_file
+    assert_equal parallel_task.under_timeout?, false
   end
 
   test 'group_index' do

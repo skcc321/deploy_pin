@@ -110,7 +110,7 @@ A default value must be defined in the deploy_pin initializer. Ex.:
 # config/initializers/deploy_pin.rb
 DeployPin.setup do
   statement_timeout 0.2.second # 200 ms
-end 
+end
 ```
 
 In order to not use the default value, it's required to use explicitly in the task, like:
@@ -127,7 +127,7 @@ end
 
 To know more about the params, please check the documentation [here](lib/deploy_pin/database.rb).
 
-### Parallel
+## Parallel
 To run parallel tasks using timeout, it's required to use the parallel wrapper, which mimics parallel interface,  
 but adding the timeout option.
 
@@ -141,6 +141,52 @@ end
 ```
 
 Check the documentation [here](lib/deploy_pin/parallel_wrapper.rb).
+
+## Formatting
+`run_formatter` is used to format the output of a `run` task
+`list_formatter` is used to format the output of a `list` task
+
+A default value must be defined in the deploy_pin initializer. Ex.:
+```ruby
+# config/initializers/deploy_pin.rb
+DeployPin.setup do
+  run_formatter(
+    lambda do |index, task_count, task, executable, start, time = nil|
+      end_of_msg = if executable
+                     start ? '(Started)' : "(Done in #{time})\n\n"
+                   else
+                     "(Skipped)\n\n"
+                   end
+
+      puts("[#{index + 1}/#{task_count}] Task #{task.title} #{task.uuid}##{task.group} #{end_of_msg}".blue.bold)
+    end
+  )
+  list_formatter(
+    lambda do |index, task|
+      puts("======= Task ##{index} ========".blue.bold)
+
+      # print details
+      task.details.each do |key, value|
+        puts("#{key}:\t\t#{value}")
+      end
+
+      puts("\n<<<\n#{task.script.strip.green}\n>>>\n\n")
+    end
+  )
+end
+```
+
+In order to not use the default value, it's required to use explicitly in the task, like:
+```ruby
+# Some deploy_pin task 
+# 20190401135040:I
+# task_title: Execute some query with timeout
+
+# === task code goes down here ===
+DeployPin::Database::execute_with_timeout do
+ ActiveRecord::Base.connection.execute("select * from shipments;")
+end
+```
 
 ## Contributing
 Contribution directions go here.

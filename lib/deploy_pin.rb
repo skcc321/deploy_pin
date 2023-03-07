@@ -17,6 +17,8 @@ module DeployPin
     fallback_group
     groups
     statement_timeout
+    run_formatter
+    list_formatter
   ].freeze
 
   OPTIONS.each do |option|
