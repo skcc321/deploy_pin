@@ -6,9 +6,9 @@ DeployPin.setup do
   fallback_group 'II'
   statement_timeout 10.minutes
   run_formatter(
-    lambda do |index, task_count, task, executable, start, time = nil|
+    lambda do |index, task_count, task, executable, start, duration = nil|
       end_of_msg = if executable
-                     start ? '(Started)' : "(Done in #{time})\n\n"
+                     start ? '(Started)' : "(Done in #{duration})\n\n"
                    else
                      "(Skipped)\n\n"
                    end

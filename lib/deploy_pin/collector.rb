@@ -3,8 +3,6 @@
 # executes tasks
 module DeployPin
   class Collector
-    include ActionView::Helpers::DateHelper
-
     attr_reader :identifiers, :formatter
 
     def initialize(identifiers:)
@@ -22,11 +20,11 @@ module DeployPin
 
         # run if executable
         if executable
-          time = execution_time do
+          duration = execution_duration do
             run_with_timeout(task) { task.run }
           end
 
-          DeployPin.run_formatter.call(index, _tasks.count, task, executable, false, time)
+          DeployPin.run_formatter.call(index, _tasks.count, task, executable, false, duration)
         end
 
         # mark each task as done
@@ -81,12 +79,12 @@ module DeployPin
         DeployPin::Database.execute_with_timeout(DeployPin.statement_timeout, **{}, &block)
       end
 
-      def execution_time
+      def execution_duration
         start_time = Time.now
 
         yield
 
-        time_ago_in_words(start_time)
+        Time.now - start_time
       end
   end
 end
