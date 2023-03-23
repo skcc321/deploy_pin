@@ -143,7 +143,7 @@ end
 Check the documentation [here](lib/deploy_pin/parallel_wrapper.rb).
 
 ## Formatting
-`run_formatter` is used to format the output of a `run` task
+`run_formatter` is used to format the output of a `run` task  
 `list_formatter` is used to format the output of a `list` task
 
 A default value must be defined in the deploy_pin initializer. Ex.:
@@ -151,9 +151,9 @@ A default value must be defined in the deploy_pin initializer. Ex.:
 # config/initializers/deploy_pin.rb
 DeployPin.setup do
   run_formatter(
-    lambda do |index, task_count, task, executable, start, time = nil|
+    lambda do |index, task_count, task, executable, start, duration = nil|
       end_of_msg = if executable
-                     start ? '(Started)' : "(Done in #{time})\n\n"
+                     start ? '(Started)' : "(Done in #{duration})\n\n"
                    else
                      "(Skipped)\n\n"
                    end
