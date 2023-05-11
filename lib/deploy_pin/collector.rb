@@ -9,28 +9,15 @@ module DeployPin
       @identifiers = identifiers
     end
 
+    # :reek:TooManyStatements
     def run
       # cache tasks
       _tasks = tasks
       _tasks.each_with_index do |task, index|
-        # run only uniq tasks
-        executable = _tasks[0..index].none? { |_task| task.eql?(_task) }
-
-        DeployPin.run_formatter.call(index, _tasks.count, task, executable, true)
-
-        # run if executable
-        if executable
-          duration = execution_duration do
-            run_with_timeout(task) { task.run }
-          end
-
-          DeployPin.run_formatter.call(index, _tasks.count, task, executable, false, duration)
-        end
-
-        # mark each task as done
-        task.mark unless task.done?
+        DeployPin.task_wrapper.call(task, -> { process(_tasks, task, index) })
       end
     end
+    # :reek:TooManyStatements
 
     def list
       _tasks = tasks
@@ -52,6 +39,26 @@ module DeployPin
     end
 
     private
+
+      # :reek:FeatureEnvy
+      # :reek:TooManyStatements
+      def process(cached_tasks, task, index)
+        # run only uniq tasks
+        executable = cached_tasks[0..index].none? { |_task| task.eql?(_task) }
+
+        DeployPin.run_formatter.call(index, cached_tasks.count, task, executable, true)
+
+        # run if executable
+        if executable
+          duration = execution_duration { run_with_timeout(task) { task.run } }
+          DeployPin.run_formatter.call(index, cached_tasks.count, task, executable, false, duration)
+        end
+
+        # mark each task as done
+        task.mark unless task.done?
+      end
+      # :reek:TooManyStatements
+      # :reek:FeatureEnvy
 
       # :reek:UtilityFunction
       def files
