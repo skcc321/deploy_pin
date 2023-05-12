@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module DeployPin
-  VERSION = '1.3.8'
+  VERSION = '1.4.0'
 end

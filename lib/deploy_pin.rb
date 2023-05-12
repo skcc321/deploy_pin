@@ -19,14 +19,15 @@ module DeployPin
     statement_timeout
     run_formatter
     list_formatter
+    task_wrapper
   ].freeze
 
   OPTIONS.each do |option|
     instance_eval %{
       def #{option}(val = nil)
-        return @@#{option} unless val.present?
+        return @#{option} unless val.present?
 
-        @@#{option} = val
+        @#{option} = val
       end
     }, __FILE__, __LINE__ - 6
   end
@@ -34,4 +35,10 @@ module DeployPin
   def self.setup(&block)
     instance_eval(&block)
   end
+
+  def self.setup_defaults!
+    @task_wrapper = ->(_task, task_runner) { task_runner.call }
+  end
+
+  setup_defaults!
 end

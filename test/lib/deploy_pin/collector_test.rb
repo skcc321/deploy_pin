@@ -4,6 +4,8 @@ require 'test_helper'
 
 class DeployPin::Collector::Test < ActiveSupport::TestCase
   setup do
+    DeployPin.setup_defaults!
+
     DeployPin.setup do
       tasks_path './tmp/'
       groups %w[I II III]
@@ -71,5 +73,18 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
     assert_nothing_raised do
       @collector.list
     end
+  end
+
+  test 'custom task wrapper' do
+    DeployPin.setup do
+      task_wrapper(
+        lambda { |_task, task_runner|
+          puts 'called'
+          task_runner.call
+        }
+      )
+    end
+
+    assert_output(/called\ncalled\n/) { @collector.run }
   end
 end
