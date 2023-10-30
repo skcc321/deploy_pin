@@ -7,7 +7,7 @@ module DeployPin
     include ::DeployPin::ParallelWrapper
 
     attr_reader :file,
-                :uuid,
+                :identifier,
                 :group,
                 :title,
                 :script,
@@ -16,7 +16,7 @@ module DeployPin
 
     def initialize(file)
       @file = file
-      @uuid = nil
+      @identifier = nil
       @group = nil
       @title = ''
       @script = ''
@@ -33,13 +33,13 @@ module DeployPin
       return if recurring
 
       # store record in the DB
-      DeployPin::Record.create(uuid: uuid)
+      DeployPin::Record.create(uuid: identifier)
     end
 
     def done?
       return if recurring
 
-      DeployPin::Record.where(uuid: uuid).exists?
+      DeployPin::Record.where(uuid: identifier).exists?
     end
 
     def under_timeout?
@@ -50,7 +50,7 @@ module DeployPin
       each_line do |line|
         case line.strip
         when /\A# (-?\d+):(\w+):?(recurring)?/
-          @uuid = Regexp.last_match(1).to_i
+          @identifier = Regexp.last_match(1).to_i
           @group = Regexp.last_match(2)
           @recurring = Regexp.last_match(3)
         when /\A# task_title:(.+)/
@@ -74,15 +74,15 @@ module DeployPin
 
     def details
       {
-        uuid: uuid,
+        identifier: identifier,
         group: group,
         title: title
       }
     end
 
     def eql?(other)
-      # same script & different uuid
-      script == other.script && uuid != other.uuid
+      # same script & different identifier
+      script == other.script && identifier != other.identifier
     end
 
     def unreachable_future
@@ -90,10 +90,10 @@ module DeployPin
     end
 
     def sorting_key
-      if uuid.to_i.negative?
-        [group_index, unreachable_future + uuid]
+      if identifier.to_i.negative?
+        [group_index, unreachable_future + identifier]
       else
-        [group_index, uuid]
+        [group_index, identifier]
       end
     end
 

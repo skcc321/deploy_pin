@@ -17,7 +17,7 @@ module DeployPin
       task_cover = lambda { |task, regexp|
         items = identifiers.flat_map { |x| x.to_s.scan(regexp) }.flatten
 
-        items & [task.group, task.uuid.to_s]
+        items & [task.group, task.identifier.to_s]
       }
 
       return false if task_cover.call(task, SKIP_REGEXEP).any?

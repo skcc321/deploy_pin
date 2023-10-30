@@ -19,7 +19,7 @@ DeployPin.setup do
                      "(Skipped)\n\n"
                    end
 
-      puts("[#{index + 1}/#{task_count}] Task #{task.title} #{task.uuid}##{task.group} #{end_of_msg}".blue.bold)
+      puts("[#{index + 1}/#{task_count}] Task #{task.title} #{task.identifier}##{task.group} #{end_of_msg}".blue.bold)
     end
   )
   list_formatter(

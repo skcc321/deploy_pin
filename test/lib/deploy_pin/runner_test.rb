@@ -22,7 +22,7 @@ class DeployPin::Runner::Test < ActiveSupport::TestCase
     end
   end
 
-  test 'run with uuid' do
+  test 'run with identifier' do
     assert_nothing_raised do
       DeployPin::Runner.run(identifiers: [75_371_573_753_751])
     end
