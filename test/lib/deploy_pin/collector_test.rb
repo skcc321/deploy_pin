@@ -4,20 +4,6 @@ require 'test_helper'
 
 class DeployPin::Collector::Test < ActiveSupport::TestCase
   setup do
-    DeployPin.setup_defaults!
-
-    DeployPin.setup do
-      tasks_path './tmp/'
-      groups %w[I II III]
-      fallback_group 'I'
-      statement_timeout 0.2.second # 200 ms
-    end
-
-    # clean
-    DeployPin::Record.delete_all
-    ::FileUtils.rm_rf(DeployPin.tasks_path, secure: true)
-    ::FileUtils.mkdir(DeployPin.tasks_path)
-
     # copy files
     ::FileUtils.cp 'test/support/files/task.rb', "#{DeployPin.tasks_path}1_task.rb"
     ::FileUtils.cp 'test/support/files/task_different.rb', "#{DeployPin.tasks_path}2_task.rb"
@@ -29,12 +15,6 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
 
     @collector = DeployPin::Collector.new(identifiers: DeployPin.groups)
     @ids_collector = DeployPin::Collector.new(identifiers: ['75371573753753', '75371573753754!'])
-  end
-
-  teardown do
-    # clean
-    DeployPin::Record.delete_all
-    ::FileUtils.rm_rf(DeployPin.tasks_path, secure: true)
   end
 
   test 'executable with ids' do

@@ -3,7 +3,7 @@
 $LOAD_PATH.push File.expand_path('lib', __dir__)
 
 # Maintain your gem's version:
-require 'deploy_pin/version'
+require_relative 'lib/deploy_pin/version'
 
 # Describe your gem and declare its dependencies:
 Gem::Specification.new do |spec|
@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
   spec.summary     = 'pin some task around deployment'
   spec.description = 'pin some task around deployment to execute them during deployment circle'
   spec.license     = 'MIT'
-  spec.required_ruby_version = '>= 2.7'
+  spec.required_ruby_version = '>= 3.0'
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
   # to allow pushing to a single host or delete this section to allow pushing to any host.
@@ -30,10 +30,12 @@ Gem::Specification.new do |spec|
     Dir['{app,config,db,lib}/**/*', 'MIT-LICENSE', 'Rakefile', 'README.md']
   end
 
-  spec.add_dependency 'colorize'
-  spec.add_dependency 'parallel', '~> 1.16'
-  spec.add_dependency 'rails', '>= 6.0.1'
-  spec.add_dependency 'ruby-progressbar', '~> 1.10'
+  spec.add_dependency 'colorize', '~> 1.1'
+  spec.add_dependency 'connection_pool', '~> 2.2'
+  spec.add_dependency 'parallel', '~> 1.23'
+  spec.add_dependency 'rails', '~> 7.0'
+  spec.add_dependency 'redis', '> 4.0'
+  spec.add_dependency 'ruby-progressbar', '~> 1.13'
 
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'minitest'

@@ -6,76 +6,73 @@
 
 ![DeployPin](http://hereisfree.com/content1//pic/zip/2009109935062477801.jpg)
 
-Sometimes we need to execute set of commands (tasks) after/before deployment.
-Most likely you use migrations for such things, but that is not what is related to migration at all.
-Also sometimes you need to execute some code before migration or later, after migration without blocking of main thread.
+Deploying applications often involves the need to execute a series of specific commands or tasks either before or after the deployment process. While you might typically turn to migrations for such operations, these tasks aren't always migration-related. Additionally, there are situations where you need to execute code before or after a migration without causing the main thread to block.
 
-deploy_pins is exactly what you need.
+Introducing deploy_pins – your go-to solution for streamlined task management during the deployment process. This Ruby library allows you to seamlessly orchestrate tasks before, after, or independently of migrations, offering the flexibility you need to maintain a smooth and efficient deployment workflow. With deploy_pins, you can take control of your deployment tasks and ensure that your application operates flawlessly in any environment.
 
 ## Usage
 
-
 ![DeployPin](deploy_pin.gif)
 
-To generate new task template file
+To generate a new task template file:
 ```bash
 rails g deploy_pin:task some_task_title
 # or
 rails g deploy_pin:task some_task_title --parallel
 ```
 
-Also, you can specify author
+You can also specify the author:
 ```bash
 rails g deploy_pin:task some_task_title -a author_name
 ```
 
-To list all pending tasks
+To list all pending tasks:
 ```bash
 rake deploy_pin:list
 ```
 
-To run all pending tasks
+To run all pending tasks:
 ```bash
 rake deploy_pin:run
 ```
 
-## Groupped tasks
+## Grouped Tasks
 
-Please define allowed groups in `config/initializers/deploy_pin.rb`
-if you want to group tasks around "allowed_group"
+To define allowed groups, navigate to `config/initializers/deploy_pin.rb`. You can group tasks around the "allowed_group" like this:
 ```bash
 rails g deploy_pin:task task_title -g allowed_group
 # or
 rails g deploy_pin:task task_title -g allowed_group --parallel
 ```
 
-To list all pending tasks
+To list all pending tasks within the "allowed_group":
 ```bash
 rake deploy_pin:list[allowed_group]
 ```
 
-To run all pending tasks
+To run all pending tasks within the "allowed_group":
 ```bash
 rake deploy_pin:run[allowed_group]
 ```
 
-## Run by uuid
+## Run by Identifier
 
-To run some specific task by uuid
+To execute a specific task using its identifier:
 ```bash
-rake deploy_pin:run['uuid_1, uuid_2']
+rake deploy_pin:run['identifier_1, identifier_2']
 ```
-Or you can combine uuid and group
+
+Alternatively, you can combine an identifier and a group:
 ```bash
-rake deploy_pin:run['uuid, allowed_group']
+rake deploy_pin:run['identifier, allowed_group']
 ```
-In case if you want to rerun task you should add exclamation mark in the end of uuid
+
+If you wish to rerun a task, add an exclamation mark at the end of the identifier:
 ```bash
-rake deploy_pin:run['uuid_1!, uuid_2!']
+rake deploy_pin:run['identifier_1!, identifier_2!']
 ```
 
 ## Installation
-
 
 Add this line to your application's Gemfile:
 
@@ -83,39 +80,41 @@ Add this line to your application's Gemfile:
 gem 'deploy_pin'
 ```
 
-And then execute:
+Then execute:
 ```bash
 $ bundle
 ```
 
-Or install it yourself as:
+You can also install it manually with:
 ```bash
 $ gem install deploy_pin
 ```
 
-then generate configuration file
+Afterward, generate the configuration file:
 ```bash
 rails g deploy_pin:install
 ```
 
-and run migration
+Finally, run the migration:
 ```bash
 rake db:migrate
 ```
 
 ## Database Timeout
-By default, deploy_pin will run all the non-parallel tasks under a database statement timeout.  
-A default value must be defined in the deploy_pin initializer. Ex.:
+
+By default, deploy_pin runs all non-parallel tasks under a database statement timeout. To set a default value, you should define it in the deploy_pin initializer, for example:
+
 ```ruby
 # config/initializers/deploy_pin.rb
 DeployPin.setup do
-  statement_timeout 0.2.second # 200 ms
+  statement_timeout 0.2.seconds # 200 ms
 end
 ```
 
-In order to not use the default value, it's required to use explicitly in the task, like:
+If you want to use a different value than the default, you need to specify it explicitly in the task, as shown below:
+
 ```ruby
-# Some deploy_pin task 
+# Some deploy_pin task
 # 20190401135040:I
 # task_title: Execute some query with timeout
 
@@ -125,28 +124,26 @@ DeployPin::Database::execute_with_timeout do
 end
 ```
 
-To know more about the params, please check the documentation [here](lib/deploy_pin/database.rb).
+For more information about the parameters, please refer to the documentation [here](lib/deploy_pin/database.rb).
 
 ## Parallel
-To run parallel tasks using timeout, it's required to use the parallel wrapper, which mimics parallel interface,  
-but adding the timeout option.
 
-In a deploy_pin task, instead of using `Parallel.each(1..2, in_processes: 2)`, use:
+To run parallel tasks using a timeout, you need to use the parallel wrapper, which mimics the parallel interface but adds the timeout option. In a deploy_pin task, instead of using `Parallel.each(1..2, in_processes: 2)`, use:
+
 ```ruby
 parallel_each(1..2, in_processes: 2, timeout: 0.3.seconds) do |i|
-  # ActiveRecord::Base.connection_pool.with_connection it's already include in the parallel wrapper.
+  # ActiveRecord::Base.connection_pool.with_connection is already included in the parallel wrapper.
   puts "Item: #{i}, Worker: #{Parallel.worker_number}"
   ActiveRecord::Base.connection.execute("<some db query>")
 end
 ```
 
-Check the documentation [here](lib/deploy_pin/parallel_wrapper.rb).
+Check the documentation [here](lib/deploy_pin/parallel_wrapper.rb) for more details.
 
 ## Formatting
-`run_formatter` is used to format the output of a `run` task  
-`list_formatter` is used to format the output of a `list` task
 
-A default value must be defined in the deploy_pin initializer. Ex.:
+`run_formatter` is used to format the output of a `run` task, and `list_formatter` is used to format the output of a `list` task. To set a default value, you should define it in the deploy_pin initializer:
+
 ```ruby
 # config/initializers/deploy_pin.rb
 DeployPin.setup do
@@ -158,14 +155,14 @@ DeployPin.setup do
                      "(Skipped)\n\n"
                    end
 
-      puts("[#{index + 1}/#{task_count}] Task #{task.title} #{task.uuid}##{task.group} #{end_of_msg}".blue.bold)
+      puts("[#{index + 1}/#{task_count}] Task #{task.title} #{task.identifier}##{task.group} #{end_of_msg}".blue.bold)
     end
   )
   list_formatter(
     lambda do |index, task|
       puts("======= Task ##{index} ========".blue.bold)
 
-      # print details
+      # Print details
       task.details.each do |key, value|
         puts("#{key}:\t\t#{value}")
       end
@@ -176,16 +173,42 @@ DeployPin.setup do
 end
 ```
 
-In order to not use the default value, it's required to use explicitly in the task, like:
-```ruby
-# Some deploy_pin task 
-# 20190401135040:I
-# task_title: Execute some query with timeout
+To use a different formatting value than the default, you need to specify it explicitly in the task, similar to the database timeout configuration.
 
-# === task code goes down here ===
-DeployPin::Database::execute_with_timeout do
- ActiveRecord::Base.connection.execute("select * from shipments;")
-end
+## Recurring Tasks
+If you want to generate a recurring task, you can use the `--recurring` option. Make sure to set a correct `--identifier`, which should be a numeric value. Positive and negative numbers are possible here. The identifier affects the order of task execution, allowing you to customize the sequence as desired.
+
+Please note that two identifiers, 0 and -10, are already reserved for deployment state tracking. Avoid using these identifiers.
+
+```bash
+rails g deploy_pin:task some_task_title --recurring --identifier 5
+# or
+rails g deploy_pin:task some_task_title --parallel --recurring --identifier 5
+```
+
+## DeploymentStateTrack
+In the initializer
+```ruby
+    DeployPin.setup do
+      groups %w[I II III post rollback]
+      ...
+      deployment_state_transition({
+        ongoing: %w[I III],
+        pending: "rollback", # enters to pending step before "rollback"
+        ttl: 20.second, # memoize the state to avoid Redis spam
+        redis_url: "redis://localhost:6379"
+      })
+    end
+
+    # enabled next methods
+    DeployPin.ongoing_deployment?
+    DeployPin.pending_deployment?
+```
+
+Around the deployment
+```bash
+    bundle exec rake deploy_pin:run[I, II, III] - # enters to ongoing state before "I" and leaves it after "III" so all tasks in I, II, III have DeployPin.oingoing_deployment? == true
+    bundle exec rake deploy_pin:run[rollback] - # enters "pending state"
 ```
 
 ## Contributing

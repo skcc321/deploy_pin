@@ -4,14 +4,6 @@ require 'test_helper'
 require 'rake'
 
 class DeployPinTasksTest < ActiveSupport::TestCase
-  setup do
-    DeployPin.setup do
-      tasks_path './tmp/'
-      groups %w[I II III]
-      fallback_group 'I'
-    end
-  end
-
   Rails.application.load_tasks
 
   test "deploy_pin:list'" do

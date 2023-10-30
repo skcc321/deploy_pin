@@ -2,7 +2,9 @@
 
 module DeployPin
   class TaskGenerator < Rails::Generators::Base
-    class_option :parallel, type: :boolean
+    class_option :parallel, type: :boolean, aliases: '-p'
+    class_option :recurring, type: :boolean, aliases: '-r'
+    class_option :identifier, aliases: '-i'
     argument :title, required: true
     class_option :group, aliases: '-g', default: DeployPin.fallback_group
     class_option :author, aliases: '-a'
@@ -19,8 +21,10 @@ module DeployPin
 
       @author = options[:author] || ENV['USER']
       @group = options[:group]
-      @uuid = Time.now.strftime('%Y%m%d%H%M%S')
-      template template_file, "#{DeployPin.tasks_path}/#{@uuid}_#{title}.rb"
+      @recurring = options[:recurring]
+      @identifier = @recurring ? options[:identifier] : Time.now.strftime('%Y%m%d%H%M%S')
+      filename = @recurring ? "r_#{@identifier}_#{title}.rb" : "#{@identifier}_#{title}.rb"
+      template template_file, "#{DeployPin.tasks_path}/#{filename}"
     end
   end
 end
