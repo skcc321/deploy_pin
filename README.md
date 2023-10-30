@@ -1,6 +1,8 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Gem Version](https://badge.fury.io/rb/deploy_pin.svg)](https://badge.fury.io/rb/deploy_pin)
 ![](https://ruby-gem-downloads-badge.herokuapp.com/deploy_pin)
-![example workflow](https://github.com/skcc321/deploy_pin/actions/workflows/verify.yml/badge.svg)
+[![Verification](https://github.com/skcc321/deploy_pin/actions/workflows/verify.yml/badge.svg)](https://github.com/skcc321/deploy_pin/actions/workflows/verify.yml)
+[![Publish Gem](https://github.com/skcc321/deploy_pin/actions/workflows/publish.yml/badge.svg)](https://github.com/skcc321/deploy_pin/actions/workflows/publish.yml)
 
 # DeployPin
 
