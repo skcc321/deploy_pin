@@ -21,6 +21,7 @@ module DeployPin
     #   # <app root>/deploy_pin/20190401135040_task.rb
     #   # 20190401135040:I
     #   # task_title: Execute some query with timeout
+    #   # affected_areas: none
     #
     #   # === task code goes down here ===
     #   DeployPin::Database::execute_with_timeout do
