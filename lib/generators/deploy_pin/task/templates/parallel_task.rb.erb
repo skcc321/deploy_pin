@@ -2,6 +2,7 @@
 
 # <%= @identifier %>:<%= @group %><%= @recurring ? ":recurring" : "" %>
 # task_title: <%= @author ? "@#{@author} #{title.titleize}" : "#{title.titleize}" %>
+# affected_areas: none
 
 # === parallel task code goes down here ===
 10.times { DeployPin::Record.create(uuid: "hello") }

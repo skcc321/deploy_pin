@@ -119,6 +119,7 @@ If you want to use a different value than the default, you need to specify it ex
 # Some deploy_pin task
 # 20190401135040:I
 # task_title: Execute some query with timeout
+# affected_areas: none
 
 # === task code goes down here ===
 DeployPin::Database::execute_with_timeout do

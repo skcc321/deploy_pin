@@ -2,6 +2,7 @@
 
 # 75371573753751:I
 # task_title: super duper task
+# affected_areas: none
 
 # === task code goes down here ===
 a = 1

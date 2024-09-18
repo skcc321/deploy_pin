@@ -42,7 +42,7 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -67,7 +67,7 @@ jobs:
 
       - name: Upload coverage
         if: ${{ matrix.db  == 'pg' && matrix.ruby == '3.2.2' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: review.txt
           path: coverage/review.txt
@@ -77,8 +77,8 @@ jobs:
     needs: rspec
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
           name: review.txt
           path: coverage/
