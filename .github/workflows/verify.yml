@@ -82,7 +82,7 @@ jobs:
         with:
           name: review.txt
           path: coverage/
-      - uses: reviewdog/action-setup@v4
+      - uses: reviewdog/action-setup@v1
         with:
           reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
       - name: coverage
