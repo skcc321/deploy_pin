@@ -6,8 +6,6 @@
 
 # DeployPin
 
-![DeployPin](http://hereisfree.com/content1//pic/zip/2009109935062477801.jpg)
-
 Deploying applications often involves the need to execute a series of specific commands or tasks either before or after the deployment process. While you might typically turn to migrations for such operations, these tasks aren't always migration-related. Additionally, there are situations where you need to execute code before or after a migration without causing the main thread to block.
 
 Introducing deploy_pins – your go-to solution for streamlined task management during the deployment process. This Ruby library allows you to seamlessly orchestrate tasks before, after, or independently of migrations, offering the flexibility you need to maintain a smooth and efficient deployment workflow. With deploy_pins, you can take control of your deployment tasks and ensure that your application operates flawlessly in any environment.
