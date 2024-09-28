@@ -2,12 +2,7 @@
 
 module DeployPin
   module Database
-    PG_TIMEOUT_STATEMENT = 'SET statement_timeout TO %s'
-    MYSQL_TIMEOUT_STATEMENT = 'SET max_execution_time = %s'
-
     extend self
-
-    def dummy_method; end
 
     # Run a block under a sql maximum timeout.
     #
@@ -68,23 +63,11 @@ module DeployPin
 
       def set_max_timeout(timeout)
         timeout_in_milliseconds = timeout.to_f.in_milliseconds.ceil # Make sure is always at least 1. 0 turns this off
-
-        timeout_statement =
-          if postgresql?
-            PG_TIMEOUT_STATEMENT
-          elsif mysql?
-            MYSQL_TIMEOUT_STATEMENT
-          end
-
-        connection.execute timeout_statement % connection.quote(timeout_in_milliseconds)
+        connection.execute db_engine::TIMEOUT_STATEMENT % connection.quote(timeout_in_milliseconds)
       end
 
-      def postgresql?
-        connection.adapter_name =~ /postg/i
-      end
-
-      def mysql?
-        connection.adapter_name =~ /mysql/i
+      def db_engine
+        @db_engine ||= DeployPin::DatabaseEngine.new(connection).detect
       end
 
       def connection
