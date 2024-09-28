@@ -14,14 +14,15 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         # Due to https://github.com/actions/runner/issues/849, we have to use quotes for '3.0'
-        db: ["pg", "mysql"]
         ruby: ["3.2.5", "3.3.5", truffleruby]
+        db: ["mariadb", "mysql", "pg"]
     runs-on: ${{ matrix.os }}
     services:
       redis:
         image: redis:6.2-alpine
         ports:
           - '6379:6379'
+
       postgres:
         image: postgres:16
         env:
@@ -29,6 +30,7 @@ jobs:
           POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
         ports:
           - '5432:5432'
+
       mysql:
         image: bitnami/mysql:latest
         env:
@@ -41,6 +43,16 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+
+      mariadb:
+        image: mariadb:latest
+        env:
+          MARIADB_ROOT_PASSWORD: ${{ env.DB_PASSWORD }}
+          MYSQL_USER: ${{ env.DB_USERNAME }}
+          MYSQL_PASSWORD: ${{ env.DB_PASSWORD }}
+        ports:
+          - '3307:3306'
+
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
@@ -66,7 +78,7 @@ jobs:
           bin/test
 
       - name: Upload coverage
-        if: ${{ matrix.db  == 'pg' && matrix.ruby == '3.2.5' }}
+        if: ${{ matrix.db == 'pg' && matrix.ruby == '3.2.5' }}
         uses: actions/upload-artifact@v4
         with:
           name: review.txt
