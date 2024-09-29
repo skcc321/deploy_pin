@@ -81,10 +81,6 @@ class DeployPin::Database::Test < ActiveSupport::TestCase
     ActiveRecord::QueryCanceled if pg?
   end
 
-  def clear_db
-    DeployPin::Record.delete_all
-  end
-
   DeployPin::DatabaseEngine::DB_ENGINES_MAPPING.each_key do |engine|
     define_method "#{engine}?" do
       ENV['DB_ROLE'] == engine.to_s
