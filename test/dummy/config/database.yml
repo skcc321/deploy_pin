@@ -19,12 +19,17 @@ mysql: &mysql
 development:
   pg:
     <<: *pg
+  mariadb:
+    <<: *mysql
   mysql:
     <<: *mysql
 
 test:
   pg:
     <<: *pg
+    database: deploy_pin_test
+  mariadb:
+    <<: *mysql
     database: deploy_pin_test
   mysql:
     <<: *mysql

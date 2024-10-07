@@ -30,31 +30,23 @@ class DeployPin::ParallelWrapper::Test < ActiveSupport::TestCase
   end
 
   def sql_sleep(duration_in_sec)
-    if postgresql?
-      "SELECT pg_sleep(#{duration_in_sec});"
-    elsif mysql?
+    if mysql? || mariadb?
       # Mysql `SELECT sleep(n);` doesn't throw exception when timeout exceeds, that's the reason of this query.
       "SELECT 1 WHERE sleep(#{duration_in_sec});"
+    elsif pg?
+      "SELECT pg_sleep(#{duration_in_sec});"
     end
   end
 
   def timeout_exception_klass
-    if postgresql?
-      ActiveRecord::QueryCanceled
-    elsif mysql?
-      ActiveRecord::StatementTimeout
+    return ActiveRecord::StatementTimeout if mysql? || mariadb?
+
+    ActiveRecord::QueryCanceled if pg?
+  end
+
+  DeployPin::DatabaseEngine::DB_ENGINES_MAPPING.each_key do |engine|
+    define_method "#{engine}?" do
+      ENV['DB_ROLE'] == engine.to_s
     end
-  end
-
-  def clear_db
-    DeployPin::Record.delete_all
-  end
-
-  def postgresql?
-    ActiveRecord::Base.connection.adapter_name =~ /postg/i
-  end
-
-  def mysql?
-    ActiveRecord::Base.connection.adapter_name =~ /mysql/i
   end
 end

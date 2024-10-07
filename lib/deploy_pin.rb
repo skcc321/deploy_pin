@@ -8,20 +8,21 @@ require 'deploy_pin/task'
 require 'deploy_pin/task_criteria'
 require 'deploy_pin/engine'
 require 'deploy_pin/database'
+require 'deploy_pin/database_engine'
 require 'parallel'
 require 'ruby-progressbar'
 require 'colorize'
 
 module DeployPin
   OPTIONS = %i[
-    tasks_path
+    deployment_state_transition
     fallback_group
     groups
-    statement_timeout
-    run_formatter
     list_formatter
+    run_formatter
+    statement_timeout
     task_wrapper
-    deployment_state_transition
+    tasks_path
   ].freeze
 
   DEFAULTS = {

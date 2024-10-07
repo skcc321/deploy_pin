@@ -190,26 +190,26 @@ rails g deploy_pin:task some_task_title --parallel --recurring --identifier 5
 ## DeploymentStateTrack
 In the initializer
 ```ruby
-    DeployPin.setup do
-      groups %w[I II III post rollback]
-      ...
-      deployment_state_transition({
-        ongoing: %w[I III],
-        pending: "rollback", # enters to pending step before "rollback"
-        ttl: 20.second, # memoize the state to avoid Redis spam
-        redis_url: "redis://localhost:6379"
-      })
-    end
+DeployPin.setup do
+  groups %w[I II III post rollback]
+  ...
+  deployment_state_transition({
+    ongoing: %w[I III],
+    pending: "rollback", # enters to pending step before "rollback"
+    ttl: 20.second, # memoize the state to avoid Redis spam
+    redis_url: "redis://localhost:6379"
+  })
+end
 
-    # enabled next methods
-    DeployPin.ongoing_deployment?
-    DeployPin.pending_deployment?
+# enabled next methods
+DeployPin.ongoing_deployment?
+DeployPin.pending_deployment?
 ```
 
 Around the deployment
 ```bash
-    bundle exec rake deploy_pin:run[I, II, III] - # enters to ongoing state before "I" and leaves it after "III" so all tasks in I, II, III have DeployPin.oingoing_deployment? == true
-    bundle exec rake deploy_pin:run[rollback] - # enters "pending state"
+bundle exec rake deploy_pin:run[I, II, III] - # enters to ongoing state before "I" and leaves it after "III" so all tasks in I, II, III have DeployPin.oingoing_deployment? == true
+bundle exec rake deploy_pin:run[rollback] - # enters "pending state"
 ```
 ## Similar Gems
 - https://github.com/theSteveMitchell/after_party
