@@ -6,11 +6,11 @@ DeployPin.setup do
   fallback_group 'III'
   statement_timeout 10.minutes
   deployment_state_transition({
-    ongoing: %w[I III],
-    pending: 'rollback', # enters to pending step before "rollback"
-    ttl: 20.second, # memoize the state to avoid the store spam
-    redis_url: 'redis://localhost:6379'
-  })
+                                ongoing: %w[I III],
+                                pending: 'rollback', # enters to pending step before "rollback"
+                                ttl: 20.second, # memoize the state to avoid the store spam
+                                redis_url: 'redis://localhost:6379'
+                              })
   run_formatter(
     lambda do |index, task_count, task, executable, start, duration = nil|
       end_of_msg = if executable

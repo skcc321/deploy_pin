@@ -1,8 +1,9 @@
 inherit_from: .rubocop_todo.yml
+require: rubocop-minitest
 
 AllCops:
   NewCops: disable
-  TargetRubyVersion: 3.0
+  TargetRubyVersion: 3.1
 
 Layout/IndentationConsistency:
   EnforcedStyle: indented_internal_methods

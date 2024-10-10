@@ -10,7 +10,7 @@ class DeployPin::TaskCriteria::Test < ActiveSupport::TestCase
     ::FileUtils.cp 'test/support/files/task_different.rb', "#{DeployPin.tasks_path}3_task.rb"
 
     # create two record
-    DeployPin::Record.create(uuid: '75371573753751')
+    DeployPin::Record.create(uuid: '75371573753751', completed_at: Time.current)
     DeployPin::Record.create(uuid: '75371573753754')
 
     @task_1 = DeployPin::Task.new("#{DeployPin.tasks_path}1_task.rb")
@@ -23,11 +23,11 @@ class DeployPin::TaskCriteria::Test < ActiveSupport::TestCase
   end
 
   test 'suitable?' do
-    assert_equal(true, @criteria.suitable?(@task_2))
+    assert(@criteria.suitable?(@task_2))
   end
 
   test 'not suitable?' do
-    assert_equal(false, @criteria.suitable?(@task_3))
-    assert_equal(false, @criteria.suitable?(@task_1))
+    refute(@criteria.suitable?(@task_3))
+    refute(@criteria.suitable?(@task_1))
   end
 end

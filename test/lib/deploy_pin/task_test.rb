@@ -8,33 +8,41 @@ class DeployPin::Task::Test < ActiveSupport::TestCase
   end
 
   test 'run' do
-    assert_nothing_raised do
-      @task.run
-    end
+    assert_nothing_raised { @task.run }
+  end
+
+  test 'prepare' do
+    assert_equal DeployPin::Record.where(uuid: @task.identifier).count, 0
+    assert_nothing_raised { @task.prepare }
+    assert_equal DeployPin::Record.where(uuid: @task.identifier).count, 1
   end
 
   test 'mark' do
-    assert_nothing_raised do
-      @task.mark
-    end
+    @task.prepare
+    assert_nothing_raised { @task.mark }
   end
 
   test 'done?' do
-    assert_nothing_raised do
-      @task.done?
-    end
+    @task.prepare
+    assert_nothing_raised { @task.done? }
+    assert_equal @task.done?, false
+    @task.mark
+    assert_equal @task.done?, true
+  end
+
+  test 'increment_progress!' do
+    @task.prepare
+    assert_equal @task.progress, 0
+    assert_nothing_raised { @task.increment_progress!(77) }
+    assert_equal @task.progress, 77
   end
 
   test 'parse' do
-    assert_nothing_raised do
-      @task.parse
-    end
+    assert_nothing_raised { @task.parse }
   end
 
   test 'details' do
-    assert_nothing_raised do
-      @task.details
-    end
+    assert_nothing_raised { @task.details }
   end
 
   test 'eql?' do

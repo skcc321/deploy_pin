@@ -1,0 +1,8 @@
+Description:
+    Upgrades the deploy_pins table in the DB with an extra columns for resumable tasks
+
+Example:
+    rails generate deploy_pin:upgrade
+
+    This will create:
+        db/migrate/upgrade_deploy_pins.rb
