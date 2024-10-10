@@ -234,6 +234,7 @@ bundle exec rake deploy_pin:run[rollback] - # enters "pending state"
 ```
 ## Similar Gems
 - https://github.com/theSteveMitchell/after_party
+- https://github.com/Shopify/maintenance_tasks
 
 ## Contributing
 Contribution directions go here.
