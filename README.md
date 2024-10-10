@@ -197,9 +197,6 @@ end
 This allows your task to resume from where it left off, minimizing the risk of repeating work.
 
 
-
-```bash
-
 ## Recurring Tasks
 If you want to generate a recurring task, you can use the `--recurring` option. Make sure to set a correct `--identifier`, which should be a numeric value. Positive and negative numbers are possible here. The identifier affects the order of task execution, allowing you to customize the sequence as desired.
 
