@@ -4,17 +4,17 @@
 module DeployPin
   module Runner
     def self.run(identifiers:)
-      DeployPin::Collector.new(identifiers: identifiers).run
+      DeployPin::Collector.new(identifiers:).run
     end
 
     def self.list(identifiers:)
-      DeployPin::Collector.new(identifiers: identifiers).list
+      DeployPin::Collector.new(identifiers:).list
     end
 
     def self.summary(identifiers:)
       # print summary
       self.print('======= Summary ========')
-      self.print("Tasks number: #{DeployPin::Collector.new(identifiers: identifiers).tasks_count}")
+      self.print("Tasks number: #{DeployPin::Collector.new(identifiers:).tasks_count}")
     end
 
     def self.print(msg)

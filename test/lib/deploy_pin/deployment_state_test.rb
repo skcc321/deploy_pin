@@ -37,19 +37,19 @@ class DeployPin::Runner::Test < ActiveSupport::TestCase
   end
 
   test 'state transition' do
-    assert_equal(false, DeployPin.ongoing_deployment?)
-    assert_equal(false, DeployPin.pending_deployment?)
+    refute(DeployPin.ongoing_deployment?)
+    refute(DeployPin.pending_deployment?)
     sleep(0.02)
     eval(DeployPin.deployment_tasks_code[0]) # rubocop:disable Security/Eval
-    assert_equal(true, DeployPin.ongoing_deployment?)
-    assert_equal(false, DeployPin.pending_deployment?)
+    assert(DeployPin.ongoing_deployment?)
+    refute(DeployPin.pending_deployment?)
     eval(DeployPin.deployment_tasks_code[1]) # rubocop:disable Security/Eval
     sleep(0.02)
-    assert_equal(false, DeployPin.ongoing_deployment?)
-    assert_equal(false, DeployPin.pending_deployment?)
+    refute(DeployPin.ongoing_deployment?)
+    refute(DeployPin.pending_deployment?)
     sleep(0.02)
     eval(DeployPin.deployment_tasks_code[2]) # rubocop:disable Security/Eval
-    assert_equal(false, DeployPin.ongoing_deployment?)
-    assert_equal(true, DeployPin.pending_deployment?)
+    refute(DeployPin.ongoing_deployment?)
+    assert(DeployPin.pending_deployment?)
   end
 end

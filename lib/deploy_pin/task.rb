@@ -14,6 +14,8 @@ module DeployPin
                 :recurring,
                 :explicit_timeout
 
+    delegate :progress, to: :record
+
     def initialize(file)
       @file = file
       @identifier = nil
@@ -29,17 +31,34 @@ module DeployPin
       eval(script)
     end
 
+    def record
+      DeployPin::Record.find_by(uuid: identifier)
+    end
+
+    def prepare
+      return if recurring
+
+      DeployPin::Record.create(uuid: identifier) unless record
+    end
+
     def mark
       return if recurring
 
       # store record in the DB
-      DeployPin::Record.create(uuid: identifier)
+      record.update(completed_at: Time.current)
+    end
+
+    def increment_progress!(incrementor)
+      raise NotImplementedError, 'Recurring tasks do not support progress yet.' if recurring
+
+      record.increment!(:progress, incrementor)
     end
 
     def done?
       return if recurring
+      return unless record
 
-      DeployPin::Record.where(uuid: identifier).exists?
+      record.completed_at.present?
     end
 
     def under_timeout?
@@ -74,9 +93,9 @@ module DeployPin
 
     def details
       {
-        identifier: identifier,
-        group: group,
-        title: title
+        identifier:,
+        group:,
+        title:
       }
     end
 
@@ -103,7 +122,6 @@ module DeployPin
     end
 
     protected
-
 
       def group_index
         DeployPin.groups.index(group)

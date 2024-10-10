@@ -176,6 +176,30 @@ end
 
 To use a different formatting value than the default, you need to specify it explicitly in the task, similar to the database timeout configuration.
 
+## Resumable Tasks
+
+When working with long-running code that processes a large dataset, it makes sense to store progress in the database to allow resuming the task later. You can do this by using the `DeployPin::Task` instance methods: `#progress` and `#increment_progress(num)`.
+
+Here is an example of how to use these methods:
+
+```ruby
+# Some DeployPin task
+...
+# === task code goes here ===
+
+# The progress is 0 by default
+Users.where(id: progress..).find_each do |user|
+  # Do some work
+  increment_progress(1) # Increment progress by 1 and store it in the database so you can resume the task from this point
+end
+```
+
+This allows your task to resume from where it left off, minimizing the risk of repeating work.
+
+
+
+```bash
+
 ## Recurring Tasks
 If you want to generate a recurring task, you can use the `--recurring` option. Make sure to set a correct `--identifier`, which should be a numeric value. Positive and negative numbers are possible here. The identifier affects the order of task execution, allowing you to customize the sequence as desired.
 
