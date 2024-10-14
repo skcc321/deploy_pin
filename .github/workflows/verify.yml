@@ -23,6 +23,14 @@ jobs:
         ports:
           - '6379:6379'
 
+      mongo:
+        image: mongo:latest
+        env:
+          MONGO_INITDB_ROOT_USERNAME: ${{ env.DB_USERNAME }}
+          MONGO_INITDB_ROOT_PASSWORD: ${{ env.DB_PASSWORD }}
+        ports:
+          - 27017:27017
+
       postgres:
         image: postgres:16
         env:

@@ -7,6 +7,14 @@ services:
     restart: always
     ports:
       - '6379:6379'
+  mongo:
+    image: mongo:latest
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - 27017:27017
   postgres:
     image: postgres:16
     restart: always
