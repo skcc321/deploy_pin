@@ -178,7 +178,7 @@ To use a different formatting value than the default, you need to specify it exp
 
 ## Resumable Tasks
 
-When working with long-running code that processes a large dataset, it makes sense to store progress in the database to allow resuming the task later. You can do this by using the `DeployPin::Task` instance methods: `#progress` and `#increment_progress!(num)`.
+When working with long-running code that processes a large dataset, it makes sense to store progress in the database to allow resuming the task later. You can do this by using the `DeployPin::Task` instance methods: `#progress`, `#save_progress!(num)` and `#increment_progress!(num)`.
 
 Here is an example of how to use these methods:
 
@@ -191,6 +191,7 @@ Here is an example of how to use these methods:
 Users.where(id: progress..).find_each do |user|
   # Do some work
   increment_progress!(1) # Increment progress by 1 and store it in the database so you can resume the task from this point
+  # or save_progress!(user.id) # Save the progress as the user id
 end
 ```
 
