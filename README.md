@@ -178,7 +178,7 @@ To use a different formatting value than the default, you need to specify it exp
 
 ## Resumable Tasks
 
-When working with long-running code that processes a large dataset, it makes sense to store progress in the database to allow resuming the task later. You can do this by using the `DeployPin::Task` instance methods: `#progress` and `#increment_progress(num)`.
+When working with long-running code that processes a large dataset, it makes sense to store progress in the database to allow resuming the task later. You can do this by using the `DeployPin::Task` instance methods: `#progress` and `#increment_progress!(num)`.
 
 Here is an example of how to use these methods:
 
