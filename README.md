@@ -190,7 +190,7 @@ Here is an example of how to use these methods:
 # The progress is 0 by default
 Users.where(id: progress..).find_each do |user|
   # Do some work
-  increment_progress(1) # Increment progress by 1 and store it in the database so you can resume the task from this point
+  increment_progress!(1) # Increment progress by 1 and store it in the database so you can resume the task from this point
 end
 ```
 
