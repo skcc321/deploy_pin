@@ -54,6 +54,12 @@ module DeployPin
       record.increment!(:progress, incrementor)
     end
 
+    def save_progress!(value)
+      raise NotImplementedError, 'Recurring tasks do not support progress yet.' if recurring
+
+      record.update(progress: value)
+    end
+
     def done?
       return if recurring
       return unless record

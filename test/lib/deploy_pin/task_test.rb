@@ -35,6 +35,17 @@ class DeployPin::Task::Test < ActiveSupport::TestCase
     assert_equal @task.progress, 0
     assert_nothing_raised { @task.increment_progress!(77) }
     assert_equal @task.progress, 77
+    assert_nothing_raised { @task.increment_progress!(13) }
+    assert_equal @task.progress, 90
+  end
+
+  test 'save_progress!' do
+    @task.prepare
+    assert_equal @task.progress, 0
+    assert_nothing_raised { @task.save_progress!(13) }
+    assert_equal @task.progress, 13
+    assert_nothing_raised { @task.save_progress!(1) }
+    assert_equal @task.progress, 1
   end
 
   test 'parse' do
