@@ -19,5 +19,9 @@ module DeployPin
     def copy_initializer
       template 'deploy_pin.rb', 'config/initializers/deploy_pin.rb'
     end
+
+    def migration_version
+      "[#{ActiveRecord::Migration.current_version}]"
+    end
   end
 end
