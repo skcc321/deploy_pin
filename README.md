@@ -241,5 +241,34 @@ bundle exec rake deploy_pin:run[rollback] - # enters "pending state"
 ## Contributing
 Contribution directions go here.
 
+### Running Tests Locally
+
+To ensure your changes meet the required standards and pass all tests before submitting a pull request, you can simulate the GitHub Actions workflow locally using the [`act`](https://github.com/nektos/act) tool.
+
+#### Prerequisites
+
+1. **Install `act`**
+   Follow the installation guide provided in the official [`act` documentation](https://nektosact.com/installation/index.html).
+
+2. **Docker**
+   Ensure Docker is installed and running on your machine.
+
+#### Running the Workflow
+
+Use the following command to simulate the workflow locally:
+
+```bash
+act pull_request --secret-file .env --container-architecture linux/amd64 -W .github/workflows -j rspec
+```
+
+This command does the following:
+- `pull_request`: Runs the pull_request workflow defined in your .github/workflows directory.
+- `--secret-file .env`: Uses the .env file provided in the repository to load environment variables.
+- `--container-architecture linux/amd64`: Ensures compatibility with GitHub Actions runners.
+- `-W .github/workflows`: Specifies the directory containing the workflow files.
+- `-j rspec`: Runs the `rspec` job defined in the workflow.
+
+For more details on customizing this command, refer to the [act documentation](https://nektosact.com/).
+
 ## License
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
