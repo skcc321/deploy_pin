@@ -20,8 +20,12 @@ module DeployPin
       template 'deploy_pin.rb', 'config/initializers/deploy_pin.rb'
     end
 
-    def migration_version
-      "[#{ActiveRecord::Migration.current_version}]"
+    def activerecord_migration_class
+      if ::ActiveRecord::Migration.respond_to?(:current_version)
+        "ActiveRecord::Migration[#{::ActiveRecord::Migration.current_version}]"
+      else
+        'ActiveRecord::Migration'
+      end
     end
   end
 end
