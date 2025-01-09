@@ -12,9 +12,9 @@ class DeployPin::Task::Test < ActiveSupport::TestCase
   end
 
   test 'prepare' do
-    assert_equal DeployPin::Record.where(uuid: @task.identifier).count, 0
-    assert_nothing_raised { @task.prepare }
-    assert_equal DeployPin::Record.where(uuid: @task.identifier).count, 1
+    assert_difference 'DeployPin::Record.count', 1 do
+      assert_nothing_raised { @task.prepare }
+    end
   end
 
   test 'mark' do
@@ -25,9 +25,9 @@ class DeployPin::Task::Test < ActiveSupport::TestCase
   test 'done?' do
     @task.prepare
     assert_nothing_raised { @task.done? }
-    assert_equal @task.done?, false
+    refute @task.done?
     @task.mark
-    assert_equal @task.done?, true
+    assert @task.done?
   end
 
   test 'increment_progress!' do
@@ -74,24 +74,24 @@ class DeployPin::Task::Test < ActiveSupport::TestCase
 
   test 'explicit_timeout?' do
     @task.parse
-    assert_equal @task.send(:explicit_timeout?), false
+    refute @task.send(:explicit_timeout?)
 
     task_with_timeout = DeployPin::Task.new('test/support/files/task_with_timeout.rb')
     task_with_timeout.parse
-    assert_equal task_with_timeout.send(:explicit_timeout?), true
+    assert task_with_timeout.send(:explicit_timeout?)
   end
 
   test 'under_timeout?' do
     @task.parse
-    assert_equal @task.under_timeout?, true
+    assert @task.under_timeout?
 
     task_with_timeout = DeployPin::Task.new('test/support/files/task_with_timeout.rb')
     task_with_timeout.parse
-    assert_equal task_with_timeout.under_timeout?, false
+    refute task_with_timeout.under_timeout?
 
     parallel_task = DeployPin::Task.new('test/support/files/parallel_task.rb')
     parallel_task.parse
-    assert_equal parallel_task.under_timeout?, false
+    refute parallel_task.under_timeout?
   end
 
   test 'classified_for_cleanup?' do
