@@ -10,7 +10,7 @@ class DeployPin::Runner::Test < ActiveSupport::TestCase
     ::FileUtils.cp 'test/support/files/task_same.rb', "#{DeployPin.tasks_path}3_task.rb"
   end
 
-  test 'sumary' do
+  test 'summary' do
     assert_nothing_raised do
       DeployPin::Runner.summary(identifiers: [DeployPin.fallback_group])
     end
