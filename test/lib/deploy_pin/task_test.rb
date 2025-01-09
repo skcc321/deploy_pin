@@ -4,7 +4,9 @@ require 'test_helper'
 
 class DeployPin::Task::Test < ActiveSupport::TestCase
   setup do
-    @task = DeployPin::Task.new('test/support/files/task.rb')
+    @task_file = "#{DeployPin.tasks_path}1_task.rb"
+    ::FileUtils.cp 'test/support/files/task.rb', @task_file
+    @task = DeployPin::Task.new(@task_file)
   end
 
   test 'run' do
@@ -68,7 +70,7 @@ class DeployPin::Task::Test < ActiveSupport::TestCase
 
   test 'eql?' do
     assert_nothing_raised do
-      @task.eql?(DeployPin::Task.new('test/support/files/task.rb'))
+      @task.eql?(DeployPin::Task.new(@task_file))
     end
   end
 
@@ -113,7 +115,7 @@ class DeployPin::Task::Test < ActiveSupport::TestCase
 
   test '<=>' do
     assert_nothing_raised do
-      @task.send(:<=>, DeployPin::Task.new('test/support/files/task.rb'))
+      @task.send(:<=>, DeployPin::Task.new(@task_file))
     end
   end
 end
