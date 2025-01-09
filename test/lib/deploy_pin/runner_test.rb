@@ -33,4 +33,10 @@ class DeployPin::Runner::Test < ActiveSupport::TestCase
       DeployPin::Runner.list(identifiers: [DeployPin.fallback_group])
     end
   end
+
+  test 'cleanup' do
+    assert_nothing_raised do
+      DeployPin::Runner.cleanup(identifiers: DeployPin.groups)
+    end
+  end
 end

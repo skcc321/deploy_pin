@@ -48,6 +48,16 @@ class DeployPin::Task::Test < ActiveSupport::TestCase
     assert_equal @task.progress, 1
   end
 
+  test 'remove' do
+    @task.prepare
+
+    assert_difference 'DeployPin::Record.count', -1 do
+      assert_nothing_raised { @task.remove }
+    end
+
+    refute File.exist?(@task_file)
+  end
+
   test 'parse' do
     assert_nothing_raised { @task.parse }
   end
@@ -82,6 +92,17 @@ class DeployPin::Task::Test < ActiveSupport::TestCase
     parallel_task = DeployPin::Task.new('test/support/files/parallel_task.rb')
     parallel_task.parse
     assert_equal parallel_task.under_timeout?, false
+  end
+
+  test 'classified_for_cleanup?' do
+    @task.prepare
+    refute @task.classified_for_cleanup?
+
+    @task.mark
+    refute @task.classified_for_cleanup?
+
+    @task.record.update(completed_at: (DeployPin.cleanup_safe_time_window.call + 1.day).ago)
+    assert @task.classified_for_cleanup?
   end
 
   test 'group_index' do

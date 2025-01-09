@@ -15,4 +15,11 @@ namespace :deploy_pin do
     DeployPin::Runner.list(**args)
     DeployPin::Runner.summary(**args)
   end
+
+  desc 'Remove tasks codebase and DB records for a defined time window'
+  task cleanup: :environment do
+    args.with_defaults(identifiers: DeployPin.groups)
+
+    DeployPin::Runner.cleanup(**args)
+  end
 end

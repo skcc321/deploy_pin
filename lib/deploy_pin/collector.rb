@@ -26,6 +26,10 @@ module DeployPin
       end
     end
 
+    def cleanup
+      init_tasks.select(&:classified_for_cleanup?).each(&:remove)
+    end
+
     def executable
       # cache tasks
       tasks = init_tasks
