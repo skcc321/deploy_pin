@@ -14,7 +14,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         # Due to https://github.com/actions/runner/issues/849, we have to use quotes for '3.0'
-        ruby: ["3.2.6", "3.3.6", truffleruby]
+        ruby: ["3.2.6", "3.3.7", truffleruby]
         db: ["mariadb", "mysql", "pg"]
     runs-on: ${{ matrix.os }}
     services:
