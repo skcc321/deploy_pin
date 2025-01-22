@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'colorize', '~> 1.1'
   spec.add_dependency 'connection_pool', '~> 2.2'
   spec.add_dependency 'parallel', '~> 1.23'
-  spec.add_dependency 'rails', '~> 7.0'
+  spec.add_dependency 'rails', '>= 7.0', '< 9.0'
   spec.add_dependency 'redis', '> 4.0'
   spec.add_dependency 'ruby-progressbar', '~> 1.13'
 

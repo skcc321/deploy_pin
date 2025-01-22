@@ -10,3 +10,6 @@ directories:
   "test":
     UtilityFunction:
       enabled: false
+
+exclude_paths:
+  - lib/generators/deploy_pin/**/templates/**/*.rb

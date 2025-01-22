@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CreateDeployPins < ActiveRecord::Migration[7.0]
+class CreateDeployPins < <%= activerecord_migration_class %>
   def change
     create_table :deploy_pins do |t|
       t.string :uuid

@@ -2,6 +2,8 @@ inherit_from: .rubocop_todo.yml
 require: rubocop-minitest
 
 AllCops:
+  Exclude:
+    - lib/generators/deploy_pin/**/templates/**/*.rb
   NewCops: disable
   TargetRubyVersion: 3.1
 
