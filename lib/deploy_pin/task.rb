@@ -10,6 +10,7 @@ module DeployPin
                 :identifier,
                 :group,
                 :title,
+                :affected_areas,
                 :script,
                 :recurring,
                 :explicit_timeout
@@ -21,6 +22,7 @@ module DeployPin
       @identifier = nil
       @group = nil
       @title = ''
+      @affected_areas = ''
       @script = ''
       @explicit_timeout = false
       @parallel = false
@@ -80,6 +82,8 @@ module DeployPin
           @recurring = Regexp.last_match(3)
         when /\A# task_title:(.+)/
           @title = Regexp.last_match(1).strip
+        when /\A# affected_areas:(.+)/
+          @affected_areas = Regexp.last_match(1).strip
         when /\A[^#].*/
           @script += line
 
@@ -101,7 +105,8 @@ module DeployPin
       {
         identifier:,
         group:,
-        title:
+        title:,
+        affected_areas:
       }
     end
 

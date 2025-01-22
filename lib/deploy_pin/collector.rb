@@ -26,6 +26,14 @@ module DeployPin
       end
     end
 
+    def short_list
+      groups_tasks = init_tasks.group_by(&:group).to_a
+      groups_tasks.inject(0) do |offset, (group, tasks)|
+        DeployPin.short_list_formatter.call(group, tasks, offset)
+        offset + tasks.count
+      end
+    end
+
     def executable
       # cache tasks
       tasks = init_tasks

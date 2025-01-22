@@ -19,6 +19,7 @@ module DeployPin
     fallback_group
     groups
     list_formatter
+    short_list_formatter
     run_formatter
     statement_timeout
     task_wrapper

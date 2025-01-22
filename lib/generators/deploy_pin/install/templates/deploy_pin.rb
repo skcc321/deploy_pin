@@ -34,4 +34,21 @@ DeployPin.setup do
       puts("\n<<<\n#{task.script.strip.green}\n>>>\n\n")
     end
   )
+  short_list_formatter(
+    lambda do |group, tasks, start_index|
+      puts(" Group: #{group} ".center(38, "=").light_cyan.bold)
+      puts("\n")
+
+      tasks.each.with_index(start_index) do |task, index|
+        puts(" Task ##{index} ".center(38, "=").blue.bold)
+        # print details
+        task.details.each do |key, value|
+          key_aligned = "#{key}:".ljust(20)
+          puts("#{key_aligned}#{value}")
+        end
+
+        puts("\n")
+      end
+    end
+  )
 end

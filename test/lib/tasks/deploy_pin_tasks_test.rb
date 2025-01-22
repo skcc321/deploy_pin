@@ -18,6 +18,18 @@ class DeployPinTasksTest < ActiveSupport::TestCase
     end
   end
 
+  test "deploy_pin:short_list'" do
+    assert_nothing_raised do
+      Rake::Task['deploy_pin:short_list'].invoke
+    end
+  end
+
+  test "deploy_pin:short_list[I]'" do
+    assert_nothing_raised do
+      Rake::Task['deploy_pin:short_list'].invoke('I')
+    end
+  end
+
   test "deploy_pin:run'" do
     assert_nothing_raised do
       Rake::Task['deploy_pin:run'].invoke
