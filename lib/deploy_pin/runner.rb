@@ -11,6 +11,10 @@ module DeployPin
       DeployPin::Collector.new(identifiers:).list
     end
 
+    def self.cleanup(identifiers:)
+      DeployPin::Collector.new(identifiers:).cleanup
+    end
+
     def self.summary(identifiers:)
       # print summary
       self.print('======= Summary ========')

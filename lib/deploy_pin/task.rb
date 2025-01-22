@@ -31,6 +31,11 @@ module DeployPin
       eval(script)
     end
 
+    def remove
+      File.delete(file) if File.exist?(file)
+      record&.destroy
+    end
+
     def record
       DeployPin::Record.find_by(uuid: identifier)
     end
@@ -69,6 +74,12 @@ module DeployPin
 
     def under_timeout?
       !explicit_timeout? && !parallel?
+    end
+
+    def classified_for_cleanup?
+      return false unless done?
+
+      record.completed_at < DeployPin.cleanup_safe_time_window.call.ago
     end
 
     def parse

@@ -15,6 +15,7 @@ require 'colorize'
 
 module DeployPin
   OPTIONS = %i[
+    cleanup_safe_time_window
     deployment_state_transition
     fallback_group
     groups
@@ -26,6 +27,7 @@ module DeployPin
   ].freeze
 
   DEFAULTS = {
+    cleanup_safe_time_window: -> { 1.year },
     task_wrapper: ->(_task, task_runner) { task_runner.call }
   }.freeze
 

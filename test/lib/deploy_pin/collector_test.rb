@@ -10,8 +10,8 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
     ::FileUtils.cp 'test/support/files/task_same.rb', "#{DeployPin.tasks_path}3_task.rb"
     ::FileUtils.cp 'test/support/files/other_task.rb', "#{DeployPin.tasks_path}4_task.rb"
 
-    # create one completed record
-    DeployPin::Record.create(uuid: '75371573753754', completed_at: Time.current)
+    @completed_record =
+      DeployPin::Record.create(uuid: '75371573753754', completed_at: Time.current)
 
     @collector = DeployPin::Collector.new(identifiers: DeployPin.groups)
     @ids_collector = DeployPin::Collector.new(identifiers: ['75371573753753', '75371573753754!'])
@@ -53,6 +53,20 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
     assert_nothing_raised do
       @collector.list
     end
+  end
+
+  test 'cleanup' do
+    assert_no_difference 'DeployPin::Record.count' do
+      @collector.cleanup
+    end
+
+    assert File.exist?("#{DeployPin.tasks_path}4_task.rb")
+
+    assert_difference 'DeployPin::Record.count', -1 do
+      @collector.cleanup
+    end
+
+    refute File.exist?("#{DeployPin.tasks_path}4_task.rb")
   end
 
   test 'custom task wrapper' do
