@@ -6,4 +6,5 @@ DeployPin.setup do
   fallback_group 'II'
   run_formatter ->(*) {}
   list_formatter ->(*) {}
+  short_list_formatter ->(*) {}
 end

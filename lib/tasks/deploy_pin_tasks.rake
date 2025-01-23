@@ -15,4 +15,11 @@ namespace :deploy_pin do
     DeployPin::Runner.list(**args)
     DeployPin::Runner.summary(**args)
   end
+
+  task :short_list, [:identifiers] => :environment do |_t, args|
+    args.with_defaults(identifiers: DeployPin.groups)
+
+    DeployPin::Runner.short_list(**args)
+    DeployPin::Runner.summary(**args)
+  end
 end
