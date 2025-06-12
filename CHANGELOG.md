@@ -1,3 +1,13 @@
+# 1.7.3 / 2025-01-23
+* Add `short_list` rake task for concise task listings.
+* Support Ruby on Rails 8 and update dependencies.
+
+# 1.7.2 / 2024-10-17
+* Add `save_progress!` method to store progress explicitly.
+
+# 1.7.1 / 2024-10-11
+* Mark existing deploy pins as completed during upgrade.
+
 # 1.7.0 / 2024-10-10
 
 ## Breaking Changes:
