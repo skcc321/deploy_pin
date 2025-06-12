@@ -247,7 +247,7 @@ DeployPin.pending_deployment?
 
 Around the deployment
 ```bash
-bundle exec rake deploy_pin:run[I, II, III] - # enters to ongoing state before "I" and leaves it after "III" so all tasks in I, II, III have DeployPin.oingoing_deployment? == true
+bundle exec rake deploy_pin:run[I, II, III] - # enters to ongoing state before "I" and leaves it after "III" so all tasks in I, II, III have DeployPin.ongoing_deployment? == true
 bundle exec rake deploy_pin:run[rollback] - # enters "pending state"
 ```
 ## Similar Gems
