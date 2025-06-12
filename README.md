@@ -143,7 +143,7 @@ Check the documentation [here](lib/deploy_pin/parallel_wrapper.rb) for more deta
 
 ## Formatting
 
-`run_formatter` is used to format the output of a `run` task, `list_formatter` for the `list` task and `list_short_formatter` is used to format the output of a `short_list` task. To set a default value, you should define it in the deploy_pin initializer:
+`run_formatter` is used to format the output of a `run` task, `list_formatter` for the `list` task and `short_list_formatter` is used to format the output of a `short_list` task. To set a default value, you should define it in the deploy_pin initializer:
 
 ```ruby
 # config/initializers/deploy_pin.rb
