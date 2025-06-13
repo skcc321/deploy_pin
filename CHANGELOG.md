@@ -1,3 +1,7 @@
+# 1.7.4 / 2025-06-13
+* Change default affected areas
+* Add possibility to remove fallback_group from initializer and make `--group` attribute required on task generation
+
 # 1.7.3 / 2025-01-23
 * Add `short_list` rake task for concise task listings.
 * Support Ruby on Rails 8 and update dependencies.

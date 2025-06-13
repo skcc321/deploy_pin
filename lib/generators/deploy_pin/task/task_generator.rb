@@ -12,6 +12,13 @@ module DeployPin
     source_root File.expand_path('templates', __dir__)
 
     desc 'This generator creates deploy_pin task at lib/deploy_pin/'
+
+    def initialize(*args)
+      super
+
+      validate
+    end
+
     def create_task_file
       template_file = if options[:parallel]
                         'parallel_task.rb.erb'
@@ -25,6 +32,10 @@ module DeployPin
       @identifier = @recurring ? options[:identifier] : Time.now.strftime('%Y%m%d%H%M%S')
       filename = @recurring ? "r_#{@identifier}_#{title}.rb" : "#{@identifier}_#{title}.rb"
       template template_file, "#{DeployPin.tasks_path}/#{filename}"
+    end
+
+    def validate
+      raise Thor::Error, set_color('Missing required option: --group', :red) if options[:group].blank?
     end
   end
 end
