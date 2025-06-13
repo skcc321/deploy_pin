@@ -14,6 +14,12 @@ class DeployPin::TaskGeneratorTest < Rails::Generators::TestCase
     end
   end
 
+  test 'rases error if group is not present in allowed group' do
+    assert_raises(Thor::Error) do
+      DeployPin::TaskGenerator.new(['title'], { group: 'D' }, destination_root: destination_root)
+    end
+  end
+
   test 'generator runs without errors (with group)' do
     assert_nothing_raised do
       DeployPin::TaskGenerator.new(

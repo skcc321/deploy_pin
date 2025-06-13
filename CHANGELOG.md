@@ -1,3 +1,6 @@
+# 1.7.5 / 2025-06-13
+* Add validation for `group` attribute in task generation. Group should be present in the allowed groups list.
+
 # 1.7.4 / 2025-06-13
 * Change default affected areas
 * Add possibility to remove fallback_group from initializer and make `--group` attribute required on task generation

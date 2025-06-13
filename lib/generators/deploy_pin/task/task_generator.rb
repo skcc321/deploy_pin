@@ -36,6 +36,10 @@ module DeployPin
 
     def validate
       raise Thor::Error, set_color('Missing required option: --group', :red) if options[:group].blank?
+
+      return if DeployPin.groups.include?(options[:group])
+
+      raise Thor::Error, set_color("Group '#{options[:group]}' is not defined in DeployPin.groups", :red)
     end
   end
 end
