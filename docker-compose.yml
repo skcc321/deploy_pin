@@ -1,12 +1,10 @@
----
-version: '3'
-
 services:
   redis:
     image: redis:7.4-alpine
     restart: always
     ports:
-      - '6379:6379'
+      - "6379:6379"
+
   postgres:
     image: postgres:16
     restart: always
@@ -15,20 +13,27 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
+
   mysql:
-    image: bitnami/mysql:latest
+    image: mysql:8.0
     restart: always
     environment:
-      MYSQL_ROOT_USER: ${DB_USERNAME}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    command: --default-authentication-plugin=mysql_native_password
     ports:
       - "3306:3306"
+    volumes:
+      # init scripts run once on first start (empty data dir)
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d
+
   mariadb:
     image: mariadb:latest
     restart: always
     environment:
       MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
     ports:
-      - '3307:3306'
+      - "3307:3306"

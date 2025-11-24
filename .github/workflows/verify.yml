@@ -3,12 +3,13 @@ name: verify
 on: [pull_request]
 
 env:
+  DB_NAME: myapp_db
   DB_USERNAME: runner
   DB_PASSWORD: password
 
 jobs:
-  rspec:
-    name: rspec
+  test:
+    name: test
     strategy:
       fail-fast: false
       matrix:
@@ -16,12 +17,14 @@ jobs:
         # Due to https://github.com/actions/runner/issues/849, we have to use quotes for '3.0'
         ruby: ["3.2.6", "3.3.7", truffleruby]
         db: ["mariadb", "mysql", "pg"]
+
     runs-on: ${{ matrix.os }}
+
     services:
       redis:
         image: redis:7.4-alpine
         ports:
-          - '6379:6379'
+          - "6379:6379"
 
       postgres:
         image: postgres:16
@@ -29,17 +32,18 @@ jobs:
           POSTGRES_USER: ${{ env.DB_USERNAME }}
           POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
         ports:
-          - '5432:5432'
+          - "5432:5432"
 
       mysql:
-        image: bitnami/mysql:latest
+        image: mysql:8.0
         env:
-          MYSQL_ROOT_USER: ${{ env.DB_USERNAME }}
           MYSQL_ROOT_PASSWORD: ${{ env.DB_PASSWORD }}
+          MYSQL_USER: ${{ env.DB_USERNAME }}
+          MYSQL_PASSWORD: ${{ env.DB_PASSWORD }}
         ports:
-          - '3306:3306'
+          - "3306:3306"
         options: >-
-          --health-cmd="mysqladmin ping"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ppasword"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -48,23 +52,73 @@ jobs:
         image: mariadb:latest
         env:
           MARIADB_ROOT_PASSWORD: ${{ env.DB_PASSWORD }}
-          MYSQL_USER: ${{ env.DB_USERNAME }}
-          MYSQL_PASSWORD: ${{ env.DB_PASSWORD }}
+          MARIADB_USER: ${{ env.DB_USERNAME }}
+          MARIADB_PASSWORD: ${{ env.DB_PASSWORD }}
         ports:
-          - '3307:3306'
+          - "3307:3306"
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
 
+      # MySQL/MariaDB client tools
+      - name: Install MySQL client
+        if: ${{ matrix.db != 'pg' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+
+      - name: Wait for MySQL/MariaDB
+        if: ${{ matrix.db != 'pg' }}
+        env:
+          DB_ENGINE: ${{ matrix.db }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+        run: |
+          if [ "$DB_ENGINE" = "mariadb" ]; then
+            DB_PORT=3307
+          else
+            DB_PORT=3306
+          fi
+
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -P "$DB_PORT" -uroot -p"$DB_PASSWORD" --silent; then
+              echo "DB ($DB_ENGINE) is up on port $DB_PORT"
+              break
+            fi
+            echo "Waiting for $DB_ENGINE on port $DB_PORT..."
+            sleep 2
+          done
+
+      - name: Grant privileges to non-root user (MySQL/MariaDB)
+        if: ${{ matrix.db != 'pg' }}
+        env:
+          DB_ENGINE: ${{ matrix.db }}
+          DB_USERNAME: ${{ env.DB_USERNAME }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+        run: |
+          if [ "$DB_ENGINE" = "mariadb" ]; then
+            DB_PORT=3307
+          else
+            DB_PORT=3306
+          fi
+
+          mysql -h 127.0.0.1 -P "$DB_PORT" -uroot -p"$DB_PASSWORD" <<EOSQL
+            GRANT CREATE, DROP ON *.* TO '${DB_USERNAME}'@'%';
+            GRANT ALL PRIVILEGES ON *.* TO '${DB_USERNAME}'@'%';
+            FLUSH PRIVILEGES;
+          EOSQL
+
       - name: Setup test database
         env:
           RAILS_ENV: test
+          DB_NAME: ${{ env.DB_NAME }}
           DB_USERNAME: ${{ env.DB_USERNAME }}
           DB_PASSWORD: ${{ env.DB_PASSWORD }}
+          DB_ROLE: ${{ matrix.db }}
         run: |
           bin/rails db:prepare
 
@@ -72,6 +126,7 @@ jobs:
         env:
           RAILS_ENV: test
           DB_ROLE: ${{ matrix.db }}
+          DB_NAME: ${{ env.DB_NAME }}
           DB_USERNAME: ${{ env.DB_USERNAME }}
           DB_PASSWORD: ${{ env.DB_PASSWORD }}
         run: |
@@ -86,7 +141,7 @@ jobs:
 
   coverage:
     name: coverage
-    needs: rspec
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

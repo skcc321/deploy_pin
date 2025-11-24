@@ -11,7 +11,6 @@ module DeployPin
 
     # :reek:TooManyStatements
     def run
-      # cache tasks
       tasks = init_tasks
       tasks.each_with_index do |task, index|
         DeployPin.task_wrapper.call(task, -> { process(tasks, task, index) })
@@ -34,8 +33,17 @@ module DeployPin
       end
     end
 
+    # :reek:FeatureEnvy
+    def mark_done
+      tasks = init_tasks
+      tasks.each do |task|
+        task.prepare
+        task.mark
+      end
+    end
+    # :reek:FeatureEnvy
+
     def executable
-      # cache tasks
       tasks = init_tasks
       tasks.map.with_index do |task, index|
         task if tasks[0..index].none? { |other_task| task.eql?(other_task) }

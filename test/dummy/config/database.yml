@@ -6,7 +6,7 @@ default: &default
   username: <%= ENV['DB_USERNAME'] %>
   password: <%= ENV['DB_PASSWORD'] %>
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  database: deploy_pin
+  database: <%= ENV.fetch("DB_NAME") %>
 
 pg: &pg
   <<: *default
@@ -14,6 +14,7 @@ pg: &pg
 
 mysql: &mysql
   <<: *default
+  username: root
   adapter: mysql2
 
 development:
@@ -27,10 +28,10 @@ development:
 test:
   pg:
     <<: *pg
-    database: deploy_pin_test
+    database: <%= ENV.fetch("DB_NAME") %>_test
   mariadb:
     <<: *mysql
-    database: deploy_pin_test
+    database: <%= ENV.fetch("DB_NAME") %>_test
   mysql:
     <<: *mysql
-    database: deploy_pin_test
+    database: <%= ENV.fetch("DB_NAME") %>_test

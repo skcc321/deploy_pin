@@ -1,3 +1,6 @@
+# 1.7.6 / 2025-11-25
+# Add `rake deploy_pin:mark_done` task to mark specific deploy pins as completed based on criteria.
+
 # 1.7.5 / 2025-06-13
 * Add validation for `group` attribute in task generation. Group should be present in the allowed groups list.
 

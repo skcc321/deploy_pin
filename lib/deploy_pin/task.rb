@@ -2,7 +2,8 @@
 
 # Task wrapper
 module DeployPin
-  class Task
+  # :reek:TooManyMethods
+  class Task # rubocop:disable Metrics/ClassLength
     extend ::DeployPin::ParallelWrapper
     include ::DeployPin::ParallelWrapper
 
@@ -73,7 +74,8 @@ module DeployPin
       !explicit_timeout? && !parallel?
     end
 
-    def parse
+    # :reek:TooManyStatements
+    def parse # rubocop:disable Metrics/MethodLength
       each_line do |line|
         case line.strip
         when /\A# (-?\d+):(\w+):?(recurring)?/
@@ -92,6 +94,7 @@ module DeployPin
         end
       end
     end
+    # :reek:TooManyStatements
 
     def each_line(&block)
       if file.starts_with?('# no_file_task')
@@ -146,4 +149,5 @@ module DeployPin
         @parallel
       end
   end
+  # :reek:TooManyMethods
 end
