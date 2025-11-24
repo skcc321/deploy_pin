@@ -226,6 +226,13 @@ rails g deploy_pin:task some_task_title --recurring --identifier 5
 rails g deploy_pin:task some_task_title --parallel --recurring --identifier 5
 ```
 
+## Mark Tasks as Done
+
+```bash
+rake deploy_pin:mark_done['identifier_1, identifier_2'] # marks specific tasks as done 
+rake deploy_pin:mark_done # marks all tasks as done. useful in seed file
+```
+
 ## DeploymentStateTrack
 In the initializer
 ```ruby
@@ -275,7 +282,7 @@ To ensure your changes meet the required standards and pass all tests before sub
 Use the following command to simulate the workflow locally:
 
 ```bash
-act pull_request --secret-file .env --container-architecture linux/amd64 -W .github/workflows -j rspec
+act pull_request --secret-file .env --container-architecture linux/amd64 -W .github/workflows -j test
 ```
 
 This command does the following:

@@ -23,7 +23,9 @@ if ActiveSupport::TestCase.respond_to?(:fixture_paths=)
 end
 
 ActiveSupport::TestCase.setup do
-  DeployPin.remove_instance_variable(:"@deployment_state_transition") if DeployPin.enabled?(:deployment_state_transition)
+  if DeployPin.enabled?(:deployment_state_transition)
+    DeployPin.remove_instance_variable(:"@deployment_state_transition")
+  end
 
   DeployPin.setup do
     tasks_path './tmp/'

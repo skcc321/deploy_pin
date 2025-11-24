@@ -21,9 +21,11 @@ class DeployPin::Database::Test < ActiveSupport::TestCase
     task_content = task_content_with_default_timeout(0.1.second)
     task = DeployPin::Task.new(task_content)
 
-    File.stub :foreach, true, task_content do
-      task.parse
-      task.run
+    assert_nothing_raised do
+      File.stub :foreach, true, task_content do
+        task.parse
+        task.run
+      end
     end
   end
 
@@ -31,9 +33,11 @@ class DeployPin::Database::Test < ActiveSupport::TestCase
     task_content = task_content_with_custom_timeout 0.4.second, 0.3.second
     task = DeployPin::Task.new(task_content)
 
-    File.stub :foreach, true, task_content do
-      task.parse
-      task.run
+    assert_nothing_raised do
+      File.stub :foreach, true, task_content do
+        task.parse
+        task.run
+      end
     end
   end
 
