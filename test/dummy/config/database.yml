@@ -6,7 +6,7 @@ default: &default
   username: <%= ENV['DB_USERNAME'] %>
   password: <%= ENV['DB_PASSWORD'] %>
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  database: <%= ENV.fetch("DB_NAME") %>
+  database: <%= ENV['DB_NAME'] %>
 
 pg: &pg
   <<: *default
