@@ -28,10 +28,10 @@ development:
 test:
   pg:
     <<: *pg
-    database: <%= ENV.fetch("DB_NAME") %>_test
+    database: <%= ENV["DB_NAME"] %>_test
   mariadb:
     <<: *mysql
-    database: <%= ENV.fetch("DB_NAME") %>_test
+    database: <%= ENV["DB_NAME"] %>_test
   mysql:
     <<: *mysql
-    database: <%= ENV.fetch("DB_NAME") %>_test
+    database: <%= ENV["DB_NAME"] %>_test
