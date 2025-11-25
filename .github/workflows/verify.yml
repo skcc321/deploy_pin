@@ -15,7 +15,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         # Due to https://github.com/actions/runner/issues/849, we have to use quotes for '3.0'
-        ruby: ["3.2.6", "3.3.7", truffleruby]
+        ruby: ["3.3.10", "3.4.7"]
         db: ["mariadb", "mysql", "pg"]
 
     runs-on: ${{ matrix.os }}
@@ -133,7 +133,7 @@ jobs:
           bin/test
 
       - name: Upload coverage
-        if: ${{ matrix.db == 'pg' && matrix.ruby == '3.2.6' }}
+        if: ${{ matrix.db == 'pg' && matrix.ruby == '3.4.7' }}
         uses: actions/upload-artifact@v4
         with:
           name: review.txt
