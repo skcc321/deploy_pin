@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    deploy_pin (1.7.7)
+    deploy_pin (1.8.7)
       colorize (~> 1.1)
       connection_pool (~> 2.2)
       parallel (~> 1.23)
@@ -12,8 +12,6 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    action_text-trix (2.1.16)
-      railties
     actioncable (7.2.3)
       actionpack (= 7.2.3)
       activesupport (= 7.2.3)
