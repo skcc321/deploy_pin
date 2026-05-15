@@ -68,7 +68,7 @@ module DeployPin
 
         # run if executable
         if executable
-          duration = execution_duration { run_with_timeout(task) { task.run } }
+          duration = execution_duration { run_task_safely(task) }
           DeployPin.run_formatter.call(index, tasks.count, task, executable, false, duration)
         end
 
@@ -76,6 +76,15 @@ module DeployPin
       end
       # :reek:TooManyStatements
       # :reek:FeatureEnvy
+
+      def run_task_safely(task)
+        run_with_timeout(task) { task.run }
+      rescue StandardError => e
+        raise unless DeployPin.continue_on_error
+
+        DeployPin::Runner.print("[DeployPin] Task #{task.identifier} failed: #{e.message}".red)
+        DeployPin::Runner.print('[DeployPin] Continuing due to continue_on_error configuration'.yellow)
+      end
 
       # :reek:UtilityFunction
       def files

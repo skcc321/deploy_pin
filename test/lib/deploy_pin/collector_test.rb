@@ -67,4 +67,46 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
 
     assert_output(/called\ncalled\n/) { @collector.run }
   end
+
+  test 'continue_on_error marks failed task as done and continues' do
+    # Setup with a failing task
+    ::FileUtils.rm_rf(DeployPin.tasks_path, secure: true)
+    ::FileUtils.mkdir(DeployPin.tasks_path)
+    ::FileUtils.cp 'test/support/files/failing_task.rb', "#{DeployPin.tasks_path}1_task.rb"
+    ::FileUtils.cp 'test/support/files/task.rb', "#{DeployPin.tasks_path}2_task.rb"
+
+    DeployPin.setup do
+      continue_on_error true
+    end
+
+    collector = DeployPin::Collector.new(identifiers: DeployPin.groups)
+
+    assert_nothing_raised do
+      collector.run
+    end
+
+    # Both tasks should be marked as done
+    assert DeployPin::Record.find_by(uuid: '75371573753799').completed_at.present?
+    assert DeployPin::Record.find_by(uuid: '75371573753751').completed_at.present?
+  ensure
+    DeployPin.setup do
+      continue_on_error false
+    end
+  end
+
+  test 'without continue_on_error raises on failed task' do
+    ::FileUtils.rm_rf(DeployPin.tasks_path, secure: true)
+    ::FileUtils.mkdir(DeployPin.tasks_path)
+    ::FileUtils.cp 'test/support/files/failing_task.rb', "#{DeployPin.tasks_path}1_task.rb"
+
+    DeployPin.setup do
+      continue_on_error false
+    end
+
+    collector = DeployPin::Collector.new(identifiers: DeployPin.groups)
+
+    assert_raises(RuntimeError) do
+      collector.run
+    end
+  end
 end

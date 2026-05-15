@@ -15,6 +15,7 @@ require 'colorize'
 
 module DeployPin
   OPTIONS = %i[
+    continue_on_error
     deployment_state_transition
     fallback_group
     groups
@@ -27,13 +28,14 @@ module DeployPin
   ].freeze
 
   DEFAULTS = {
+    continue_on_error: false,
     task_wrapper: ->(_task, task_runner) { task_runner.call }
   }.freeze
 
   OPTIONS.each do |option|
     instance_eval %{
       def #{option}(val = nil)
-        return @#{option} unless val.present?
+        return @#{option} if val.nil?
 
         @#{option} = val
       end

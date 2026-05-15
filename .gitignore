@@ -16,3 +16,4 @@ coverage/*
 task.rb
 *.swp
 *.gem
+.DS_Store
