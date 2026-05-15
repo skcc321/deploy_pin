@@ -257,6 +257,27 @@ Around the deployment
 bundle exec rake deploy_pin:run[I, II, III] - # enters to ongoing state before "I" and leaves it after "III" so all tasks in I, II, III have DeployPin.ongoing_deployment? == true
 bundle exec rake deploy_pin:run[rollback] - # enters "pending state"
 ```
+## Continue on Error
+
+By default, if a task raises an error, the entire deploy pin run is aborted. You can configure `continue_on_error` to rescue failures, log them, and still mark the task as done. This is useful in CI environments where external services may be unavailable.
+
+```ruby
+# config/initializers/deploy_pin.rb
+DeployPin.setup do
+  continue_on_error true
+end
+```
+
+Or conditionally via environment variable:
+
+```ruby
+DeployPin.setup do
+  continue_on_error ENV.fetch("DEPLOY_PIN_CONTINUE_ON_ERROR", "false") == "true"
+end
+```
+
+When enabled, failed tasks will log the error and continue to the next task without halting execution.
+
 ## Similar Gems
 - https://github.com/ilyakatz/data-migrate
 - https://github.com/Shopify/maintenance_tasks
