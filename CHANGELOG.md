@@ -1,3 +1,6 @@
+# 1.8.8 / 2026-07-11
+* Relax `connection_pool` dependency to `>= 2.2, < 5` (was `~> 2.2`). The previous pin blocked apps from upgrading to Sidekiq > 8.0.1, which requires `connection_pool >= 3.0`.
+
 # 1.7.6 / 2025-11-25
 # Add `rake deploy_pin:mark_done` task to mark specific deploy pins as completed based on criteria.
 
