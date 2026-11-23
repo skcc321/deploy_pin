@@ -142,12 +142,14 @@ jobs:
         run: |
           bin/test
 
+      # ActiveRecord and Mongoid runs cover different code paths; the coverage job merges both.
       - name: Upload coverage
-        if: ${{ matrix.db == 'pg' && matrix.ruby == '3.4.13' }}
+        if: ${{ (matrix.db == 'pg' || matrix.db == 'mongodb') && matrix.ruby == '3.4.13' }}
         uses: actions/upload-artifact@v4
         with:
-          name: review.txt
-          path: coverage/review.txt
+          name: coverage-${{ matrix.db }}
+          path: coverage/.resultset.json
+          include-hidden-files: true
 
   coverage:
     name: coverage
@@ -155,10 +157,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4.13"
+          bundler-cache: true
       - uses: actions/download-artifact@v4
         with:
-          name: review.txt
-          path: coverage/
+          pattern: coverage-*
+          path: coverage-parts/
+      - name: Merge coverage
+        run: |
+          bundle exec ruby -e "
+            require 'simplecov'
+            require 'simplecov-review'
+            SimpleCov.collate(Dir['coverage-parts/*/.resultset.json']) do
+              formatter SimpleCov::Formatter::ReviewFormatter
+            end
+          "
       - uses: reviewdog/action-setup@v1
         with:
           reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]

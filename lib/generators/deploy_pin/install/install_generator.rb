@@ -32,13 +32,9 @@ module DeployPin
     private
 
       # Used by the migration template.
-      # :reek:UtilityFunction and :reek:ManualDispatch
+      # :reek:UtilityFunction
       def activerecord_migration_class
-        if ::ActiveRecord::Migration.respond_to?(:current_version)
-          "ActiveRecord::Migration[#{::ActiveRecord::Migration.current_version}]"
-        else
-          'ActiveRecord::Migration'
-        end
+        "ActiveRecord::Migration[#{::ActiveRecord::Migration.current_version}]"
       end
 
       def mongoid?
