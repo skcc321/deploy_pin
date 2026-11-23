@@ -16,11 +16,16 @@ jobs:
         os: [ubuntu-latest]
         # Due to https://github.com/actions/runner/issues/849, we have to use quotes for '3.0'
         ruby: ["3.3.14", "3.4.13"]
-        db: ["mariadb", "mysql", "pg"]
+        db: ["mariadb", "mysql", "pg", "mongodb"]
 
     runs-on: ${{ matrix.os }}
 
     services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - "27017:27017"
+
       redis:
         image: redis:7.4-alpine
         ports:
@@ -67,7 +72,7 @@ jobs:
 
       # MySQL/MariaDB client tools
       - name: Install MySQL client
-        if: ${{ matrix.db != 'pg' }}
+        if: ${{ matrix.db == 'mysql' || matrix.db == 'mariadb' }}
         # The runner image ships MySQL preinstalled; installing the client upgrades
         # mysql-server too, and its postinst fails. Only install when missing.
         run: |
@@ -77,7 +82,7 @@ jobs:
           fi
 
       - name: Wait for MySQL/MariaDB
-        if: ${{ matrix.db != 'pg' }}
+        if: ${{ matrix.db == 'mysql' || matrix.db == 'mariadb' }}
         env:
           DB_ENGINE: ${{ matrix.db }}
           DB_PASSWORD: ${{ env.DB_PASSWORD }}
@@ -98,7 +103,7 @@ jobs:
           done
 
       - name: Grant privileges to non-root user (MySQL/MariaDB)
-        if: ${{ matrix.db != 'pg' }}
+        if: ${{ matrix.db == 'mysql' || matrix.db == 'mariadb' }}
         env:
           DB_ENGINE: ${{ matrix.db }}
           DB_USERNAME: ${{ env.DB_USERNAME }}
@@ -117,6 +122,7 @@ jobs:
           EOSQL
 
       - name: Setup test database
+        if: ${{ matrix.db != 'mongodb' }}
         env:
           RAILS_ENV: test
           DB_NAME: ${{ env.DB_NAME }}

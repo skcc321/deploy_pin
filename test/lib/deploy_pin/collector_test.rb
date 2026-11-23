@@ -11,7 +11,7 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
     ::FileUtils.cp 'test/support/files/other_task.rb', "#{DeployPin.tasks_path}4_task.rb"
 
     # create one completed record
-    DeployPin::Record.create(uuid: '75371573753754', completed_at: Time.current)
+    DeployPin::Storage.record_class.create(uuid: '75371573753754', completed_at: Time.current)
 
     @collector = DeployPin::Collector.new(identifiers: DeployPin.groups)
     @ids_collector = DeployPin::Collector.new(identifiers: ['75371573753753', '75371573753754!'])
@@ -86,8 +86,8 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
     end
 
     # Both tasks should be marked as done
-    assert DeployPin::Record.find_by(uuid: '75371573753799').completed_at.present?
-    assert DeployPin::Record.find_by(uuid: '75371573753751').completed_at.present?
+    assert DeployPin::Storage.record_class.find_by(uuid: '75371573753799').completed_at.present?
+    assert DeployPin::Storage.record_class.find_by(uuid: '75371573753751').completed_at.present?
   ensure
     DeployPin.setup do
       continue_on_error false
