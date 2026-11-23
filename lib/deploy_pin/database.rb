@@ -43,6 +43,7 @@ module DeployPin
     #     ActiveRecord::Base.connection.execute("<some mysql query>")
     #   end
     def execute_with_timeout(timeout = DeployPin.statement_timeout, **params, &blk)
+      raise NotImplementedError, 'statement timeout requires ActiveRecord' unless available?
       raise ArgumentError, 'timeout must be greater than zero' if timeout.to_f <= 0
 
       return call_block_under_timeout(timeout, &blk) unless params.key? :connected_to
@@ -51,6 +52,11 @@ module DeployPin
       klass.connected_to(**params[:connected_to]) do
         call_block_under_timeout(timeout, &blk)
       end
+    end
+
+    # Statement timeouts are implemented on top of ActiveRecord connections only.
+    def available?
+      defined?(::ActiveRecord::Base) ? true : false
     end
 
     private

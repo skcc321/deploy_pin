@@ -52,8 +52,8 @@ Style/Documentation:
   Exclude:
     - 'spec/**/*'
     - 'test/**/*'
-    - 'app/models/deploy_pin/application_record.rb'
-    - 'app/models/deploy_pin/record.rb'
+    - 'lib/deploy_pin/storage/active_record/application_record.rb'
+    - 'lib/deploy_pin/storage/active_record/record.rb'
     - 'lib/deploy_pin.rb'
     - 'lib/deploy_pin/collector.rb'
     - 'lib/deploy_pin/database.rb'

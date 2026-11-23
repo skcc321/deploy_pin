@@ -35,7 +35,7 @@ ActiveSupport::TestCase.setup do
   end
 
   # clean
-  DeployPin::Record.delete_all
+  DeployPin::Storage.record_class.delete_all
   ::FileUtils.rm_rf(DeployPin.tasks_path, secure: true)
   ::FileUtils.mkdir(DeployPin.tasks_path)
 end

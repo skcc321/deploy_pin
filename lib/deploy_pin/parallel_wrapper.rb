@@ -36,17 +36,21 @@ module DeployPin
         raise 'You must provide at least one argument for parallel methods' if parallel_args.empty?
 
         Parallel.send(parallel_method_name, *parallel_args) do |*block_args|
-          ActiveRecord::Base.connection_pool.with_connection do
-            DeployPin::Database.execute_with_timeout(timeout, **timeout_params) do
-              db_block.call(*block_args)
-            end
-          end
+          with_database_timeout { db_block.call(*block_args) }
         end
       end
 
       private
 
         attr_accessor :method_name, :parallel_args, :db_block
+
+        def with_database_timeout(&block)
+          return yield unless DeployPin::Database.available?
+
+          ActiveRecord::Base.connection_pool.with_connection do
+            DeployPin::Database.execute_with_timeout(timeout, **timeout_params, &block)
+          end
+        end
 
         def prepare_timeout_args
           timeout = @timeout_args[:timeout]

@@ -35,13 +35,13 @@ module DeployPin
     end
 
     def record
-      DeployPin::Record.find_by(uuid: identifier)
+      record_class.find_by(uuid: identifier)
     end
 
     def prepare
       return if recurring
 
-      DeployPin::Record.create(uuid: identifier) unless record
+      record_class.create(uuid: identifier) unless record
     end
 
     def mark
@@ -136,6 +136,10 @@ module DeployPin
     end
 
     protected
+
+      def record_class
+        DeployPin::Storage.record_class
+      end
 
       def group_index
         DeployPin.groups.index(group)
