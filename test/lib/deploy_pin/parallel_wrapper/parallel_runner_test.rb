@@ -45,7 +45,7 @@ class DeployPin::ParallelWrapper::ParallelRunner::Test < ActiveSupport::TestCase
 
   test 'run with parallel extra arguments and timeouts' do
     parallel_args = [1..2, { in_processes: 2 }]
-    statement_timeout_args = [timeout: 0.3.seconds]
+    statement_timeout_args = [{ timeout: 0.3.seconds }]
     args = parallel_args + statement_timeout_args
 
     args_checker = lambda do |*parallel_each_args|

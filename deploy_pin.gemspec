@@ -31,14 +31,15 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency 'colorize', '~> 1.1'
-  spec.add_dependency 'connection_pool', '~> 2.2'
-  spec.add_dependency 'parallel', '~> 1.23'
+  spec.add_dependency 'connection_pool', '>= 2.2', '< 4'
+  spec.add_dependency 'parallel', '>= 1.23', '< 3'
   spec.add_dependency 'rails', '>= 7.0', '< 9.0'
-  spec.add_dependency 'redis', '> 4.0'
+  spec.add_dependency 'redis', '>= 4.0', '< 7'
   spec.add_dependency 'ruby-progressbar', '~> 1.13'
 
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'minitest'
+  spec.add_development_dependency 'minitest-mock'
   spec.add_development_dependency 'mysql2'
   spec.add_development_dependency 'pg'
   spec.add_development_dependency 'pry'

@@ -1,5 +1,5 @@
 inherit_from: .rubocop_todo.yml
-require: rubocop-minitest
+plugins: rubocop-minitest
 
 AllCops:
   Exclude:
