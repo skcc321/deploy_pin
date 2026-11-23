@@ -278,6 +278,23 @@ end
 
 When enabled, failed tasks will log the error and continue to the next task without halting execution.
 
+## Storage
+
+DeployPin keeps track of executed tasks in a storage provider. It is set with the `storage` setting and defaults to `:active_record`, which uses the `deploy_pins` table created by the install generator.
+
+```ruby
+# config/initializers/deploy_pin.rb
+DeployPin.setup do
+  storage :active_record # default, can be omitted
+end
+```
+
+Existing setups don't need any changes: the default keeps using the same `DeployPin::Record` model and `deploy_pins` table, so already executed tasks stay marked as done.
+
+The record model of the configured provider is available via `DeployPin::Storage.record_class`. An unknown provider raises an `ArgumentError` listing the supported ones.
+
+Note: [Database Timeout](#database-timeout) and the timeout of the [Parallel](#parallel) wrapper rely on ActiveRecord connections. When ActiveRecord is not loaded, tasks run without a statement timeout.
+
 ## Similar Gems
 - https://github.com/ilyakatz/data-migrate
 - https://github.com/Shopify/maintenance_tasks
