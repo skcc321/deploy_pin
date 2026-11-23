@@ -9,11 +9,16 @@ require 'deploy_pin/task_criteria'
 require 'deploy_pin/engine'
 require 'deploy_pin/database'
 require 'deploy_pin/database_engine'
+require 'deploy_pin/storage'
 require 'parallel'
 require 'ruby-progressbar'
 require 'colorize'
 
 module DeployPin
+  # ActiveRecord models are loaded lazily, so apps without ActiveRecord can boot.
+  autoload :ApplicationRecord, 'deploy_pin/storage/active_record/application_record'
+  autoload :Record, 'deploy_pin/storage/active_record/record'
+
   OPTIONS = %i[
     continue_on_error
     deployment_state_transition
@@ -23,12 +28,14 @@ module DeployPin
     short_list_formatter
     run_formatter
     statement_timeout
+    storage
     task_wrapper
     tasks_path
   ].freeze
 
   DEFAULTS = {
     continue_on_error: false,
+    storage: :active_record,
     task_wrapper: ->(_task, task_runner) { task_runner.call }
   }.freeze
 

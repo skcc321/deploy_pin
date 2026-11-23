@@ -1,3 +1,7 @@
+# Unreleased
+* Add `storage` setting (defaults to `:active_record`) and `DeployPin::Storage` to resolve the record model, preparing for additional storage providers. Existing configs and `deploy_pins` records are unaffected.
+* Load ActiveRecord models lazily and skip statement timeouts when ActiveRecord is not loaded.
+
 # 1.7.6 / 2025-11-25
 # Add `rake deploy_pin:mark_done` task to mark specific deploy pins as completed based on criteria.
 

@@ -107,7 +107,7 @@ module DeployPin
 
       # :reek:UtilityFunction and :reek:ControlParameter
       def run_with_timeout(task, &block)
-        return yield unless task.under_timeout?
+        return yield unless task.under_timeout? && DeployPin::Database.available?
 
         DeployPin::Database.execute_with_timeout(DeployPin.statement_timeout, **{}, &block)
       end

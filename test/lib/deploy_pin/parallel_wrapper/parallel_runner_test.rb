@@ -59,4 +59,34 @@ class DeployPin::ParallelWrapper::ParallelRunner::Test < ActiveSupport::TestCase
       runner.run
     end
   end
+
+  test 'runs the block under the database timeout when ActiveRecord is available' do
+    timeouts = []
+    execute_with_timeout = lambda do |timeout, **_params, &block|
+      timeouts << timeout
+      block.call
+    end
+    results = Queue.new
+
+    parallel_args = [[1, 2], { in_threads: 2 }, { timeout: 0.3.seconds }]
+    runner = DeployPin::ParallelWrapper::ParallelRunner.new(:each, *parallel_args) { |item| results << item }
+
+    DeployPin::Database.stub(:execute_with_timeout, execute_with_timeout) { runner.run }
+
+    assert_equal [0.3.seconds, 0.3.seconds], timeouts
+    assert_equal [1, 2], Array.new(results.size) { results.pop }.sort
+  end
+
+  test 'runs the block without the database timeout when ActiveRecord is not available' do
+    results = Queue.new
+    execute_with_timeout = ->(*) { flunk 'execute_with_timeout should not be called' }
+
+    DeployPin::Database.stub :available?, false do
+      DeployPin::Database.stub :execute_with_timeout, execute_with_timeout do
+        DeployPin::ParallelWrapper::ParallelRunner.new(:each, [1, 2], in_threads: 2) { |item| results << item }.run
+      end
+    end
+
+    assert_equal [1, 2], Array.new(results.size) { results.pop }.sort
+  end
 end

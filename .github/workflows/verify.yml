@@ -15,7 +15,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         # Due to https://github.com/actions/runner/issues/849, we have to use quotes for '3.0'
-        ruby: ["3.3.10", "3.4.7"]
+        ruby: ["3.3.14", "3.4.13"]
         db: ["mariadb", "mysql", "pg"]
 
     runs-on: ${{ matrix.os }}
@@ -68,9 +68,13 @@ jobs:
       # MySQL/MariaDB client tools
       - name: Install MySQL client
         if: ${{ matrix.db != 'pg' }}
+        # The runner image ships MySQL preinstalled; installing the client upgrades
+        # mysql-server too, and its postinst fails. Only install when missing.
         run: |
-          sudo apt-get update
-          sudo apt-get install -y mysql-client
+          if ! command -v mysqladmin >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends mysql-client
+          fi
 
       - name: Wait for MySQL/MariaDB
         if: ${{ matrix.db != 'pg' }}
@@ -133,7 +137,7 @@ jobs:
           bin/test
 
       - name: Upload coverage
-        if: ${{ matrix.db == 'pg' && matrix.ruby == '3.4.7' }}
+        if: ${{ matrix.db == 'pg' && matrix.ruby == '3.4.13' }}
         uses: actions/upload-artifact@v4
         with:
           name: review.txt
