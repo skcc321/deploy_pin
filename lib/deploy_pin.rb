@@ -15,9 +15,10 @@ require 'ruby-progressbar'
 require 'colorize'
 
 module DeployPin
-  # ActiveRecord models are loaded lazily, so apps without ActiveRecord can boot.
+  # Storage models are loaded lazily, so only the configured ORM has to be present.
   autoload :ApplicationRecord, 'deploy_pin/storage/active_record/application_record'
   autoload :Record, 'deploy_pin/storage/active_record/record'
+  autoload :MongoidRecord, 'deploy_pin/storage/mongoid_record'
 
   OPTIONS = %i[
     continue_on_error

@@ -4,7 +4,7 @@ module DeployPin
   # Resolves the model used to persist task records, based on the configured storage provider.
   #
   #   DeployPin.setup do
-  #     storage :active_record # default
+  #     storage :active_record # default, or :mongoid
   #   end
   #
   # A record class must respond to:
@@ -14,7 +14,8 @@ module DeployPin
   #   #progress, #completed_at, #update(attributes), #increment!(attribute, by)
   module Storage
     PROVIDERS = {
-      active_record: -> { DeployPin::Record }
+      active_record: -> { DeployPin::Record },
+      mongoid: -> { DeployPin::MongoidRecord }
     }.freeze
 
     def self.record_class

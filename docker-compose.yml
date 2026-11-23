@@ -5,6 +5,12 @@ services:
     ports:
       - "6379:6379"
 
+  mongodb:
+    image: mongo:7
+    restart: always
+    ports:
+      - "27017:27017"
+
   postgres:
     image: postgres:16
     restart: always

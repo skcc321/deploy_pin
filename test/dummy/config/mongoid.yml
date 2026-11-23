@@ -1,0 +1,4 @@
+test:
+  clients:
+    default:
+      uri: <%= ENV.fetch('MONGODB_URI', "mongodb://127.0.0.1:27017/#{ENV.fetch('DB_NAME', 'deploy_pin')}_test") %>

@@ -100,6 +100,8 @@ Finally, run the migration:
 rake db:migrate
 ```
 
+Using Mongoid instead of ActiveRecord? See [Storage](#storage).
+
 ## Database Timeout
 
 By default, deploy_pin runs all non-parallel tasks under a database statement timeout. To set a default value, you should define it in the deploy_pin initializer, for example:
@@ -290,6 +292,25 @@ end
 ```
 
 Existing setups don't need any changes: the default keeps using the same `DeployPin::Record` model and `deploy_pins` table, so already executed tasks stay marked as done.
+
+### Mongoid
+
+Apps using [Mongoid](https://github.com/mongodb/mongoid) can store task records in a `deploy_pins` collection (`DeployPin::MongoidRecord`). Mongoid is not a dependency of deploy_pin, so it has to be in your Gemfile.
+
+Generate the initializer with the Mongoid storage (no migration is created):
+```bash
+rails g deploy_pin:install --storage=mongoid
+rails db:mongoid:create_indexes
+```
+
+Or set it in an existing initializer:
+```ruby
+DeployPin.setup do
+  storage :mongoid
+end
+```
+
+Supported providers: `:active_record`, `:mongoid`.
 
 The record model of the configured provider is available via `DeployPin::Storage.record_class`. An unknown provider raises an `ArgumentError` listing the supported ones.
 

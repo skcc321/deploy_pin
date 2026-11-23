@@ -42,8 +42,9 @@ class DeployPin::Runner::Test < ActiveSupport::TestCase
 
     tasks = DeployPin::Collector.new(identifiers: identifiers).send(:init_tasks)
     uuids = tasks.map(&:identifier).reject(&:negative?)
-    assert_equal(uuids.count - 1, DeployPin::Record.where(uuid: uuids).count)
-    assert_equal(DeployPin::Record.where(uuid: uuids).all? { |record| !record.completed_at.nil? }, true)
+    records = uuids.filter_map { |uuid| DeployPin::Storage.record_class.find_by(uuid:) }
+    assert_equal(uuids.count - 1, records.count)
+    assert_equal(records.all? { |record| !record.completed_at.nil? }, true)
   end
 
   test 'summary with empty identifiers' do
