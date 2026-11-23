@@ -15,7 +15,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         # Due to https://github.com/actions/runner/issues/849, we have to use quotes for '3.0'
-        ruby: ["3.3.14", "3.4.13"]
+        ruby: ["3.3.14", "3.4.13", "4.0.10"]
         db: ["mariadb", "mysql", "pg", "mongodb"]
 
     runs-on: ${{ matrix.os }}
@@ -63,7 +63,7 @@ jobs:
           - "3307:3306"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -145,7 +145,7 @@ jobs:
       # ActiveRecord and Mongoid runs cover different code paths; the coverage job merges both.
       - name: Upload coverage
         if: ${{ (matrix.db == 'pg' || matrix.db == 'mongodb') && matrix.ruby == '3.4.13' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ matrix.db }}
           path: coverage/.resultset.json
@@ -156,12 +156,12 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.4.13"
           bundler-cache: true
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: coverage-*
           path: coverage-parts/

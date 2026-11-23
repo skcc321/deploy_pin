@@ -2,6 +2,8 @@
 * Add `storage` setting (defaults to `:active_record`) and `DeployPin::Storage` to resolve the record model, preparing for additional storage providers. Existing configs and `deploy_pins` records are unaffected.
 * Load ActiveRecord models lazily and skip statement timeouts when ActiveRecord is not loaded.
 * Add Mongoid storage provider (`storage :mongoid`) and `--storage` option for `rails g deploy_pin:install`.
+* Allow `connection_pool` 3.x, `parallel` 2.x and cap `redis` below 7.
+* Update locked dependencies to resolve security advisories (Rails 8.1.4.1, rack, nokogiri, net-imap, etc.); test against Ruby 4.0.
 
 # 1.7.6 / 2025-11-25
 # Add `rake deploy_pin:mark_done` task to mark specific deploy pins as completed based on criteria.

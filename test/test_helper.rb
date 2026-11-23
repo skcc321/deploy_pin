@@ -16,6 +16,7 @@ if DeployPin::Database.available?
 end
 DeployPin::Storage.record_class.create_indexes if DeployPin.storage == :mongoid
 require 'rails/test_help'
+require 'minitest/mock'
 require 'fileutils'
 
 # Load fixtures from the engine
