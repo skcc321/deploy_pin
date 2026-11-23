@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 DeployPin.setup do
+<% if options[:storage] != 'active_record' -%>
+  storage :<%= options[:storage] %>
+<% end -%>
   tasks_path 'lib/deploy_pin'
   groups %w[pre I II III]
   fallback_group 'III'

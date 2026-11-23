@@ -4,6 +4,8 @@ require 'minitest/autorun'
 require 'test_helper'
 
 class DeployPin::ParallelWrapper::Test < ActiveSupport::TestCase
+  setup { skip 'requires ActiveRecord' unless DeployPin::Database.available? }
+
   test 'should throw exception when execution time is equal to the default timeout' do
     task_content = task_content_with_default_timeout(0.3.second)
     task = DeployPin::Task.new(task_content)

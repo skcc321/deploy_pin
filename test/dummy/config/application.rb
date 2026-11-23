@@ -3,7 +3,15 @@
 require_relative 'boot'
 
 require 'rails'
-require 'active_record/railtie'
+require 'action_controller/railtie'
+
+MONGOID_STORAGE = ENV['DB_ROLE'] == 'mongodb'
+
+if MONGOID_STORAGE
+  require 'mongoid'
+else
+  require 'active_record/railtie'
+end
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -13,6 +21,9 @@ require 'deploy_pin'
 module Dummy
   class Application < Rails::Application
     config.load_defaults Rails::VERSION::STRING.to_f
+
+    # The dummy ApplicationRecord is ActiveRecord-only.
+    Rails.autoloaders.main.ignore(config.root.join('app/models/application_record.rb')) if MONGOID_STORAGE
 
     # Configuration for the application, engines, and railties goes here.
     #

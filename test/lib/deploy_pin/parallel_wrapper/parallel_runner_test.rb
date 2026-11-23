@@ -61,6 +61,8 @@ class DeployPin::ParallelWrapper::ParallelRunner::Test < ActiveSupport::TestCase
   end
 
   test 'runs the block under the database timeout when ActiveRecord is available' do
+    skip 'requires ActiveRecord' unless DeployPin::Database.available?
+
     timeouts = []
     execute_with_timeout = lambda do |timeout, **_params, &block|
       timeouts << timeout

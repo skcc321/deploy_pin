@@ -10,8 +10,8 @@ class DeployPin::TaskCriteria::Test < ActiveSupport::TestCase
     ::FileUtils.cp 'test/support/files/task_different.rb', "#{DeployPin.tasks_path}3_task.rb"
 
     # create two record
-    DeployPin::Record.create(uuid: '75371573753751', completed_at: Time.current)
-    DeployPin::Record.create(uuid: '75371573753754')
+    DeployPin::Storage.record_class.create(uuid: '75371573753751', completed_at: Time.current)
+    DeployPin::Storage.record_class.create(uuid: '75371573753754')
 
     @task_1 = DeployPin::Task.new("#{DeployPin.tasks_path}1_task.rb")
     @task_2 = DeployPin::Task.new("#{DeployPin.tasks_path}2_task.rb")

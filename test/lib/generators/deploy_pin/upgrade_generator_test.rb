@@ -9,6 +9,8 @@ class DeployPin::UpgradeGeneratorTest < Rails::Generators::TestCase
   setup :prepare_destination
 
   test 'generator runs without errors' do
+    skip 'requires ActiveRecord' unless DeployPin::Database.available?
+
     assert_nothing_raised do
       run_generator ['I']
     end

@@ -12,9 +12,9 @@ class DeployPin::Task::Test < ActiveSupport::TestCase
   end
 
   test 'prepare' do
-    assert_equal DeployPin::Record.where(uuid: @task.identifier).count, 0
+    assert_equal DeployPin::Storage.record_class.where(uuid: @task.identifier).count, 0
     assert_nothing_raised { @task.prepare }
-    assert_equal DeployPin::Record.where(uuid: @task.identifier).count, 1
+    assert_equal DeployPin::Storage.record_class.where(uuid: @task.identifier).count, 1
   end
 
   test 'mark' do
