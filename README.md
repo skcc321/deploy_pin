@@ -130,7 +130,15 @@ User.where(name: nil).find_each { |user| user.update!(name: user.email) }
 
 ### Groups and ordering
 
-`groups` defines the steps of your deploy, in order. For example, `pre` runs before migrations and `I`, `II` and `III` run after them. Tasks are sorted by **group**, then by **identifier**. Negative identifiers run after the other tasks of their group.
+`groups` defines the steps of your deploy, in order. Group names are up to you, and so is the moment each group runs: you choose it by calling `rake 'deploy_pin:run[<group>]'` at that point of your deploy. You can have as many stages as you need. For example:
+
+| Group | When you run it | Typical tasks |
+|---|---|---|
+| `pre` | Right before the deploy starts | Pause background jobs, take a snapshot, flip a feature flag |
+| `I`, `II`, … | Around the migrations | Backfill data that the new schema or code needs |
+| `post` | Right after the new release is live | Warm caches, re-enable jobs, notify other services |
+
+Tasks are sorted by **group**, then by **identifier**. Negative identifiers run after the other tasks of their group.
 
 A non-recurring task runs only once. When it finishes, it is marked done in the storage, and later runs skip it. If two tasks have the same code, only the first one runs.
 
@@ -167,18 +175,35 @@ rake 'deploy_pin:run[I, !20190401135040]' # group I except one task
 
 ## Hooking into your deploy
 
-Run the `pre` group before migrations and the rest after them. A deploy step usually looks like this:
+Call `deploy_pin:run` with the right groups at each stage of your deploy. With `groups %w[pre I II III post]`:
 
 ```bash
-bundle exec rake 'deploy_pin:run[pre]' db:migrate 'deploy_pin:run[I, II, III]'
+# right before the deploy
+bundle exec rake 'deploy_pin:run[pre]'
+
+# with the migrations
+bundle exec rake db:migrate 'deploy_pin:run[I, II, III]'
+
+# right after the new release is live
+bundle exec rake 'deploy_pin:run[post]'
 ```
+
+The examples below use the same stages. Adjust them to your own groups.
 
 <details>
 <summary>Heroku</summary>
 
+The release phase runs before the new release goes live:
+
 ```
 # Procfile
 release: bundle exec rake 'deploy_pin:run[pre]' db:migrate 'deploy_pin:run[I, II, III]'
+```
+
+Heroku has no hook after the release is live, so run `post` as a one-off dyno from your deploy pipeline:
+
+```bash
+heroku run "bundle exec rake 'deploy_pin:run[post]'"
 ```
 
 </details>
@@ -189,10 +214,8 @@ release: bundle exec rake 'deploy_pin:run[pre]' db:migrate 'deploy_pin:run[I, II
 ```ruby
 # lib/capistrano/tasks/deploy_pin.rake
 namespace :deploy_pin do
-  %w[pre post].each do |step|
-    task step do
-      groups = step == 'pre' ? 'pre' : 'I, II, III'
-
+  { pre: 'pre', migrate: 'I, II, III', post: 'post' }.each do |stage, groups|
+    task stage do
       on primary(:db) do
         within release_path do
           with rails_env: fetch(:rails_env) do
@@ -206,7 +229,8 @@ end
 
 # config/deploy.rb
 before 'deploy:migrate', 'deploy_pin:pre'
-after 'deploy:migrate', 'deploy_pin:post'
+after 'deploy:migrate', 'deploy_pin:migrate'
+after 'deploy:published', 'deploy_pin:post'
 ```
 
 </details>
@@ -214,11 +238,17 @@ after 'deploy:migrate', 'deploy_pin:post'
 <details>
 <summary>Kamal</summary>
 
-After `kamal deploy`, run the tasks in the new container:
+Use [Kamal hooks](https://kamal-deploy.org/docs/hooks/overview/). They run on your machine, so each one calls `kamal app exec` (remember to make them executable):
 
 ```bash
-kamal app exec --primary --reuse "bin/rails 'deploy_pin:run[I, II, III]'"
+# .kamal/hooks/pre-deploy: the new image is pushed, the old version still serves traffic
+kamal app exec --primary --version "$KAMAL_VERSION" "bin/rails 'deploy_pin:run[pre]'"
+
+# .kamal/hooks/post-deploy: the new version is live
+kamal app exec --primary --reuse "bin/rails 'deploy_pin:run[I, II, III]' 'deploy_pin:run[post]'"
 ```
+
+The default Rails entrypoint runs `db:prepare` when the container boots, so here the migration groups run in the post-deploy hook.
 
 </details>
 
