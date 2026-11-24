@@ -44,4 +44,51 @@ ruby -e '
   [DeployPin::InstallGenerator, DeployPin::TaskGenerator, DeployPin::UpgradeGenerator].each(&:desc)
 '
 
-echo "smoke test passed: $(gem list deploy_pin | head -1)"
+echo "installed gem passed: $(gem list deploy_pin | head -1)"
+
+# The README quick start without Rails, in a new bundle: first with DeployPin only,
+# then with ActiveRecord and SQLite.
+quick_start="$work/quick_start"
+mkdir -p "$quick_start" && cd "$quick_start"
+cat > Gemfile <<RUBY
+source 'https://rubygems.org'
+gem 'deploy_pin', path: '$work/src'
+RUBY
+bundle install --quiet
+
+bundle exec ruby -e 'require "deploy_pin"; DeployPin.load_tasks; abort "no rake tasks" unless Rake::Task.task_defined?("deploy_pin:run")'
+if output=$(bundle exec deploy_pin install 2>&1); then
+  echo "deploy_pin install without activerecord should fail"; exit 1
+fi
+grep -q 'needs the activerecord gem' <<<"$output"
+
+bundle add activerecord sqlite3 --quiet
+bundle exec deploy_pin install
+mkdir -p db
+cat > config/environment.rb <<'RUBY'
+require 'active_record'
+require 'deploy_pin'
+ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: 'db/app.sqlite3')
+require_relative 'deploy_pin'
+RUBY
+cat > Rakefile <<'RUBY'
+require 'deploy_pin'
+DeployPin.load_tasks
+
+task :environment do
+  require_relative 'config/environment'
+end
+
+task migrate: :environment do
+  ActiveRecord::MigrationContext.new('db/migrate').migrate
+end
+RUBY
+bundle exec rake migrate
+bundle exec deploy_pin task say_hello -g I --require config/environment.rb
+echo 'File.write("ran.txt", File.exist?("ran.txt") ? "twice" : "once")' >> lib/deploy_pin/*_say_hello.rb
+sed -i.bak 's/^20.times.*$//' lib/deploy_pin/*_say_hello.rb # skip the template's progress bar demo
+bundle exec rake 'deploy_pin:run[I, II]' >/dev/null
+bundle exec rake deploy_pin:run >/dev/null
+[ "$(cat ran.txt)" = once ] || { echo "the task did not run exactly once: $(cat ran.txt 2>/dev/null)"; exit 1; }
+
+echo "quick start passed"

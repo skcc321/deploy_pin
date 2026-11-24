@@ -40,6 +40,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'colorize', '~> 1.1'
   spec.add_dependency 'connection_pool', '>= 2.2', '< 4'
   spec.add_dependency 'parallel', '>= 1.23', '< 3'
+  spec.add_dependency 'rake', '>= 12' # DeployPin.load_tasks
   spec.add_dependency 'redis', '>= 4.0', '< 7'
   spec.add_dependency 'ruby-progressbar', '~> 1.13'
   spec.add_dependency 'thor', '>= 1.0', '< 2'
@@ -53,7 +54,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'pg'
   spec.add_development_dependency 'pry'
   spec.add_development_dependency 'rails', '>= 7.0', '< 9.0' # the Rails test suite (test/rails)
-  spec.add_development_dependency 'rake'
   spec.add_development_dependency 'redcarpet'
   spec.add_development_dependency 'rspec' # runs the specs the task generator creates
   spec.add_development_dependency 'rubocop'

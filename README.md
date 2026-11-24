@@ -95,16 +95,19 @@ end
 
 ### Without Rails
 
-DeployPin works in any Ruby app. The `deploy_pin` command runs the same generators as `rails g deploy_pin:*`:
+DeployPin works in any Ruby app. Add it together with a storage gem and your database adapter, for example ActiveRecord with SQLite (use `pg` or `mysql2` for other databases, or `mongoid` instead of `activerecord`):
 
 ```bash
-bundle add deploy_pin
-bundle exec deploy_pin install  # config/deploy_pin.rb and db/migrate/<timestamp>_create_deploy_pins.rb
+bundle add deploy_pin activerecord sqlite3
 ```
 
-Run the migration with your migration tool, or pass `--storage=mongoid`. `--config-path` and `--migrations-path` change where the files go.
+The `deploy_pin` command runs the same generators as `rails g deploy_pin:*`. Create `config/deploy_pin.rb` and the `deploy_pins` migration (with `--storage=mongoid`, only the configuration):
 
-Then add the rake tasks to your `Rakefile`. They run your `environment` task first, so define one that loads your app and connects to the database:
+```bash
+bundle exec deploy_pin install # --config-path and --migrations-path change where the files go
+```
+
+Then add the rake tasks to your `Rakefile`. They run your `environment` task first, so define one that loads your app, connects to the database and loads `config/deploy_pin.rb`. Run the migration with your migration tool:
 
 ```ruby
 # Rakefile
@@ -112,20 +115,28 @@ require 'deploy_pin'
 DeployPin.load_tasks
 
 task :environment do
-  require_relative 'config/environment' # loads the app, the database connection and config/deploy_pin.rb
+  require_relative 'config/environment'
 end
+```
+
+```ruby
+# config/environment.rb
+require 'active_record'
+require 'deploy_pin'
+ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: 'db/app.sqlite3')
+require_relative 'deploy_pin'
 ```
 
 Without an `environment` task, the rake tasks only load `config/deploy_pin.rb`.
 
-Generate tasks with `deploy_pin task`. It loads `config/deploy_pin.rb` first, or the files given with `--require`:
+Generate tasks with `deploy_pin task`. It loads `config/deploy_pin.rb` first, or the files given with `--require`. Then run them with rake:
 
 ```bash
-bundle exec deploy_pin task backfill_user_names -g I
 bundle exec deploy_pin task backfill_user_names -g I --require config/environment.rb
+bundle exec rake deploy_pin:run
 ```
 
-The rest of this README uses the Rails commands. Replace `rails g deploy_pin:<command>` with `deploy_pin <command>`, and `config/initializers/deploy_pin.rb` with `config/deploy_pin.rb`.
+The rest of this README uses the Rails commands. Replace `rails g deploy_pin:<command>` with `deploy_pin <command>`, and `config/initializers/deploy_pin.rb` with `config/deploy_pin.rb`. [`bin/smoke_test_gem`](bin/smoke_test_gem) runs these steps on CI.
 
 ## Quick start
 
