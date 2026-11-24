@@ -127,7 +127,7 @@ DeployPin::Database::execute_with_timeout do
 end
 ```
 
-For more information about the parameters, please refer to the documentation [here](lib/deploy_pin/database.rb).
+For more information about the parameters, please refer to the [`DeployPin::Database` documentation](https://rubydoc.info/gems/deploy_pin/DeployPin/Database).
 
 ## Parallel
 
@@ -141,7 +141,7 @@ parallel_each(1..2, in_processes: 2, timeout: 0.3.seconds) do |i|
 end
 ```
 
-Check the documentation [here](lib/deploy_pin/parallel_wrapper.rb) for more details.
+Check the [`DeployPin::ParallelWrapper` documentation](https://rubydoc.info/gems/deploy_pin/DeployPin/ParallelWrapper) for more details.
 
 ## Formatting
 
@@ -315,6 +315,14 @@ Supported providers: `:active_record`, `:mongoid`.
 The record model of the configured provider is available via `DeployPin::Storage.record_class`. An unknown provider raises an `ArgumentError` listing the supported ones.
 
 Note: [Database Timeout](#database-timeout) and the timeout of the [Parallel](#parallel) wrapper rely on ActiveRecord connections. When ActiveRecord is not loaded, tasks run without a statement timeout.
+
+## API Documentation
+
+The API documentation is published at [rubydoc.info](https://rubydoc.info/gems/deploy_pin). To build it locally into `doc/`, run:
+
+```bash
+bundle exec rake yard
+```
 
 ## Similar Gems
 - https://github.com/ilyakatz/data-migrate

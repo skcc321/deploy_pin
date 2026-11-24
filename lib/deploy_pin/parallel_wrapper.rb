@@ -1,25 +1,35 @@
 # frozen_string_literal: true
 
 module DeployPin
-  # Parallel wrapper to run parallel tasks using database statement timeout.
-  # This wrapper keeps parallel interface, but running the processes under db statement timeout.
+  # Runs the methods of the [Parallel](https://github.com/grosser/parallel)
+  # gem with each block call under a database statement timeout. Prefix any
+  # Parallel method with `parallel_` inside a task.
   #
-  # In order to use this wrapper, just use call parallel methods with `parallel_`. Ex.:
+  # The `timeout:` option sets the timeout; it defaults to
+  # {DeployPin.statement_timeout}. Pass an array to give
+  # {Database.execute_with_timeout} options too.
+  #
+  # @example
   #   parallel_each(1..2, in_processes: 2, timeout: 0.3.seconds) do |i|
   #     puts "Item: #{i}, Worker: #{Parallel.worker_number}"
   #     ActiveRecord::Base.connection.execute("<some db query>")
   #   end
   #
-  # In order to pass more `timeout` options, it requires to pass an array, like:
+  # @example With timeout options
   #   parallel_each(1..2, in_processes: 2, timeout: [0.3.seconds, { connected_to: { role: :reading } }]) do |i|
-  #     puts "Item: #{i}, Worker: #{Parallel.worker_number}"
   #     ActiveRecord::Base.connection.execute("<some db query>")
   #   end
   module ParallelWrapper
+    # Prefix that maps a method to its Parallel counterpart.
     PARALLEL_PREFIX = 'parallel_'
 
+    # Runs one `parallel_*` call.
     # :reek:TooManyInstanceVariables
     class ParallelRunner
+      # @param method_name [Symbol] the `parallel_*` method that was called
+      # @param args [Array] arguments for the Parallel method; a trailing hash
+      #   with `:timeout` is used for the timeout
+      # @yield the block to run for each item
       def initialize(method_name, *args, &db_block)
         @method_name = method_name
         @db_block = db_block
@@ -32,6 +42,8 @@ module DeployPin
         @parallel_args = args
       end
 
+      # @return [Object] the result of the Parallel method
+      # @raise [RuntimeError] if no arguments were given
       def run
         raise 'You must provide at least one argument for parallel methods' if parallel_args.empty?
 
@@ -75,12 +87,16 @@ module DeployPin
         end
     end
 
+    # Handles `parallel_*` calls.
+    #
+    # @return [Object] the result of the Parallel method
     def method_missing(name, *args, &block)
       return super unless respond_to_missing?(name)
 
       ParallelRunner.new(name, *args, &block).run
     end
 
+    # @return [Boolean] true for `parallel_*` names of existing Parallel methods
     # :reek:ManualDispatch and :reek:BooleanParameter
     def respond_to_missing?(method_name, include_private = false)
       return super unless parallel_prefix_pattern.match? method_name

@@ -1,0 +1,10 @@
+--markup markdown
+--readme README.md
+--output-dir doc
+--protected
+--no-private
+--exclude lib/generators/deploy_pin/.*/templates
+lib/**/*.rb
+-
+CHANGELOG.md
+MIT-LICENSE

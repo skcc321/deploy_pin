@@ -1,47 +1,44 @@
 # frozen_string_literal: true
 
 module DeployPin
+  # Runs database queries under a statement timeout (PostgreSQL, MySQL and MariaDB).
   module Database
     extend self
 
-    # Run a block under a sql maximum timeout.
+    # Runs a block under a database statement timeout.
     #
-    # A default timeout will be get from DeployPin.setup
-    #
-    #   # config/initializers/deploy_pin.rb
-    #   DeployPin.setup do
-    #     statement_timeout 0.2.second # 200 ms
-    #   end
-    #
-    #   # <app root>/deploy_pin/20190401135040_task.rb
+    # @example Use the default {DeployPin.statement_timeout}
     #   # 20190401135040:I
     #   # task_title: Execute some query with timeout
     #   # affected_areas: none
     #
     #   # === task code goes down here ===
-    #   DeployPin::Database::execute_with_timeout do
+    #   DeployPin::Database.execute_with_timeout do
     #     ActiveRecord::Base.connection.execute("select * from shipments;")
     #   end
     #
-    # A timeout can be passed as param as well:
-    #
-    #   DeployPin::Database::execute_with_timeout 10.minutes do
+    # @example Pass a timeout
+    #   DeployPin::Database.execute_with_timeout 10.minutes do
     #     ActiveRecord::Base.connection.execute("select * from shipments;")
     #   end
     #
-    # In order to connect to multiple databases, pass the +connected_to+ keyword into the params.
-    # The +connected_to+ will use the +ActiveRecord::Base.connected_to+.
-    # To connect to a replica database, for example:
-    #
-    #   DeployPin::Database::execute_with_timeout 1.seconds, connected_to: { role: :reading } do
-    #     Shipment.all # Get all record from replica
+    # @example Run against a replica, through `ApplicationRecord.connected_to`
+    #   DeployPin::Database.execute_with_timeout 1.second, connected_to: { role: :reading } do
+    #     Shipment.all
     #   end
     #
-    # Or a specific database:
-    #
-    #   DeployPin::Database.execute_with_timeout 30.second, connected_to: { database: :test_mysql } do
+    # @example Run against another database, through `ActiveRecord::Base.connected_to`
+    #   DeployPin::Database.execute_with_timeout 30.seconds, connected_to: { database: :test_mysql } do
     #     ActiveRecord::Base.connection.execute("<some mysql query>")
     #   end
+    #
+    # @param timeout [ActiveSupport::Duration, Numeric] timeout, in seconds when numeric
+    # @param params [Hash] options
+    # @option params [Hash] :connected_to arguments passed to `connected_to`
+    # @yield the code to run under the timeout
+    # @return [Object] the result of the block
+    # @raise [NotImplementedError] if ActiveRecord is not loaded
+    # @raise [ArgumentError] if the timeout is not greater than zero
     def execute_with_timeout(timeout = DeployPin.statement_timeout, **params, &blk)
       raise NotImplementedError, 'statement timeout requires ActiveRecord' unless available?
       raise ArgumentError, 'timeout must be greater than zero' if timeout.to_f <= 0
@@ -55,6 +52,8 @@ module DeployPin
     end
 
     # Statement timeouts are implemented on top of ActiveRecord connections only.
+    #
+    # @return [Boolean] whether ActiveRecord is loaded
     def available?
       defined?(::ActiveRecord::Base) ? true : false
     end
