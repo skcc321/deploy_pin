@@ -1,11 +1,19 @@
 # Unreleased
-* Add YARD documentation for the public API (`bundle exec rake yard`), published at https://rubydoc.info/gems/deploy_pin.
-* Fix the `!` force and skip syntax for one-character groups and identifiers (e.g. `I!`, `!I`), which matched nothing before.
-* Add `storage` setting (defaults to `:active_record`) and `DeployPin::Storage` to resolve the record model, preparing for additional storage providers. Existing configs and `deploy_pins` records are unaffected.
+
+# 1.9.0 / 2026-11-24
+### Added
+* Mongoid storage provider (`storage :mongoid`) and a `--storage` option for `rails g deploy_pin:install`.
+* `storage` setting (defaults to `:active_record`) and `DeployPin::Storage` to resolve the record model. Existing configs and `deploy_pins` records are unaffected.
+* YARD documentation for the public API (`bundle exec rake yard`), published at https://rubydoc.info/gems/deploy_pin.
+
+### Changed
+* Allow `connection_pool` 3.x and `parallel` 2.x; cap `redis` below 7.
 * Load ActiveRecord models lazily and skip statement timeouts when ActiveRecord is not loaded.
-* Add Mongoid storage provider (`storage :mongoid`) and `--storage` option for `rails g deploy_pin:install`.
-* Allow `connection_pool` 3.x, `parallel` 2.x and cap `redis` below 7.
-* Update locked dependencies to resolve security advisories (Rails 8.1.4.1, rack, nokogiri, net-imap, etc.); test against Ruby 4.0.
+* Test against Ruby 4.0 and Rails 8.1; update locked development dependencies to resolve security advisories.
+* Releases are published with RubyGems trusted publishing and carry build attestations.
+
+### Fixed
+* The `!` force and skip syntax now works for one-character groups and identifiers (e.g. `I!`, `!I`), which matched nothing before.
 
 # 1.7.6 / 2025-11-25
 # Add `rake deploy_pin:mark_done` task to mark specific deploy pins as completed based on criteria.
