@@ -1,10 +1,8 @@
 Description:
-    Creates the DeployPin initializer and, for ActiveRecord, the migration
-    that stores the tasks state in the DB. Outside Rails, run `deploy_pin install`.
+    Creates base migration to store tasks state in the DB
 
 Example:
-    rails generate deploy_pin:install [--storage=mongoid]
+    rails generate deploy_pin:install
 
     This will create:
-        config/initializers/deploy_pin.rb
-        db/migrate/{timestamp}_create_deploy_pins.rb (not with --storage=mongoid)
+        db/migrate/create_deploy_pins.rb

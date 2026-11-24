@@ -3,9 +3,9 @@
 * DeployPin works without Rails. Rails is no longer a dependency (ActiveSupport and Thor are). In other Ruby apps:
   * the `deploy_pin` command runs the generators: `deploy_pin install` (creates `config/deploy_pin.rb`), `deploy_pin task` and `deploy_pin upgrade`. It loads `config/deploy_pin.rb` first, or the files given with `--require`;
   * `DeployPin.load_tasks` adds the `deploy_pin:*` rake tasks to a Rakefile. They run the app's `environment` task first when there is one, else `DeployPin.load_config`.
-  Rails apps keep working as before: the engine loads the rake tasks, and `rails g deploy_pin:*` runs the same generators.
+  Rails apps keep working as before: the engine loads the rake tasks, `rails g deploy_pin:task` runs the same task generator, and `rails g deploy_pin:install`/`upgrade` keep Rails' migration numbering. Both share the templates.
 * `storage` accepts a record class of your own, e.g. for Sequel or ROM.
-* `deploy_pin install` (and `rails g deploy_pin:install`) takes `--config-path` and `--migrations-path`.
+* `deploy_pin install` takes `--config-path` and `--migrations-path`.
 
 ### Changed
 * The spec generated for a task requires `spec_helper` outside Rails apps, and loads the rake tasks with `DeployPin.load_tasks`.
