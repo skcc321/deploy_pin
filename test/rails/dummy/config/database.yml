@@ -1,0 +1,37 @@
+# frozen_string_literal: true
+
+default: &default
+  encoding: utf8
+  host: 127.0.0.1
+  username: <%= ENV['DB_USERNAME'] %>
+  password: <%= ENV['DB_PASSWORD'] %>
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  database: <%= ENV['DB_NAME'] %>
+
+pg: &pg
+  <<: *default
+  adapter: postgresql
+
+mysql: &mysql
+  <<: *default
+  username: root
+  adapter: mysql2
+
+development:
+  pg:
+    <<: *pg
+  mariadb:
+    <<: *mysql
+  mysql:
+    <<: *mysql
+
+test:
+  pg:
+    <<: *pg
+    database: <%= ENV["DB_NAME"] %>_test
+  mariadb:
+    <<: *mysql
+    database: <%= ENV["DB_NAME"] %>_test
+  mysql:
+    <<: *mysql
+    database: <%= ENV["DB_NAME"] %>_test

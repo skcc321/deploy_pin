@@ -54,12 +54,26 @@ module DeployPin
       self.print("Tasks number: #{DeployPin::Collector.new(identifiers:).tasks_count}")
     end
 
+    # Variables that name the app environment, by priority, when the app is not a
+    # Rails app: Rails, Rack, then Sinatra and other Rack apps.
+    ENV_VARIABLES = %w[RAILS_ENV RACK_ENV APP_ENV].freeze
+
     # Prints a message, except in the test environment.
     #
     # @param msg [String]
     # @return [void]
     def self.print(msg)
-      puts(msg) unless Rails.env.test?
+      puts(msg) unless test_env?
+    end
+
+    # Whether the app runs in its test environment: `Rails.env` in a Rails
+    # app, else the first of {ENV_VARIABLES} that is set.
+    #
+    # @return [Boolean]
+    def self.test_env?
+      return ::Rails.env.test? if defined?(::Rails.env)
+
+      ENV.values_at(*ENV_VARIABLES).find(&:present?) == 'test'
     end
   end
 end

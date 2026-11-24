@@ -1,8 +1,9 @@
 Description:
-    Upgrades the deploy_pins table in the DB with an extra columns for resumable tasks
+    Upgrades the deploy_pins table in the DB with an extra columns for resumable tasks.
+    Outside Rails, run `deploy_pin upgrade`.
 
 Example:
     rails generate deploy_pin:upgrade
 
     This will create:
-        db/migrate/upgrade_deploy_pins.rb
+        db/migrate/{timestamp}_upgrade_deploy_pins.rb

@@ -3,7 +3,7 @@
 --output-dir doc
 --protected
 --no-private
---exclude lib/generators/deploy_pin/.*/templates
+--exclude lib/deploy_pin/generators/templates
 lib/**/*.rb
 -
 CHANGELOG.md

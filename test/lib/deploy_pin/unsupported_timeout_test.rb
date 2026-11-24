@@ -50,3 +50,19 @@ class DeployPin::UnsupportedTimeoutTest < ActiveSupport::TestCase
     assert_equal [10, 20], runner.run
   end
 end
+
+# `connected_to:` switches the connection through the app's ApplicationRecord,
+# or through ActiveRecord::Base in apps without one, like this plain Ruby app.
+class DeployPin::DatabaseConnectedToTest < ActiveSupport::TestCase
+  setup { skip 'requires ActiveRecord' unless DeployPin::Database.available? }
+
+  test 'runs the block connected to a role through ActiveRecord::Base without an ApplicationRecord' do
+    refute defined?(::ApplicationRecord)
+
+    role = DeployPin::Database.execute_with_timeout(1, connected_to: { role: :writing }) do
+      ActiveRecord::Base.current_role
+    end
+
+    assert_equal :writing, role
+  end
+end

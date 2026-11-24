@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 module DeployPin
-  # Rails engine that loads the `deploy_pin:*` rake tasks.
+  # Rails engine that loads the `deploy_pin:*` rake tasks. It is only loaded
+  # in Rails apps; other apps call {DeployPin.load_tasks} from their Rakefile.
   class Engine < ::Rails::Engine
     isolate_namespace DeployPin
 

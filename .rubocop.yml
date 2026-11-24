@@ -3,7 +3,11 @@ plugins: rubocop-minitest
 
 AllCops:
   Exclude:
-    - lib/generators/deploy_pin/**/templates/**/*.rb
+    - lib/deploy_pin/generators/templates/**/*
+    - test/dummy/lib/deploy_pin/**/*
+    - test/rails/dummy/tmp/**/*
+    - test/rails/dummy/lib/deploy_pin/**/*
+    - tmp/**/*
   NewCops: disable
   TargetRubyVersion: 3.1
 
@@ -12,5 +16,14 @@ Layout/IndentationConsistency:
 
 Style/ClassAndModuleChildren:
   EnforcedStyle: nested
+  Exclude:
+    - test/**/*_test.rb
+
+Metrics/BlockLength:
+  Exclude:
+    - '*.gemspec'
+    - lib/tasks/*.rake
+
+Metrics/ClassLength:
   Exclude:
     - test/**/*_test.rb

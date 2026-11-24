@@ -126,17 +126,20 @@ jobs:
       - name: Setup test database
         if: ${{ matrix.db != 'mongodb' }}
         env:
+          APP_ENV: test
           RAILS_ENV: test
           DB_NAME: ${{ env.DB_NAME }}
           DB_USERNAME: ${{ env.DB_USERNAME }}
           DB_PASSWORD: ${{ env.DB_PASSWORD }}
           DB_ROLE: ${{ matrix.db }}
         run: |
+          bundle exec rake db:prepare
           bin/rails db:prepare
 
-      - name: Run tests
+      # DeployPin in a plain Ruby app (test/dummy): no Rails loaded
+      - name: Run tests (plain Ruby app)
         env:
-          RAILS_ENV: test
+          APP_ENV: test
           DB_ROLE: ${{ matrix.db }}
           DB_NAME: ${{ env.DB_NAME }}
           DB_USERNAME: ${{ env.DB_USERNAME }}
@@ -144,7 +147,19 @@ jobs:
         run: |
           bin/test
 
+      # DeployPin in a Rails app (test/rails/dummy): engine, rake tasks, rails g
+      - name: Run tests (Rails app)
+        env:
+          RAILS_ENV: test
+          DB_ROLE: ${{ matrix.db }}
+          DB_NAME: ${{ env.DB_NAME }}
+          DB_USERNAME: ${{ env.DB_USERNAME }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+        run: |
+          bin/test rails
+
       # ActiveRecord and Mongoid runs cover different code paths; the coverage job merges both.
+      # Each upload holds both suites (plain Ruby and Rails), which SimpleCov merges.
       - name: Upload coverage
         if: ${{ (matrix.db == 'pg' || matrix.db == 'mongodb') && matrix.ruby == '3.4.13' }}
         uses: actions/upload-artifact@v7
