@@ -169,6 +169,22 @@ class DeployPin::CleanupTest < ActiveSupport::TestCase
     refute_path_exists @old
   end
 
+  test 'removes a generated test that is in the tasks directory' do
+    DeployPin.setup { tests_path TASKS_DIR }
+    spec = "#{TASKS_DIR}#{@old_id}_old_spec.rb"
+    File.write(spec, "# frozen_string_literal: true\n\nrequire 'spec_helper'\n\nRSpec.describe 'task' do\nend\n")
+
+    assert_equal ["#{tasks_dir}#{@old_id}_old_spec.rb", "#{tasks_dir}#{@old_id}_old.rb"], cleanup
+    refute_path_exists spec
+    refute_path_exists @old
+  end
+
+  test 'prints paths in the current directory relative to it, even after a doubled slash' do
+    DeployPin.setup { tasks_path "#{Dir.pwd}//#{TASKS_DIR.delete_prefix('./')}" }
+
+    assert_equal ["#{tasks_dir}#{@old_id}_old.rb"], cleanup(dry_run: true).grep_v(/_spec\.rb\z/)
+  end
+
   test 'created_at and cleanable?' do
     tasks = [@old, @recent, @recurring, @not_a_timestamp, @negative].map do |file|
       DeployPin::Task.new(file).tap(&:parse)

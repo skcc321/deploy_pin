@@ -80,9 +80,12 @@ module DeployPin
         end
       end
 
-      # Whether a file is one of the task files, whatever path names it.
+      # Whether a file is a task file, with an identifier in its header,
+      # whatever path names it. Generated tests have no identifier, so they are
+      # removed even when they are in the tasks directory.
       def task_source?(path)
-        @task_sources ||= @tasks.reject(&:built_in?).filter_map { |task| real_path(task.file) }.to_set
+        @task_sources ||= @tasks.select { |task| task.identifier && !task.built_in? }
+                                .filter_map { |task| real_path(task.file) }.to_set
         @task_sources.include?(real_path(path))
       end
 
@@ -111,13 +114,14 @@ module DeployPin
         end
       end
 
-      # The path without the current directory's prefix, `.` components and
-      # repeated slashes, which name the same file from the current directory.
+      # The path without the current directory's prefix (and the slashes after
+      # it), `.` components and repeated slashes, which name the same file from the current directory.
       # `..` components are kept: after a symbolic link, they lead elsewhere
       # than a lexical normalization says.
-      # :reek:UtilityFunction
+      # :reek:UtilityFunction and :reek:TooManyStatements
       def display_path(path)
-        head, *parts = path.delete_prefix("#{Dir.pwd}/").split('/', -1)
+        cwd = Regexp.escape(Dir.pwd.chomp('/'))
+        head, *parts = path.sub(%r{\A#{cwd}/+}, '').split('/', -1)
         parts = parts.reject { |part| part.empty? || part == '.' }
         head == '.' ? parts.join('/') : [head, *parts].join('/')
       end
