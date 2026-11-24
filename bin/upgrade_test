@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# Upgrade test: sets up a new Rails app with a released DeployPin (1.10.0 by
+# default), runs some of its tasks, then switches the app to this checkout
+# without changing its initializer or records, and checks that:
+#   - the initializer is unchanged, and the deploy_pins migration is identical;
+#   - done tasks are not run again, pending ones run;
+#   - the saved progress of a resumable task is kept;
+#   - tasks generated after the upgrade run.
+#
+# usage: bin/upgrade_test [rails requirement] [from version]
+#   bin/upgrade_test '~> 8.1.0'
+#   bin/upgrade_test '~> 7.0.0' 1.10.0
+#
+# Needs PostgreSQL (DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD) and network
+# access to install gems. Run from the repository root.
+set -euo pipefail
+
+rails_requirement=${1:-'~> 8.1.0'}
+from_version=${2:-1.10.0}
+root=$(pwd)
+work=$(mktemp -d)
+app="$work/app"
+export DB_NAME="deploy_pin_upgrade_$$" RAILS_ENV=development
+unset BUNDLE_GEMFILE RUBYOPT RAILS_ENV_TEST
+trap 'cd "$app" 2>/dev/null && bin/rails db:drop >/dev/null 2>&1; rm -rf "$work"' EXIT
+
+fail() { echo "FAIL: $*" >&2; exit 1; }
+step() { echo "-- $*"; }
+ran() { tr '\n' ' ' < ran.log | sed 's/ $//'; }
+
+gem install --no-document --quiet rails -v "$rails_requirement" >/dev/null
+rails_version=$(ruby -e "puts Gem::Specification.find_by_name('railties', '$rails_requirement').version")
+(cd "$work" && rails "_${rails_version}_" new "$app" --minimal --skip-bundle --skip-git --database=postgresql >/dev/null)
+cd "$app"
+export BUNDLE_GEMFILE="$app/Gemfile"
+cat > config/database.yml <<YML
+development:
+  adapter: postgresql
+  host: ${DB_HOST:-127.0.0.1}
+  port: ${DB_PORT:-5432}
+  username: ${DB_USERNAME}
+  password: ${DB_PASSWORD}
+  database: ${DB_NAME}
+YML
+echo "gem 'deploy_pin', '$from_version'" >> Gemfile
+bundle install --quiet
+step "Rails $rails_version, deploy_pin $from_version from rubygems.org"
+
+# Set up with the released version
+bin/rails g deploy_pin:install >/dev/null
+# No Redis here: turn the deployment state off without touching anything else
+sed -i.bak 's/^  deployment_state_transition(/  _deployment_state = (/' config/initializers/deploy_pin.rb && rm config/initializers/deploy_pin.rb.bak
+bin/rails db:create db:migrate >/dev/null
+for task in first_done:I second_resumable:II third_pending:III; do
+  bin/rails g deploy_pin:task "${task%%:*}" -g "${task##*:}" --skip-test >/dev/null
+  sleep 1 # identifiers are timestamps in seconds
+done
+for file in lib/deploy_pin/*.rb; do
+  sed -i.bak 's/^20\.times.*$//' "$file" && rm "$file.bak" # skip the template's progress bar demo
+  echo "File.open('ran.log', 'a') { |log| log.puts '$(basename "$file" .rb | cut -d_ -f2-)' }" >> "$file"
+done
+: > ran.log
+bin/rails 'deploy_pin:run[I]' >/dev/null
+second_id=$(basename lib/deploy_pin/*_second_resumable.rb | cut -d_ -f1)
+bin/rails runner "DeployPin::Record.create!(uuid: '$second_id', progress: 42)" # started earlier, resumable
+[ "$(ran)" = first_done ] || fail "$from_version ran: $(ran)"
+step "$from_version ran: $(ran)"
+cp config/initializers/deploy_pin.rb "$work/initializer"
+migration=$(ls db/migrate/*_create_deploy_pins.rb)
+
+# Switch to this checkout
+sed -i.bak "s#gem 'deploy_pin', '$from_version'#gem 'deploy_pin', path: '$root'#" Gemfile && rm Gemfile.bak
+bundle install --quiet
+step "switched to $root ($(bundle exec ruby -e 'require "deploy_pin/version"; print DeployPin::VERSION'))"
+cmp -s config/initializers/deploy_pin.rb "$work/initializer" || fail 'the initializer changed'
+
+pending=$(bin/rails runner 'print DeployPin::Collector.new(identifiers: DeployPin.groups).send(:init_tasks).map(&:title).join(", ")')
+[ "$pending" = 'Second Resumable, Third Pending' ] || fail "pending: $pending"
+step "pending: $pending"
+
+: > ran.log
+bin/rails 'deploy_pin:run[I, II, III]' >/dev/null
+[ "$(ran)" = 'second_resumable third_pending' ] || fail "ran after the upgrade: $(ran)"
+step "ran: $(ran)"
+progress=$(bin/rails runner "record = DeployPin::Record.find_by(uuid: '$second_id'); print record.progress, ' ', !record.completed_at.nil?")
+[ "$progress" = '42 true' ] || fail "resumable task (progress, done): $progress"
+step 'resumable task: progress 42 kept, now done'
+
+bin/rails g deploy_pin:task fourth_after_upgrade -g I --skip-test >/dev/null
+sed -i.bak 's/^20\.times.*$//' lib/deploy_pin/*_fourth_after_upgrade.rb && rm lib/deploy_pin/*_fourth_after_upgrade.rb.bak
+: > ran.log
+bin/rails deploy_pin:run >/dev/null
+fourth_id=$(basename lib/deploy_pin/*_fourth_after_upgrade.rb | cut -d_ -f1)
+fourth_done=$(bin/rails runner "print !DeployPin::Record.find_by(uuid: '$fourth_id')&.completed_at.nil?")
+[ "$fourth_done" = true ] || fail 'the task generated after the upgrade did not run'
+not_done=$(bin/rails runner 'print DeployPin::Record.where(completed_at: nil).count')
+[ "$not_done" = 0 ] || fail "$not_done tasks not done"
+[ -z "$(ran)" ] || fail "done tasks ran again: $(ran)"
+step 'new task done, nothing ran twice'
+
+install=$(bin/rails g deploy_pin:install --skip)
+grep -q "identical  $migration" <<<"$install" || fail "install: $install"
+step 'install: migration identical'
+
+echo "upgrade from $from_version passed (Rails $rails_version)"
