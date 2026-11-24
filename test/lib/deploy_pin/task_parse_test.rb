@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require 'benchmark'
 
 # Metadata comes from the header only; the code after it is kept as written.
 class DeployPin::TaskParseTest < ActiveSupport::TestCase
@@ -162,7 +161,9 @@ class DeployPin::TaskParseTest < ActiveSupport::TestCase
     end
 
     long = "# #{'=' * 100_000}x\n"
-    assert_in_delta 0, Benchmark.realtime { DeployPin::Task.new('x').send(:delimiter?, long) }, 0.5
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    refute DeployPin::Task.new('x').send(:delimiter?, long)
+    assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 0.5
   end
 
   test 'explicit timeout and parallel are detected from calls, not from comments or strings' do
