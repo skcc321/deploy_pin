@@ -2,5 +2,5 @@
 
 module DeployPin
   # The gem version.
-  VERSION = '1.8.7'
+  VERSION = '1.9.0'
 end
