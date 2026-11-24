@@ -28,3 +28,7 @@ Metrics/BlockLength:
     - '*.gemspec'
     - lib/tasks/*.rake
     - test/support/*_tests.rb
+
+Metrics/ModuleLength:
+  Exclude:
+    - test/support/*_tests.rb
