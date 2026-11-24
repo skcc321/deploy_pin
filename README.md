@@ -188,6 +188,66 @@ bundle exec rake db:migrate 'deploy_pin:run[I, II, III]'
 bundle exec rake 'deploy_pin:run[post]'
 ```
 
+### Example: a search index change in two stages
+
+Say the new release searches a new Elasticsearch index, `products_v2`. The index has to exist before the new code goes live, but filling it takes hours. Split the work into a `pre` task and a `post` task:
+
+```bash
+rails g deploy_pin:task create_products_v2_index -g pre
+rails g deploy_pin:task backfill_products_v2_index -g post
+```
+
+The **pre** task creates the mapping and indexes only the data the new release needs right away, so the deploy stays fast:
+
+```ruby
+# 20261124120000:pre
+# task_title: Create products_v2 index and index recent products
+# affected_areas: product search
+
+# === task code goes down here ===
+client = Elasticsearch::Client.new(url: ENV.fetch('ELASTICSEARCH_URL'))
+
+unless client.indices.exists?(index: 'products_v2')
+  client.indices.create(
+    index: 'products_v2',
+    body: {
+      mappings: {
+        properties: {
+          name: { type: 'text' },
+          sku: { type: 'keyword' },
+          price: { type: 'scaled_float', scaling_factor: 100 }
+        }
+      }
+    }
+  )
+end
+
+# Products changed in the last week: enough for search to work after the release
+Product.where(updated_at: 1.week.ago..).find_in_batches(batch_size: 500) do |batch|
+  client.bulk(body: batch.flat_map { |product| [{ index: { _index: 'products_v2', _id: product.id } }, product.search_document] })
+end
+```
+
+The **post** task indexes everything else after the release is live. It saves its progress, so if it is interrupted, the next `deploy_pin:run[post]` continues where it stopped instead of starting over:
+
+```ruby
+# 20261124120100:post
+# task_title: Index all products into products_v2
+# affected_areas: product search
+
+# === task code goes down here ===
+client = Elasticsearch::Client.new(url: ENV.fetch('ELASTICSEARCH_URL'))
+
+Product.where('id > ?', progress).find_in_batches(batch_size: 1_000) do |batch|
+  client.bulk(body: batch.flat_map { |product| [{ index: { _index: 'products_v2', _id: product.id } }, product.search_document] })
+  save_progress!(batch.last.id)
+end
+```
+
+Both tasks run once. The next deploy skips them because they are marked done.
+
+### Deploy tool examples
+
 The examples below use the same stages. Adjust them to your own groups.
 
 <details>
