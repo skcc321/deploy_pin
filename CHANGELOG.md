@@ -1,4 +1,15 @@
 # Unreleased
+### Documented
+* Only one `deploy_pin:run` may execute at a time: DeployPin does not lock tasks, so overlapping runs can run the same pending task twice. See "One run at a time" in the README.
+
+### Fixed
+* Tasks generated within the same second no longer get the same identifier, which made the second one be skipped once the first was done. One-off tasks with the same identifier now stop `run`, `list`, `short_list` and `mark_done` with an error naming both files, whichever groups are selected.
+* Task code is kept as written: comments and blank lines, e.g. in heredocs, are no longer removed. Header lines are read from the header only, so `# 456:II` in the code no longer changes the task's identifier and group. Code that only mentions `parallel` or `execute_with_timeout` in a string or comment keeps the default timeout.
+* The upgrade migration (`deploy_pin upgrade`, `rails g deploy_pin:upgrade`) only marks records done when it adds `completed_at` to a pre-1.7 table. On a newer table it no longer marks unfinished tasks done or overwrites completion times.
+* `DeployPin::Database.execute_with_timeout` restores the connection's previous timeout after the block, also when it raises, and sets it on the connection the block uses, detecting the database of each connection. `connected_to:` takes `role:`, `shard:` and `prevent_writes:`; `connected_to: { database: }`, which ActiveRecord 7.2+ no longer supports, and unknown options raise an `ArgumentError` that says so.
+* `parallel_*` methods pass `in_threads:`, `in_processes:` and other Parallel options given next to `timeout:` to Parallel instead of dropping them, and no longer change the timeout array or the options passed to them.
+* `deploy_pin task --recurring` (and `rails g deploy_pin:task --recurring`) requires an integer `--identifier`, and writes nothing without one. Tasks it created before were skipped.
+* `DeployPin.load_tasks` (or `Rails.application.load_tasks`) called twice no longer runs each task twice per `rake deploy_pin:run`.
 
 # 2.0.0 / 2026-11-24
 ### Breaking changes

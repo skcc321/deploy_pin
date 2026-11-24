@@ -71,7 +71,7 @@ module DeployPin
     register Generators::Task, 'task', 'task TITLE -g GROUP [--require config/environment.rb]',
              'Create a task in DeployPin.tasks_path, and a test for it'
     register Generators::Upgrade, 'upgrade', 'upgrade',
-             'Create the migration that upgrades the deploy_pins table'
+             'Create the migration that upgrades a deploy_pins table created before DeployPin 1.7'
 
     desc 'version', 'Print the DeployPin version'
     # Prints the DeployPin version.

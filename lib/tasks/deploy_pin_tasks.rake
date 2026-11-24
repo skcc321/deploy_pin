@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+# Loading this file again (DeployPin.load_tasks or Rails.application.load_tasks
+# twice) must not add the actions twice: a recurring task would run twice.
+return unless DeployPin.register_rake_tasks(Rake.application)
+
 namespace :deploy_pin do
   # The groups and task identifiers of the task arguments; all groups only when
   # no argument is given. An explicit empty selection (`invoke([])`) selects

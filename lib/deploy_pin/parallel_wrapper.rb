@@ -7,7 +7,9 @@ module DeployPin
   #
   # The `timeout:` option sets the timeout; it defaults to
   # {DeployPin.statement_timeout}. Pass an array to give
-  # {Database.execute_with_timeout} options too.
+  # {Database.execute_with_timeout} options too. The other options
+  # (`in_processes:`, `in_threads:`, `progress:`...) go to Parallel, in the
+  # same hash or in a separate one.
   #
   # @example
   #   parallel_each(1..2, in_processes: 2, timeout: 0.3.seconds) do |i|
@@ -19,6 +21,11 @@ module DeployPin
   #   parallel_each(1..2, in_processes: 2, timeout: [0.3.seconds, { connected_to: { role: :reading } }]) do |i|
   #     ActiveRecord::Base.connection.execute("<some db query>")
   #   end
+  #
+  # @example Parallel options and the timeout in separate hashes
+  #   parallel_each(1..2, { in_threads: 2 }, { timeout: 0.3.seconds }) do |i|
+  #     ActiveRecord::Base.connection.execute("<some db query>")
+  #   end
   module ParallelWrapper
     # Prefix that maps a method to its Parallel counterpart.
     PARALLEL_PREFIX = 'parallel_'
@@ -27,19 +34,14 @@ module DeployPin
     # :reek:TooManyInstanceVariables
     class ParallelRunner
       # @param method_name [Symbol] the `parallel_*` method that was called
-      # @param args [Array] arguments for the Parallel method; a trailing hash
-      #   with `:timeout` is used for the timeout
+      # @param args [Array] arguments for the Parallel method; the `:timeout`
+      #   of a trailing hash is used for the timeout, and its other options go
+      #   to Parallel. The arguments are not changed.
       # @yield the block to run for each item
       def initialize(method_name, *args, &db_block)
         @method_name = method_name
         @db_block = db_block
-
-        if args.last.is_a?(Hash) && args.last.key?(:timeout)
-          @timeout_args = args.pop
-          prepare_timeout_args
-        end
-
-        @parallel_args = args
+        @parallel_args = extract_timeout(args)
       end
 
       # @return [Object] the result of the Parallel method
@@ -64,14 +66,16 @@ module DeployPin
           end
         end
 
-        def prepare_timeout_args
-          timeout = @timeout_args[:timeout]
-          if timeout.is_a?(Array)
-            @timeout = timeout.shift
-            @timeout_params = timeout.first
-          else
-            @timeout = timeout
-          end
+        # @return [Array] the arguments for Parallel: the trailing hash without
+        #   `:timeout`, left out when nothing else is in it
+        def extract_timeout(args)
+          options = args.last
+          return args unless options.is_a?(Hash) && options.key?(:timeout)
+
+          timeout = options[:timeout]
+          @timeout, @timeout_params = timeout.is_a?(Array) ? timeout : [timeout]
+          parallel_options = options.except(:timeout)
+          parallel_options.empty? ? args[0...-1] : [*args[0...-1], parallel_options]
         end
 
         def timeout
