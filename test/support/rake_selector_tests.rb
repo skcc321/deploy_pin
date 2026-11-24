@@ -105,6 +105,40 @@ module RakeSelectorTests
       assert_equal %w[75371573753751 75371573753752 II], listed
     end
 
+    test 'an empty array, from Ruby, selects nothing: pending tasks stay pending' do
+      DeployPin::Storage.record_class.create(uuid: '75371573753751') # started, not done
+      ran = []
+      DeployPin.task_wrapper(->(task, runner) { ran << task.identifier && runner.call })
+
+      capture_io do
+        Rake::Task['deploy_pin:mark_done'].invoke([])
+        Rake::Task['deploy_pin:run'].invoke([])
+      end
+
+      assert_empty done_identifiers
+      assert_nil DeployPin::Storage.record_class.find_by(uuid: '75371573753751').completed_at
+      assert_empty ran
+    end
+
+    test 'an empty array for list and short_list, from Ruby, lists nothing' do
+      listed = []
+      DeployPin.list_formatter(->(_index, task) { listed << task.identifier })
+      DeployPin.short_list_formatter(->(group, _tasks, _start) { listed << group })
+
+      capture_io do
+        Rake::Task['deploy_pin:list'].invoke([])
+        Rake::Task['deploy_pin:short_list'].invoke([])
+      end
+
+      assert_empty listed
+    end
+
+    test 'no argument selects all groups' do
+      Rake::Task['deploy_pin:mark_done'].invoke
+
+      assert_equal TASK_FILES.keys, done_identifiers
+    end
+
     test 'integer identifiers, from Ruby' do
       Rake::Task['deploy_pin:run'].invoke(75_371_573_753_751, 75_371_573_753_752)
 
