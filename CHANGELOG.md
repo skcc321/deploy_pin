@@ -1,4 +1,6 @@
-# Unreleased (2.0.0)
+# Unreleased
+
+# 2.0.0 / 2026-11-24
 ### Breaking changes
 * Requires Rails (or, without Rails, ActiveSupport) 7.2 or later. Rails 7.0 and 7.1 are end-of-life: apps on them stay on deploy_pin 1.10. CI runs Rails 7.2 and 8.1.
 * deploy_pin no longer depends on `rails`, but on `activesupport`, `thor` and `rake`. Rails apps already have them.
