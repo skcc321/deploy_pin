@@ -102,10 +102,12 @@ require 'colorize'
 #
 # @!method self.test_framework(val = nil)
 #   Test framework for the test file that `rails g deploy_pin:task` creates
-#   next to each task. Defaults to `:rspec`; `false` turns test generation off.
+#   next to each task; `false` turns test generation off. When not set, RSpec
+#   is used if the `RSpec` constant is loaded (e.g. rspec-rails in the
+#   `:development` group); otherwise no test is generated.
 #   @see TaskGenerator::TEST_FRAMEWORKS
 #   @param val [Symbol, false, nil] new value; omit to read the current one
-#   @return [Symbol, false]
+#   @return [Symbol, false, nil]
 #
 # @!method self.tests_path(val = nil)
 #   Directory for the tests that `rails g deploy_pin:task` creates. When not
@@ -144,7 +146,6 @@ module DeployPin
   DEFAULTS = {
     continue_on_error: false,
     storage: :active_record,
-    test_framework: :rspec,
     task_wrapper: ->(_task, task_runner) { task_runner.call }
   }.freeze
 

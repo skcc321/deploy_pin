@@ -8,8 +8,9 @@ DeployPin.setup do
   groups %w[pre I II III]
   fallback_group 'III'
   statement_timeout 10.minutes
-  test_framework :rspec # generate a spec for every task; false to skip
-  tests_path 'spec/deploy_pin'
+  # Tests generated for each task: RSpec is used when it is loaded, or set it here.
+  # test_framework :rspec # false to not generate tests
+  # tests_path 'spec/deploy_pin'
   deployment_state_transition({
                                 ongoing: %w[I III],
                                 pending: 'rollback', # enters to pending step before "rollback"

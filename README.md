@@ -424,11 +424,11 @@ end
 
 The spec turns off `continue_on_error`, so a failing task always fails its spec.
 
-RSpec (with `rspec-rails`) is the only supported framework for now. Set the framework and the directory, or turn test generation off, in the initializer:
+RSpec is the only supported framework for now. It is detected automatically when the `RSpec` constant is loaded, which is the case when `rspec-rails` is in the `:development` group, as rspec-rails recommends. If nothing is detected, the generator skips the test and says so. Set the framework and the directory, or turn test generation off, in the initializer:
 
 ```ruby
 DeployPin.setup do
-  test_framework :rspec        # default; `false` to not generate tests
+  test_framework :rspec        # detected by default; `false` to not generate tests
   tests_path 'spec/deploy_pin' # default for RSpec
 end
 ```
@@ -489,7 +489,7 @@ All options are set in `DeployPin.setup`. See the [API docs](https://rubydoc.inf
 | `statement_timeout` | — | Default database statement timeout |
 | `storage` | `:active_record` | `:active_record` or `:mongoid` |
 | `continue_on_error` | `false` | Log failed tasks and continue instead of stopping |
-| `test_framework` | `:rspec` | Test framework for generated task tests; `false` to skip them. See [Testing tasks](#testing-tasks) |
+| `test_framework` | detected (`:rspec` if `RSpec` is loaded) | Test framework for generated task tests; `false` to skip them. See [Testing tasks](#testing-tasks) |
 | `tests_path` | `'spec/deploy_pin'` | Directory for generated task tests |
 | `task_wrapper` | runs the task | `->(task, task_runner) { ... }` around every task, e.g. for logging or error reporting |
 | `deployment_state_transition` | off | See [Deployment state](#deployment-state) |

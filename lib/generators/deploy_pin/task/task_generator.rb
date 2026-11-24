@@ -17,6 +17,10 @@ module DeployPin
       rspec: { path: 'spec/deploy_pin', file: '%<task>s_spec.rb' }
     }.freeze
 
+    # Printed when no test framework is configured and none is detected.
+    UNDETECTED_TEST_FRAMEWORK = 'test for the task: no test framework detected. ' \
+                                'Add rspec-rails to the :development group, or set DeployPin.test_framework :rspec'
+
     class_option :parallel, type: :boolean, aliases: '-p'
     class_option :recurring, type: :boolean, aliases: '-r'
     class_option :identifier, aliases: '-i'
@@ -56,9 +60,11 @@ module DeployPin
     # Writes the test for the task, unless tests are turned off.
     # @return [void]
     def create_test_file
-      return unless test_framework
+      framework = test_framework
+      return if framework == false # turned off on purpose
+      return say_status(:skip, UNDETECTED_TEST_FRAMEWORK, :yellow) unless framework
 
-      template "#{test_framework}/task_spec.rb.erb", test_file_path
+      template "#{framework}/task_spec.rb.erb", test_file_path(framework)
     end
 
     # @return [void]
@@ -86,27 +92,38 @@ module DeployPin
       end
 
       # The test file in {DeployPin.tests_path}, or in the framework's default directory.
-      def test_file_path
-        settings = TEST_FRAMEWORKS.fetch(test_framework)
+      def test_file_path(framework)
+        settings = TEST_FRAMEWORKS.fetch(framework)
         directory = DeployPin.tests_path.presence || settings[:path]
 
         File.join(directory.to_s, format(settings[:file], task: task_name))
       end
 
-      # @return [Symbol, nil] the framework to use, or nil when tests are skipped
+      # The --test-framework flag or DeployPin.test_framework, else the detected one.
+      #
+      # @return [Symbol, false, nil] the framework; false when tests are turned
+      #   off (--skip-test, `test_framework false`); nil when none is detected
       def test_framework
-        return if options[:skip_test]
+        return false if options[:skip_test]
 
-        framework = options[:test_framework].presence || DeployPin.test_framework
-        # Not `framework&.to_sym`: the setting can be `false`, and `false&.to_sym` raises.
-        framework ? framework.to_sym : nil # rubocop:disable Style/SafeNavigation
+        configured = options[:test_framework].presence || DeployPin.test_framework
+        return configured if configured == false
+
+        configured&.to_sym || detected_test_framework
+      end
+
+      # RSpec is the only supported framework, detected by its constant
+      # (no dependency on Rails' generator settings).
+      def detected_test_framework
+        :rspec if defined?(::RSpec)
       end
 
       def validate_test_framework
-        return if !test_framework || TEST_FRAMEWORKS.key?(test_framework)
+        framework = test_framework
+        return if !framework || TEST_FRAMEWORKS.key?(framework)
 
         raise Thor::Error, set_color(
-          "Unknown test framework '#{test_framework}'. Supported: #{TEST_FRAMEWORKS.keys.join(', ')}", :red
+          "Unknown test framework '#{framework}'. Supported: #{TEST_FRAMEWORKS.keys.join(', ')}", :red
         )
       end
   end
