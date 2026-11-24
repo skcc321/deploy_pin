@@ -1,4 +1,7 @@
 # Unreleased
+### Fixed
+* Rails 7.1+ apps no longer fail to boot when tasks live in an autoloaded `lib/` directory (`config.autoload_lib`): DeployPin tells Zeitwerk to ignore `tasks_path`.
+* Tasks no longer crash on databases without statement timeouts (e.g. SQLite, the Rails 8 default) or when `statement_timeout` is not set: they run without a timeout, and a warning is printed once for unsupported databases.
 
 # 1.9.0 / 2026-11-24
 ### Added

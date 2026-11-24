@@ -57,7 +57,7 @@ module DeployPin
         attr_accessor :method_name, :parallel_args, :db_block
 
         def with_database_timeout(&block)
-          return yield unless DeployPin::Database.available?
+          return yield unless DeployPin::Database.available? && timeout
 
           ActiveRecord::Base.connection_pool.with_connection do
             DeployPin::Database.execute_with_timeout(timeout, **timeout_params, &block)
