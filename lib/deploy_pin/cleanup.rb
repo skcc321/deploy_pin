@@ -39,22 +39,29 @@ module DeployPin
   # could not be removed stays, and the next cleanup finds them again. Tasks
   # are taken in file name order, whatever their group, so tasks of groups
   # no longer in {DeployPin.groups} are removed too.
+  #
+  # Files are removed by the paths they were found at, never by a normalized
+  # copy: `File.expand_path` collapses `link/..` without following the link,
+  # which can name another file. A test file that is also a task file (when
+  # {DeployPin.tests_path} and {DeployPin.tasks_path} overlap) is not removed
+  # as a test.
   class Cleanup
     # @param tasks [Array<Task>] parsed tasks
     def initialize(tasks)
       @tasks = tasks
+      @task_sources = nil
     end
 
     # @param dry_run [Boolean] only return the files, without removing them
     # @return [Array<String>] the removed (or, on a dry run, removable) files,
-    #   relative to the current directory when they are in it
+    #   without the current directory's prefix when they start with it
     # @raise [CleanupWindowNotSetError] if {DeployPin.cleanup_safe_time_window} is not set
     # @raise [CleanupError] if some files could not be removed; the others are
     #   removed, and listed in {CleanupError#removed}
     # :reek:BooleanParameter and :reek:ControlParameter
     def call(dry_run: false)
       files = files_by_task
-      return files.flatten if dry_run
+      return files.flatten.map { |path| display_path(path) } if dry_run
 
       remove(files)
     end
@@ -69,8 +76,14 @@ module DeployPin
 
         before = Time.current - window
         @tasks.select { |task| task.cleanable?(before:) }.sort_by(&:file).map do |task|
-          [*task.test_files, task.file].map { |path| relative_path(path) }
+          [*task.test_files.reject { |path| task_source?(path) }, task.file]
         end
+      end
+
+      # Whether a file is one of the task files, whatever path names it.
+      def task_source?(path)
+        @task_sources ||= @tasks.reject(&:built_in?).filter_map { |task| real_path(task.file) }.to_set
+        @task_sources.include?(real_path(path))
       end
 
       # :reek:TooManyStatements
@@ -89,20 +102,31 @@ module DeployPin
       def remove_task(paths, removed, failures)
         paths.each do |path|
           File.delete(path)
-          removed << path
+          removed << display_path(path)
         rescue Errno::ENOENT
           next # already gone
         rescue SystemCallError => e
-          failures[path] = e
+          failures[display_path(path)] = e
           break
         end
       end
 
+      # The path without the current directory's prefix, `.` components and
+      # repeated slashes, which name the same file from the current directory.
+      # `..` components are kept: after a symbolic link, they lead elsewhere
+      # than a lexical normalization says.
       # :reek:UtilityFunction
-      def relative_path(path)
-        absolute = File.expand_path(path)
-        root = "#{Dir.pwd}/"
-        absolute.start_with?(root) ? absolute.delete_prefix(root) : path
+      def display_path(path)
+        head, *parts = path.delete_prefix("#{Dir.pwd}/").split('/', -1)
+        parts = parts.reject { |part| part.empty? || part == '.' }
+        head == '.' ? parts.join('/') : [head, *parts].join('/')
+      end
+
+      # :reek:UtilityFunction
+      def real_path(path)
+        File.realpath(path)
+      rescue SystemCallError
+        nil
       end
   end
 end

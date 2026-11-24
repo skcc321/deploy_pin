@@ -111,7 +111,7 @@ class DeployPin::CleanupTest < ActiveSupport::TestCase
     other = add_task('other', other_id)
     failing = "#{specs_dir}#{@old_id}_old_spec.rb"
     delete = File.method(:delete)
-    deny = ->(path) { path == failing ? raise(Errno::EACCES, path) : delete.call(path) }
+    deny = ->(path) { File.expand_path(path) == File.expand_path(failing) ? raise(Errno::EACCES) : delete.call(path) }
 
     error = File.stub(:delete, deny) { assert_raises(DeployPin::CleanupError) { cleanup } }
 
@@ -138,6 +138,35 @@ class DeployPin::CleanupTest < ActiveSupport::TestCase
         end
       end
     end
+  end
+
+  test 'removes the file it found, not the one a lexically normalized path names' do
+    # alias/.. is nested/ for the file system, but tmp/ for File.expand_path
+    FileUtils.mkdir_p(["#{TASKS_DIR}nested/child", "#{TASKS_DIR}nested/tasks", "#{TASKS_DIR}tasks"])
+    File.symlink(File.expand_path("#{TASKS_DIR}nested/child"), "#{TASKS_DIR}alias")
+    DeployPin.setup { tasks_path "#{TASKS_DIR}alias/../tasks" }
+    name = "#{@old_id}_same.rb"
+    File.write("#{TASKS_DIR}nested/tasks/#{name}", "# #{@old_id}:I\n:found\n")
+    File.write("#{TASKS_DIR}tasks/#{name}", "# #{@old_id}:I\n:decoy\n")
+
+    removed = cleanup(dry_run: true)
+    assert_equal ["#{tasks_dir}alias/../tasks/#{name}"], removed
+    assert_equal ':found', File.read(removed.first).lines.last.strip
+
+    assert_equal removed, cleanup
+    refute_path_exists "#{TASKS_DIR}nested/tasks/#{name}"
+    assert_path_exists "#{TASKS_DIR}tasks/#{name}"
+  end
+
+  test 'does not remove a task file as the test of another task' do
+    DeployPin.setup { tests_path TASKS_DIR }
+    # a valid recurring task whose name matches the old task's spec name
+    lookalike = "#{TASKS_DIR}#{@old_id}_old_spec.rb"
+    File.write(lookalike, "# 7:I:recurring\n:lookalike\n")
+
+    assert_equal ["#{tasks_dir}#{@old_id}_old.rb"], cleanup
+    assert_path_exists lookalike
+    refute_path_exists @old
   end
 
   test 'created_at and cleanable?' do
