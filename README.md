@@ -458,7 +458,7 @@ git commit -am 'Remove old DeployPin tasks'
 - Only source files are removed. Cleanup doesn't read or change the stored records, so it doesn't need access to your production database. If a removed file comes back, environments where it already ran skip it, because its record is still there.
 - Recurring tasks, the built-in deployment state tasks and tasks whose identifier isn't a 14-digit timestamp are never removed. Tasks of groups no longer in `groups` are removed like the others.
 - A task's tests are removed before its file. If a file can't be removed, cleanup removes the rest, then fails and names it. The task's file is kept, so the next cleanup tries again.
-- An environment that hasn't deployed within the window will never run the removed tasks. Pick a window longer than the time between deploys of your slowest environment.
+- Cleanup goes by age only: it doesn't know whether a task has run anywhere. Once removed, a task that is still pending somewhere (an environment that hasn't deployed within the window, a failed deploy, a long-lived release branch) never runs there. Pick a window longer than your slowest path from generating a task to running it in every environment, and check the dry run before you commit.
 
 ### Deployment state
 
