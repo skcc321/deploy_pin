@@ -112,7 +112,8 @@ class DeployPin::PlainRubyAppTest < ActiveSupport::TestCase
   private
 
     def env(overrides = {})
-      { 'BUNDLE_GEMFILE' => ENV.fetch('BUNDLE_GEMFILE', File.join(GEM_ROOT, 'Gemfile')), 'APP_ENV' => 'test' }.merge(overrides)
+      gemfile = ENV.fetch('BUNDLE_GEMFILE', File.join(GEM_ROOT, 'Gemfile'))
+      { 'BUNDLE_GEMFILE' => gemfile, 'APP_ENV' => 'test' }.merge(overrides)
     end
 
     def run!(*command, env: {}, chdir: APP_ROOT)
