@@ -30,6 +30,7 @@ class DeployPin::RailsIntegrationTest < ActiveSupport::TestCase
     assert_match "require 'rails_helper'", File.read(spec_file)
 
     hook_file = File.join(APP_ROOT, 'tmp/deploy_pin_hook_ran')
+    FileUtils.mkdir_p(File.dirname(hook_file)) # tmp/ is not in git
     FileUtils.rm_f(hook_file)
     output = run!('rspec', spec_file.delete_prefix("#{APP_ROOT}/"), env: { 'DEPLOY_PIN_HOOK_FILE' => hook_file })
     assert_match '2 examples, 0 failures', output

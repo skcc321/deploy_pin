@@ -52,7 +52,7 @@ bin/rails g deploy_pin:install >/dev/null
 sed -i.bak 's/^  deployment_state_transition(/  _deployment_state = (/' config/initializers/deploy_pin.rb && rm config/initializers/deploy_pin.rb.bak
 bin/rails db:create db:migrate >/dev/null
 for task in first_done:I second_resumable:II third_pending:III; do
-  bin/rails g deploy_pin:task "${task%%:*}" -g "${task##*:}" --skip-test >/dev/null
+  bin/rails g deploy_pin:task "${task%%:*}" -g "${task##*:}" -a ci --skip-test >/dev/null # -a: titles must not depend on $USER
   sleep 1 # identifiers are timestamps in seconds
 done
 for file in lib/deploy_pin/*.rb; do
@@ -75,7 +75,7 @@ step "switched to $root ($(bundle exec ruby -e 'require "deploy_pin/version"; pr
 cmp -s config/initializers/deploy_pin.rb "$work/initializer" || fail 'the initializer changed'
 
 pending=$(bin/rails runner 'print DeployPin::Collector.new(identifiers: DeployPin.groups).send(:init_tasks).map(&:title).join(", ")')
-[ "$pending" = 'Second Resumable, Third Pending' ] || fail "pending: $pending"
+[ "$pending" = '@ci Second Resumable, @ci Third Pending' ] || fail "pending: $pending"
 step "pending: $pending"
 
 : > ran.log

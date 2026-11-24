@@ -3,6 +3,8 @@
 require_relative 'boot'
 
 require 'rails'
+# Rails' own controllers (e.g. Rails::HealthController) need it when CI eager loads
+require 'action_controller/railtie'
 
 MONGOID_STORAGE = ENV['DB_ROLE'] == 'mongodb'
 
