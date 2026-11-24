@@ -1,4 +1,8 @@
-# Unreleased
+# Unreleased (2.0.0)
+### Breaking changes
+* Requires Rails (or, without Rails, ActiveSupport) 7.2 or later. Rails 7.0 and 7.1 are end-of-life: apps on them stay on deploy_pin 1.10. CI runs Rails 7.2 and 8.1.
+* deploy_pin no longer depends on `rails`, but on `activesupport`, `thor` and `rake`. Rails apps already have them.
+
 ### Added
 * DeployPin works without Rails. Rails is no longer a dependency (ActiveSupport and Thor are). In other Ruby apps:
   * the `deploy_pin` command runs the generators: `deploy_pin install` (creates `config/deploy_pin.rb`), `deploy_pin task` and `deploy_pin upgrade`. It loads `config/deploy_pin.rb` first, or the files given with `--require`;
@@ -8,7 +12,6 @@
 * `deploy_pin install` takes `--config-path` and `--migrations-path`.
 
 ### Changed
-* Requires Rails (or, without Rails, ActiveSupport) 7.2 or later: 7.0 and 7.1 are end-of-life. CI runs Rails 7.2 and 8.1.
 * Outside Rails apps, the spec generated for a task requires `spec_helper` and loads the rake tasks with `DeployPin.load_tasks`. In Rails apps it is unchanged (`rails_helper`, `Rails.application.load_tasks`).
 * The generators no longer read `DeployPin.fallback_group` when they are loaded, but when they run.
 

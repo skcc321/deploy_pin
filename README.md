@@ -46,7 +46,7 @@ Migrations are for schema changes. Everything else you need to run during a rele
 | | |
 |---|---|
 | Ruby | ≥ 3.1 (CI runs 3.3, 3.4 and 4.0) |
-| Rails | Optional. ≥ 7.2, < 9 (CI runs 7.2 and 8.1). Without Rails, ActiveSupport ≥ 7.2 is used |
+| Rails | Optional. ≥ 7.2, < 9 (CI runs 7.2 and 8.1). Without Rails, ActiveSupport ≥ 7.2 is used. For Rails 7.0 and 7.1, use deploy_pin 1.10 |
 | Storage | ActiveRecord (PostgreSQL, MySQL, MariaDB, …), Mongoid, or your own record class |
 | Redis | Only for [deployment state](#deployment-state) |
 
