@@ -1,4 +1,6 @@
 # Unreleased
+
+# 1.10.0 / 2026-11-24
 ### Added
 * `rails g deploy_pin:task` generates an RSpec spec for each task that runs it through `rake deploy_pin:run`. The spec goes to `spec/deploy_pin/` by default. RSpec is detected when the `RSpec` constant is loaded. Configure with `test_framework` (`:rspec`, or `false` to turn off) and `tests_path`, or pass `--skip-test` / `--test-framework` to the generator.
 ### Fixed
