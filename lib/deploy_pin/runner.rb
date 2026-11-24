@@ -43,6 +43,39 @@ module DeployPin
       DeployPin::Collector.new(identifiers:).mark_done
     end
 
+    # Removes the source files and tests of the one-off tasks created more than
+    # {DeployPin.cleanup_safe_time_window} ago (see {Collector#cleanup}), and
+    # prints each one and how many were removed. A dry run prints only the
+    # paths, one per line, so the output can be passed to `git rm`.
+    #
+    # When some files cannot be removed, the removed ones are still printed
+    # before the error is raised.
+    #
+    # @param dry_run [Boolean] only print the files, without removing them
+    # @return [Array<String>] the removed (or, on a dry run, removable) files
+    # @raise [CleanupWindowNotSetError] if {DeployPin.cleanup_safe_time_window} is not set
+    # @raise [CleanupError] if some files could not be removed
+    # :reek:BooleanParameter and :reek:TooManyStatements
+    def self.cleanup(dry_run: false)
+      paths = DeployPin::Collector.new(identifiers: DeployPin.groups).cleanup(dry_run:)
+      return paths.each { |path| self.print(path) } if dry_run
+
+      print_removed(paths)
+    rescue DeployPin::CleanupError => e
+      print_removed(e.removed)
+      raise
+    end
+
+    # Prints each removed file and how many there are.
+    #
+    # @param paths [Array<String>]
+    # @return [Array<String>] the paths
+    def self.print_removed(paths)
+      paths.each { |path| self.print("Removed #{path}") }
+      self.print("Removed #{paths.count} #{paths.one? ? 'file' : 'files'}")
+      paths
+    end
+
     # Prints how many tasks are selected.
     #
     # @param identifiers [Array<String, Integer>] groups and task identifiers to select;

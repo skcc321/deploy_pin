@@ -6,9 +6,11 @@ require 'deploy_pin/version'
 require 'deploy_pin/deployment_state'
 require 'deploy_pin/runner'
 require 'deploy_pin/collector'
+require 'deploy_pin/cleanup'
 require 'deploy_pin/parallel_wrapper'
 require 'deploy_pin/task'
 require 'deploy_pin/task_criteria'
+require 'deploy_pin/test_files'
 require 'deploy_pin/database'
 require 'deploy_pin/database_engine'
 require 'deploy_pin/storage'
@@ -36,6 +38,18 @@ require 'deploy_pin/engine' if defined?(Rails::Engine)
 #     fallback_group 'III'
 #     statement_timeout 10.minutes
 #   end
+#
+# @!method self.cleanup_safe_time_window(val = nil)
+#   How long after a one-off task was created (the timestamp in its
+#   identifier) `rake deploy_pin:cleanup` may remove its file and its test:
+#   your deployment cycle, from generating a task to running it in every
+#   environment, plus a safety buffer. Not set by default: cleanup then
+#   removes nothing and raises {CleanupWindowNotSetError}.
+#   @example
+#     cleanup_safe_time_window 6.months
+#   @param val [ActiveSupport::Duration, Numeric, nil] new value (seconds for a
+#     Numeric); omit to read the current one
+#   @return [ActiveSupport::Duration, Numeric, nil]
 #
 # @!method self.continue_on_error(val = nil)
 #   When true, a failing task is logged and the run moves on to the next task
@@ -111,7 +125,7 @@ require 'deploy_pin/engine' if defined?(Rails::Engine)
 #   next to each task; `false` turns test generation off. When not set, RSpec
 #   is used if the `RSpec` constant is loaded (e.g. rspec-rails in the
 #   `:development` group); otherwise no test is generated.
-#   @see TaskGenerator::TEST_FRAMEWORKS
+#   @see TestFiles::FRAMEWORKS
 #   @param val [Symbol, false, nil] new value; omit to read the current one
 #   @return [Symbol, false, nil]
 #
@@ -133,6 +147,7 @@ module DeployPin
 
   # Names of the configuration options. Each one is a reader/writer method on {DeployPin}.
   OPTIONS = %i[
+    cleanup_safe_time_window
     continue_on_error
     deployment_state_transition
     fallback_group

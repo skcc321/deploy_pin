@@ -55,4 +55,16 @@ namespace :deploy_pin do
     DeployPin::Runner.mark_done(identifiers:)
     DeployPin::Runner.summary(identifiers:)
   end
+
+  # `deploy_pin:cleanup[dry_run]`, or DRY_RUN=1, only prints the files.
+  desc 'remove the files of one-off tasks created more than cleanup_safe_time_window ago ([dry_run] lists them)'
+  task :cleanup, [:mode] => 'deploy_pin:environment' do |_t, args|
+    mode = args.mode.to_s.strip
+    unless ['', 'dry_run'].include?(mode)
+      abort "Unknown deploy_pin:cleanup mode '#{mode}'. Use deploy_pin:cleanup[dry_run]"
+    end
+
+    dry_run = mode == 'dry_run' || %w[1 true yes].include?(ENV['DRY_RUN'].to_s.downcase)
+    DeployPin::Runner.cleanup(dry_run:)
+  end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'ripper'
+require 'time'
 
 module DeployPin
   # A task loaded from a file in {DeployPin.tasks_path}.
@@ -130,6 +131,50 @@ module DeployPin
       record.completed_at.present?
     end
 
+    # Format of one-off task identifiers: the time the task was created.
+    TIMESTAMP_FORMAT = '%Y%m%d%H%M%S'
+
+    # When the task was created: its identifier read as a {TIMESTAMP_FORMAT}
+    # timestamp, in the local time zone like the generator writes it. The
+    # identifier must be exactly 14 digits and a real time: `Time.strptime`
+    # alone ignores extra digits and turns February 30 into March 2.
+    #
+    # @return [Time, nil] nil for recurring tasks and identifiers that are not timestamps
+    def created_at
+      digits = identifier.to_s
+      return if recurring || !digits.match?(/\A\d{14}\z/)
+
+      time = Time.strptime(digits, TIMESTAMP_FORMAT)
+      time if time.strftime(TIMESTAMP_FORMAT) == digits
+    rescue ArgumentError
+      nil
+    end
+
+    # Whether `rake deploy_pin:cleanup` may remove the task's source: a
+    # one-off task file created before `before`. Recurring and built-in tasks,
+    # and tasks whose identifier is not a timestamp, are never removed. The
+    # stored records are not looked at.
+    #
+    # @param before [Time] tasks created before this time can be removed
+    # @return [Boolean]
+    def cleanable?(before:)
+      return false if built_in?
+
+      created = created_at
+      created.present? && created < before
+    end
+
+    # @return [Array<String>] the test files of a task file that exist (see {TestFiles.existing})
+    def test_files
+      DeployPin::TestFiles.existing(File.basename(file, '.rb'))
+    end
+
+    # @return [Boolean] whether the task is a built-in one, defined in code
+    #   (starting with `# no_file_task`) rather than in a file
+    def built_in?
+      file.starts_with?('# no_file_task')
+    end
+
     # @return [Boolean] whether the task should run under {DeployPin.statement_timeout}
     def under_timeout?
       !explicit_timeout? && !parallel?
@@ -165,7 +210,7 @@ module DeployPin
     def each_line(&block)
       return enum_for(:each_line) unless block
 
-      if file.starts_with?('# no_file_task')
+      if built_in?
         file.each_line(&block)
       else
         File.foreach(file, &block)

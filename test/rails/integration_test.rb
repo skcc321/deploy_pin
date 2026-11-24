@@ -87,6 +87,22 @@ class DeployPin::RailsIntegrationTest < ActiveSupport::TestCase
     assert_nil DeployPin::Storage.record_class.find_by(uuid: '75371573753799')
   end
 
+  test 'bin/rails deploy_pin:cleanup removes old task files' do
+    directory = File.join(APP_ROOT, 'lib/deploy_pin')
+    FileUtils.mkdir_p(directory)
+    old, recent = [31.days.ago, 1.day.ago].map do |time|
+      identifier = time.strftime('%Y%m%d%H%M%S')
+      File.join(directory, "#{identifier}_task.rb").tap do |path|
+        File.write(path, "# #{identifier}:I\n\n# === task code goes down here ===\n:ok\n")
+      end
+    end
+
+    run!('bin/rails', 'deploy_pin:cleanup')
+
+    refute_path_exists old
+    assert_path_exists recent
+  end
+
   test 'the deploy_pin command also works in a Rails app' do
     run!('ruby', File.join(GEM_ROOT, 'exe/deploy_pin'), 'task', 'from_cli', '-g', 'III', '--skip-test',
          '--require', 'config/environment.rb')

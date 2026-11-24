@@ -8,6 +8,9 @@ DeployPin.setup do
   groups %w[pre I II III]
   fallback_group 'III'
   statement_timeout 10.minutes
+  # How long after its creation `rake deploy_pin:cleanup` may remove a one-off task's file:
+  # your deployment cycle, from generating a task to running it everywhere, plus a buffer.
+  # cleanup_safe_time_window 6.months
   # Tests generated for each task: RSpec is used when it is loaded, or set it here.
   # test_framework :rspec # false to not generate tests
   # tests_path 'spec/deploy_pin'

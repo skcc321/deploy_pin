@@ -90,6 +90,20 @@ module DeployPin
     end
     # :reek:FeatureEnvy
 
+    # Removes the source files and the tests of the one-off tasks created
+    # more than {DeployPin.cleanup_safe_time_window} ago, whatever the
+    # selected identifiers. See {Cleanup}.
+    #
+    # @param dry_run [Boolean] only return the files, without removing them
+    # @return [Array<String>] the removed (or, on a dry run, removable) files
+    # @raise [CleanupWindowNotSetError] if {DeployPin.cleanup_safe_time_window} is not set
+    # @raise [DuplicateIdentifierError] if two one-off tasks have the same identifier
+    # @raise [CleanupError] if some files could not be removed
+    # :reek:BooleanParameter
+    def cleanup(dry_run: false)
+      DeployPin::Cleanup.new(all_tasks).call(dry_run:)
+    end
+
     # The selected tasks without duplicates (tasks whose script is the same as an earlier task's).
     #
     # @return [Array<Task>]
@@ -142,16 +156,20 @@ module DeployPin
         Dir["#{DeployPin.tasks_path}/*.rb"]
       end
 
-      def init_tasks
+      # All the tasks, parsed, before selecting.
+      def all_tasks
         tasks = [*DeployPin.deployment_tasks_code, *files].map do |file|
           DeployPin::Task.new(file).tap(&:parse)
         end
         # One-off tasks that share an identifier share their completion record. Checked
         # before selecting: a collision must not hide behind an unselected group.
         DuplicateIdentifierError.check!(tasks)
+        tasks
+      end
 
+      def init_tasks
         # check if task is suitable
-        tasks.select { |task| task_criteria.suitable?(task) }.sort # sort by group position in config
+        all_tasks.select { |task| task_criteria.suitable?(task) }.sort # sort by group position in config
       end
 
       def task_criteria
