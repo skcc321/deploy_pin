@@ -195,7 +195,15 @@ The generator gives each one-off task an unused identifier: two tasks generated 
 
 Tasks are sorted by **group**, then by **identifier**. Negative identifiers run after the other tasks of their group.
 
-A non-recurring task runs only once. When it finishes, it is marked done in the storage, and later runs skip it. If two tasks have the same code, only the first one runs. Lines that hold only a comment or nothing don't count, unless they are inside a heredoc or another string.
+A non-recurring task runs only once. When it finishes, it is marked done in the storage, and later runs skip it.
+
+### Why DeployPin deduplicates tasks
+
+You might run a backfill in development, fix the job it calls, then add a new DeployPin task to run it again. The first task is already complete in development, so the next deploy runs the new task. Both task files can still contain the same call, such as `BackfillUserNames.call`.
+
+If both tasks are pending and selected together on the first production deploy, DeployPin runs the first task and skips the second task's body, marking that one-off task done. Both files call the job implementation in the deployed release.
+
+DeployPin compares task bodies with different identifiers within a single `deploy_pin:run` invocation. It ignores standalone comments and blank lines outside strings. If the fix changes the task body itself, both versions can run.
 
 ### Running one executor at a time
 
