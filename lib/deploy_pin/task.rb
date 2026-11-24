@@ -306,16 +306,36 @@ module DeployPin
         end
       end
 
-      # Looks for real calls in the code, not in comments or strings.
+      # Looks for real calls in the code, not in comments, strings, symbols,
+      # assignments or constant references.
       def detect_calls
-        tokens = Ripper.lex(script).filter_map { |(_, type, token)| token if %i[on_ident on_const].include?(type) }
+        calls = []
+        collect_calls(Ripper.sexp(script), calls)
 
-        @explicit_timeout = tokens.include?('execute_with_timeout')
-        @parallel = tokens.any? { |token| token == 'Parallel' || parallel_method?(token) }
+        @explicit_timeout = calls.any? { |_, name| name == 'execute_with_timeout' }
+        @parallel = calls.any? { |receiver, name| parallel_receiver?(receiver) || parallel_method?(name) }
       end
 
-      def parallel_method?(token)
-        token.start_with?(ParallelWrapper::PARALLEL_PREFIX) && respond_to?(token, true)
+      # Collects `[receiver, method name]` of each method call in a Ripper tree.
+      # :reek:UtilityFunction
+      def collect_calls(node, calls)
+        return unless node.is_a?(Array)
+
+        case node
+        in [:call | :command_call, receiver, _, [_, String => name, *], *] then calls << [receiver, name]
+        in [:fcall | :command | :vcall, [_, String => name, *], *] then calls << [nil, name]
+        else nil
+        end
+        node.each { |child| collect_calls(child, calls) }
+      end
+
+      # :reek:UtilityFunction
+      def parallel_receiver?(receiver)
+        receiver in [:var_ref | :top_const_ref, [:@const, 'Parallel', *]]
+      end
+
+      def parallel_method?(name)
+        name.start_with?(ParallelWrapper::PARALLEL_PREFIX) && respond_to?(name, true)
       end
   end
   # :reek:TooManyMethods
