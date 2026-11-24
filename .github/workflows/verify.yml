@@ -10,6 +10,8 @@ env:
 jobs:
   test:
     name: test
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -155,6 +157,9 @@ jobs:
     name: coverage
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # post review comments
     steps:
       - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
