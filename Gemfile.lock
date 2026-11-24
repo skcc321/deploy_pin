@@ -229,6 +229,7 @@ GEM
       prism (>= 1.6.0)
       rbs (>= 4.0.0)
       tsort
+    redcarpet (3.6.1)
     redis (6.1.0)
       redis-client (= 0.31.0)
     redis-client (0.31.0)
@@ -275,6 +276,7 @@ GEM
       base64
       websocket-extensions (>= 0.2.0)
     websocket-extensions (0.2.0)
+    yard (0.9.45)
     zeitwerk (2.8.3)
 
 PLATFORMS
@@ -290,10 +292,12 @@ DEPENDENCIES
   mysql2
   pg
   pry
+  redcarpet
   rubocop
   rubocop-minitest
   simplecov
   simplecov-review
+  yard
 
 BUNDLED WITH
    2.5.23

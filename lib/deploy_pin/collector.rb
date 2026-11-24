@@ -1,14 +1,26 @@
 # frozen_string_literal: true
 
-# executes tasks
 module DeployPin
+  # Loads the task files and the deployment state tasks, selects the ones
+  # matching the identifiers, sorts them by group and identifier, and runs or
+  # lists them.
   class Collector
-    attr_reader :identifiers, :formatter
+    # @return [Array<String, Integer>] the identifiers tasks are selected by
+    attr_reader :identifiers
+    # @return [nil] always nil; kept for backward compatibility
+    attr_reader :formatter
 
+    # @param identifiers [Array<String, Integer>] groups and task identifiers to select;
+    #   see {TaskCriteria} for the `!` prefix and suffix syntax
     def initialize(identifiers:)
       @identifiers = identifiers
     end
 
+    # Runs the selected tasks through {DeployPin.task_wrapper}. A task whose
+    # script duplicates an earlier one is marked done but not run.
+    #
+    # @return [void]
+    # @raise [StandardError] a task's error, unless {DeployPin.continue_on_error} is set
     # :reek:TooManyStatements
     def run
       tasks = init_tasks
@@ -18,6 +30,9 @@ module DeployPin
     end
     # :reek:TooManyStatements
 
+    # Prints each selected task with {DeployPin.list_formatter}.
+    #
+    # @return [void]
     def list
       tasks = init_tasks
       tasks.each_with_index do |task, index|
@@ -25,6 +40,9 @@ module DeployPin
       end
     end
 
+    # Prints the selected tasks group by group with {DeployPin.short_list_formatter}.
+    #
+    # @return [void]
     def short_list
       groups_tasks = init_tasks.group_by(&:group).to_a
       groups_tasks.inject(0) do |offset, (group, tasks)|
@@ -33,6 +51,9 @@ module DeployPin
       end
     end
 
+    # Marks the selected tasks as done without running them.
+    #
+    # @return [void]
     # :reek:FeatureEnvy
     def mark_done
       tasks = init_tasks
@@ -43,6 +64,9 @@ module DeployPin
     end
     # :reek:FeatureEnvy
 
+    # The selected tasks without duplicates (tasks whose script is the same as an earlier task's).
+    #
+    # @return [Array<Task>]
     def executable
       tasks = init_tasks
       tasks.map.with_index do |task, index|
@@ -50,6 +74,7 @@ module DeployPin
       end.compact
     end
 
+    # @return [Integer] number of selected tasks
     def tasks_count
       init_tasks.count
     end

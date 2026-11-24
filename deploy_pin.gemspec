@@ -21,6 +21,9 @@ Gem::Specification.new do |spec|
   # to allow pushing to a single host or delete this section to allow pushing to any host.
   if spec.respond_to?(:metadata)
     spec.metadata['allowed_push_host'] = 'https://rubygems.org'
+    spec.metadata['documentation_uri'] = 'https://rubydoc.info/gems/deploy_pin'
+    spec.metadata['source_code_uri'] = 'https://github.com/skcc321/deploy_pin'
+    spec.metadata['changelog_uri'] = 'https://github.com/skcc321/deploy_pin/blob/master/CHANGELOG.md'
   else
     raise 'RubyGems 2.0 or newer is required to protect against ' \
       'public gem pushes.'
@@ -44,8 +47,10 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'mysql2'
   spec.add_development_dependency 'pg'
   spec.add_development_dependency 'pry'
+  spec.add_development_dependency 'redcarpet'
   spec.add_development_dependency 'rubocop'
   spec.add_development_dependency 'rubocop-minitest'
   spec.add_development_dependency 'simplecov'
   spec.add_development_dependency 'simplecov-review'
+  spec.add_development_dependency 'yard'
 end
