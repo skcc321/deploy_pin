@@ -80,6 +80,37 @@ module RakeSelectorTests
       assert_equal({ 'I' => %w[75371573753751], 'II' => %w[75371573753752] }, listed)
     end
 
+    test 'an array argument, from Ruby, selects each of its groups and identifiers' do
+      Rake::Task['deploy_pin:mark_done'].invoke(%w[I II])
+
+      assert_equal TASK_FILES.keys, done_identifiers
+    end
+
+    test 'an array argument with an exclusion, from Ruby' do
+      Rake::Task['deploy_pin:run'].invoke(%w[I !75371573753799])
+
+      assert_equal %w[75371573753751], done_identifiers
+    end
+
+    test 'array arguments for list and short_list, from Ruby' do
+      listed = []
+      DeployPin.list_formatter(->(_index, task) { listed << task.identifier.to_s })
+      DeployPin.short_list_formatter(->(group, _tasks, _start) { listed << group })
+
+      capture_io do
+        Rake::Task['deploy_pin:list'].invoke(%w[II 75371573753751])
+        Rake::Task['deploy_pin:short_list'].invoke(%w[II])
+      end
+
+      assert_equal %w[75371573753751 75371573753752 II], listed
+    end
+
+    test 'integer identifiers, from Ruby' do
+      Rake::Task['deploy_pin:run'].invoke(75_371_573_753_751, 75_371_573_753_752)
+
+      assert_equal %w[75371573753751 75371573753752], done_identifiers
+    end
+
     test 'a single argument with commas, from Ruby, is split too' do
       Rake::Task['deploy_pin:run'].invoke('I, !75371573753799')
 

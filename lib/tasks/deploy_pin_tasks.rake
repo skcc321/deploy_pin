@@ -2,12 +2,15 @@
 
 namespace :deploy_pin do
   # The groups and task identifiers of the task arguments, or all groups.
-  # Rake splits `deploy_pin:run[I, !II]` on commas: the first value is
-  # `args.identifiers` and the others are in `args.extras`. A single string
-  # with commas (`Rake::Task['deploy_pin:run'].invoke('I, !II')`) is split here.
+  # From the command line, Rake splits `deploy_pin:run[I, !II]` on commas: the
+  # first value is `args.identifiers` and the others are in `args.extras`. From
+  # Ruby, `invoke` may also get a string with commas ('I, !II'), an array
+  # (%w[I II]) or identifiers as integers: strings are split, the rest is kept.
   parse_identifiers = lambda do |args|
-    values = [args.identifiers, *args.extras].compact
-    values.empty? ? DeployPin.groups : values.flat_map { |value| value.split(/\s*,\s*/) }.reject(&:empty?)
+    values = [args.identifiers, *args.extras].flatten.compact
+    next DeployPin.groups if values.empty?
+
+    values.flat_map { |value| value.is_a?(String) ? value.split(/\s*,\s*/).reject(&:empty?) : [value] }
   end
 
   # Loads the app: its `environment` task when it has one (Rails, Hanami, or
