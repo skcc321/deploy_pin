@@ -1,6 +1,31 @@
 # frozen_string_literal: true
 
 module DeployPin
+  # Raised when two one-off task files have the same identifier: they would
+  # share one completion record.
+  class DuplicateIdentifierError < StandardError
+    # Raises if one-off tasks share an identifier, naming their files.
+    #
+    # @param tasks [Array<Task>] parsed tasks
+    # @return [void]
+    # @raise [DuplicateIdentifierError]
+    def self.check!(tasks)
+      duplicates = tasks.reject(&:recurring).group_by(&:identifier).select do |identifier, same|
+        identifier && same.size > 1
+      end
+      raise self, message(duplicates) if duplicates.any?
+    end
+
+    # @param duplicates [Hash{Integer => Array<Task>}] tasks by shared identifier
+    # @return [String]
+    def self.message(duplicates)
+      messages = duplicates.map do |identifier, same|
+        "Tasks #{same.map(&:file).sort.join(' and ')} have the same identifier #{identifier}."
+      end
+      [*messages, 'Give all but the one that already ran a new identifier, e.g. by generating them again.'].join(' ')
+    end
+  end
+
   # Loads the task files and the deployment state tasks, selects the ones
   # matching the identifiers, sorts them by group and identifier, and runs or
   # lists them.
@@ -21,6 +46,7 @@ module DeployPin
     #
     # @return [void]
     # @raise [StandardError] a task's error, unless {DeployPin.continue_on_error} is set
+    # @raise [DuplicateIdentifierError] if two one-off tasks have the same identifier
     # :reek:TooManyStatements
     def run
       tasks = init_tasks
@@ -117,13 +143,15 @@ module DeployPin
       end
 
       def init_tasks
-        [*DeployPin.deployment_tasks_code, *files].map do |file|
-          task = DeployPin::Task.new(file)
-          task.parse
+        tasks = [*DeployPin.deployment_tasks_code, *files].map do |file|
+          DeployPin::Task.new(file).tap(&:parse)
+        end
+        # One-off tasks that share an identifier share their completion record. Checked
+        # before selecting: a collision must not hide behind an unselected group.
+        DuplicateIdentifierError.check!(tasks)
 
-          # check if task is suitable
-          task if task_criteria.suitable?(task)
-        end.compact.sort # sort by group position in config
+        # check if task is suitable
+        tasks.select { |task| task_criteria.suitable?(task) }.sort # sort by group position in config
       end
 
       def task_criteria

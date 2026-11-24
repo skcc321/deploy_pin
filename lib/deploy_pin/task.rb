@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'ripper'
+
 module DeployPin
   # A task loaded from a file in {DeployPin.tasks_path}.
   #
@@ -133,34 +135,36 @@ module DeployPin
       !explicit_timeout? && !parallel?
     end
 
+    # The `# <identifier>:<group>[:recurring]` header line. Like DeployPin
+    # 2.0.0, it matches the start of the line, so `# 3:I:` is task 3 of group I.
+    IDENTIFIER_LINE = /\A#\s*(-?\d+):(\w+):?(recurring)?/
+    # The `# task_title:` header line.
+    TITLE_LINE = /\A#\s*task_title:(.*)\z/
+    # The `# affected_areas:` header line.
+    AFFECTED_AREAS_LINE = /\A#\s*affected_areas:(.*)\z/
+
     # Reads the header and the code from {#file}.
     #
+    # The header is the comment block at the top of the file, up to the
+    # code delimiter (`# === task code goes down here ===`) when there is one.
+    # Metadata is read from the header only; everything after it is the
+    # {#script}, kept as written, comments and blank lines included.
+    #
     # @return [void]
-    # :reek:TooManyStatements
-    def parse # rubocop:disable Metrics/MethodLength
-      each_line do |line|
-        case line.strip
-        when /\A# (-?\d+):(\w+):?(recurring)?/
-          @identifier = Regexp.last_match(1).to_i
-          @group = Regexp.last_match(2)
-          @recurring = Regexp.last_match(3)
-        when /\A# task_title:(.+)/
-          @title = Regexp.last_match(1).strip
-        when /\A# affected_areas:(.+)/
-          @affected_areas = Regexp.last_match(1).strip
-        when /\A[^#].*/
-          @script += line
+    def parse
+      lines = each_line.to_a
+      header_size = header_length(lines)
 
-          @explicit_timeout = true if line =~ /Database.execute_with_timeout.*/
-          @parallel = true if line =~ /[Pp]arallel.*/
-        end
-      end
+      lines.first(header_size).each { |line| parse_header_line(line.strip) }
+      @script = lines.drop(header_size).join
+      detect_calls
     end
-    # :reek:TooManyStatements
 
     # @yieldparam line [String] each line of the task source
-    # @return [void]
+    # @return [void, Enumerator] an enumerator when no block is given
     def each_line(&block)
+      return enum_for(:each_line) unless block
+
       if file.starts_with?('# no_file_task')
         file.each_line(&block)
       else
@@ -179,12 +183,34 @@ module DeployPin
     end
 
     # Whether another task has the same code but a different identifier.
+    # The code is compared without its standalone comments and blank lines
+    # (see {#executable_source}).
     #
     # @param other [Task]
     # @return [Boolean]
     def eql?(other)
       # same script & different identifier
-      script == other.script && identifier != other.identifier
+      executable_source == other.executable_source && identifier != other.identifier
+    end
+
+    # Ruby tokens that are neither code nor part of a literal.
+    NON_CODE_TOKENS = %i[on_sp on_nl on_ignored_nl on_comment on_embdoc_beg on_embdoc on_embdoc_end].freeze
+
+    # The {#script} without the lines that hold only comments or whitespace
+    # outside literals: what {#eql?} compares. Lines inside heredocs and other
+    # multi-line literals are kept, even blank or comment-like ones.
+    #
+    # @return [String]
+    def executable_source
+      @executable_source ||= begin
+        lines = script.lines
+        code_lines = Ripper.lex(script).each_with_object(Set.new) do |((line, _), type, token), covered|
+          next if NON_CODE_TOKENS.include?(type)
+
+          covered.merge(line..(line + token.chomp.count("\n")))
+        end
+        lines.select.with_index(1) { |_, number| code_lines.include?(number) }.join.strip
+      end
     end
 
     # @return [Integer] a timestamp a year ahead, used to sort negative identifiers last
@@ -222,6 +248,106 @@ module DeployPin
 
       def parallel?
         @parallel
+      end
+
+    private
+
+      # Number of lines in the header: the leading comments and blank lines,
+      # ending at the code delimiter if there is one, and the blank lines
+      # right after the delimiter.
+      def header_length(lines)
+        comments = lines.index { |line| !header_line?(line) } || lines.size
+        delimiter = lines.first(comments).index { |line| delimiter?(line) }
+        return comments unless delimiter
+
+        blank = lines.drop(delimiter + 1).index { |line| !line.strip.empty? } || (lines.size - delimiter - 1)
+        delimiter + 1 + blank
+      end
+
+      def header_line?(line)
+        stripped = line.strip
+        stripped.empty? || stripped.start_with?('#')
+      end
+
+      # The line that ends the header in generated task files, e.g.
+      # `# === task code goes down here ===`: a comment of a run of `=`, any
+      # text without `=`, then another run of `=`. Checked without a regular
+      # expression, in linear time.
+      def delimiter?(line)
+        text = line.strip
+        return false unless text.start_with?('#')
+
+        body = text.delete_prefix('#').lstrip
+        head = leading_equals(body)
+        return false if head.zero?
+        return body.length >= 2 if head == body.length
+
+        tail = leading_equals(body.reverse)
+        tail.positive? && !body[head...-tail].include?('=')
+      end
+
+      def leading_equals(text)
+        text.each_char.take_while { |char| char == '=' }.size
+      end
+
+      # :reek:TooManyStatements
+      def parse_header_line(line)
+        case line
+        when IDENTIFIER_LINE
+          return if @identifier # the first identifier line is the header's
+
+          @identifier = Regexp.last_match(1).to_i
+          @group = Regexp.last_match(2)
+          @recurring = Regexp.last_match(3)
+        when TITLE_LINE
+          @title = Regexp.last_match(1).strip
+        when AFFECTED_AREAS_LINE
+          @affected_areas = Regexp.last_match(1).strip
+        end
+      end
+
+      # Looks for real calls in the code, not in comments, strings, symbols,
+      # assignments or constant references.
+      def detect_calls
+        calls = []
+        collect_calls(Ripper.sexp(script), calls)
+
+        @explicit_timeout = calls.any? do |receiver, name|
+          name == 'execute_with_timeout' && database_receiver?(receiver)
+        end
+        @parallel = calls.any? { |receiver, name| parallel_receiver?(receiver) || parallel_method?(name) }
+      end
+
+      # Collects `[receiver, method name]` of each method call in a Ripper tree.
+      # :reek:UtilityFunction
+      def collect_calls(node, calls)
+        return unless node.is_a?(Array)
+
+        case node
+        in [:call | :command_call, receiver, _, [_, String => name, *], *] then calls << [receiver, name]
+        in [:fcall | :command | :vcall, [_, String => name, *], *] then calls << [nil, name]
+        else nil
+        end
+        node.each { |child| collect_calls(child, calls) }
+      end
+
+      # `Database`, `DeployPin::Database` or `::DeployPin::Database`.
+      # :reek:UtilityFunction
+      def database_receiver?(receiver)
+        case receiver
+        in [:var_ref, [:@const, 'Database', *]] then true
+        in [:const_path_ref, [:var_ref | :top_const_ref, [:@const, 'DeployPin', *]], [:@const, 'Database', *]] then true
+        else false
+        end
+      end
+
+      # :reek:UtilityFunction
+      def parallel_receiver?(receiver)
+        receiver in [:var_ref | :top_const_ref, [:@const, 'Parallel', *]]
+      end
+
+      def parallel_method?(name)
+        name.start_with?(ParallelWrapper::PARALLEL_PREFIX) && respond_to?(name, true)
       end
   end
   # :reek:TooManyMethods

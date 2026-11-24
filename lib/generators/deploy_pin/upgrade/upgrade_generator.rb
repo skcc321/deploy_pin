@@ -5,7 +5,8 @@ require 'rails/generators/migration'
 require 'deploy_pin/generators/base'
 
 module DeployPin
-  # This generator is used to generate the migration file for upgrading db schema for 1.7 version support.
+  # `rails g deploy_pin:upgrade`: creates the migration that upgrades a
+  # `deploy_pins` table created before DeployPin 1.7 for resumable tasks.
   class UpgradeGenerator < Rails::Generators::Base
     include Rails::Generators::Migration
 
@@ -13,7 +14,7 @@ module DeployPin
     # re-runs behave like other Rails generators. The templates are shared with
     # {Generators::Upgrade}, which `deploy_pin upgrade` runs outside Rails.
     source_root File.join(DeployPin::Generators::Base::TEMPLATES_ROOT, 'upgrade')
-    desc 'Add the upgrade migration for DeployPin.'
+    desc File.read(File.expand_path('USAGE', __dir__))
 
     # @param path [String] migrations directory
     # @return [String] the next migration timestamp

@@ -183,4 +183,79 @@ class DeployPin::Generators::TaskTest < DeployPin::GeneratorTestCase
     assert_empty generated('spec/**/*_spec.rb')
     assert_match 'no test framework detected', output
   end
+
+  # Identifiers
+
+  test 'tasks generated within the same second get different identifiers and run independently' do
+    travel_to Time.new(2026, 11, 24, 12, 0, 0) do
+      run_generator DeployPin::Generators::Task, %w[first_task -g I -a ci --skip-test]
+      run_generator DeployPin::Generators::Task, %w[second_task -g II -a ci --skip-test]
+    end
+
+    files = generated('tmp/*.rb').sort
+    assert_equal %w[tmp/20261124120000_first_task.rb tmp/20261124120001_second_task.rb], files
+    files.each do |file|
+      write(file, "#{read(file).split('# === task code goes down here ===').first}\n$ran << title\n")
+    end
+
+    $ran = [] # rubocop:disable Style/GlobalVars
+    DeployPin.tasks_path File.join(destination, 'tmp')
+    capture_io { DeployPin::Runner.run(identifiers: %w[I]) }
+    capture_io { DeployPin::Runner.run(identifiers: %w[I II]) }
+
+    assert_equal ['@ci First Task', '@ci Second Task'], $ran # rubocop:disable Style/GlobalVars
+    assert_predicate DeployPin::Storage.record_class.find_by(uuid: 20_261_124_120_000).completed_at, :present?
+    assert_predicate DeployPin::Storage.record_class.find_by(uuid: 20_261_124_120_001).completed_at, :present?
+  end
+
+  test 'skips identifiers that existing task files use, by name or header' do
+    write 'tmp/20261124120000_old.rb', "# 20261124120000:I\n"
+    write 'tmp/renamed.rb', "# 20261124120001:II\n"
+
+    travel_to Time.new(2026, 11, 24, 12, 0, 0) do
+      run_generator DeployPin::Generators::Task, %w[new_task -g I --skip-test]
+    end
+
+    assert_equal ['tmp/20261124120002_new_task.rb'], generated('tmp/*_new_task.rb')
+    assert_match(/^# 20261124120002:I$/, read('tmp/20261124120002_new_task.rb'))
+  end
+
+  # Recurring identifiers
+
+  test 'a recurring task needs an identifier' do
+    error = assert_raises(Thor::Error) { build_generator(DeployPin::Generators::Task, %w[warm -g I --recurring]) }
+
+    assert_match 'Recurring tasks need an identifier: --identifier <integer>', error.message
+  end
+
+  test 'a recurring identifier must be an integer' do
+    %w[4x 1.5 abc 5-].each do |identifier|
+      error = assert_raises(Thor::Error, identifier) do
+        build_generator(DeployPin::Generators::Task, %W[warm -g I --recurring --identifier #{identifier}])
+      end
+
+      assert_match "Invalid identifier '#{identifier}': use an integer", error.message
+    end
+  end
+
+  test 'accepts negative and reserved recurring identifiers' do
+    run_generator DeployPin::Generators::Task, %w[late -g I --recurring --identifier=-3 --skip-test]
+    run_generator DeployPin::Generators::Task, %w[zero -g I --recurring --identifier 0 --skip-test]
+
+    assert_match '# -3:I:recurring', read('tmp/r_-3_late.rb')
+    assert_match '# 0:I:recurring', read('tmp/r_0_zero.rb')
+  end
+
+  test 'the deploy_pin command writes no task and no test for a missing or malformed recurring identifier' do
+    [%w[--recurring], %w[--recurring --identifier], %w[--recurring --identifier 4x]].each do |flags|
+      _, error = capture_io do
+        assert_raises(SystemExit) do
+          Dir.chdir(destination) { DeployPin::CLI.start(['task', 'warm', '-g', 'I', *flags]) }
+        end
+      end
+
+      assert_match(/Recurring tasks need an identifier|Invalid identifier/, error, flags.join(' '))
+      assert_empty generated('**/*.rb'), flags.join(' ')
+    end
+  end
 end

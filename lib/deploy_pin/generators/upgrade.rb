@@ -4,11 +4,12 @@ require 'deploy_pin/generators/base'
 
 module DeployPin
   module Generators
-    # `deploy_pin upgrade`: creates the migration that upgrades the
-    # `deploy_pins` table for resumable tasks (DeployPin 1.7).
+    # `deploy_pin upgrade`: creates the migration that upgrades a `deploy_pins`
+    # table created before DeployPin 1.7 for resumable tasks. The migration
+    # changes nothing on a table that already has the 1.7 columns.
     class Upgrade < Base
       templates 'upgrade'
-      desc 'Creates the migration that upgrades the deploy_pins table'
+      desc 'Creates the migration that upgrades a deploy_pins table created before DeployPin 1.7'
 
       class_option :migrations_path, type: :string, default: 'db/migrate',
                                      desc: 'Directory of the ActiveRecord migrations'

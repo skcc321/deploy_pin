@@ -91,4 +91,77 @@ class DeployPin::ParallelWrapper::ParallelRunner::Test < ActiveSupport::TestCase
 
     assert_equal [1, 2], Array.new(results.size) { results.pop }.sort
   end
+
+  test 'the documented form: worker options and timeout in one hash' do
+    calls = record_parallel_calls do
+      DeployPin::ParallelWrapper::ParallelRunner.new(:parallel_each, [1, 2], in_threads: 2, timeout: 0.3.seconds) do |i|
+        i
+      end.run
+    end
+
+    assert_equal [[[1, 2], { in_threads: 2 }]], calls
+  end
+
+  test 'a timeout alone leaves no options for Parallel' do
+    calls = record_parallel_calls do
+      DeployPin::ParallelWrapper::ParallelRunner.new(:parallel_each, [1, 2], timeout: 0.3.seconds) { |i| i }.run
+    end
+
+    assert_equal [[[1, 2]]], calls
+  end
+
+  test 'the separate-hash form keeps working' do
+    calls = record_parallel_calls do
+      options = { in_processes: 2 }
+      DeployPin::ParallelWrapper::ParallelRunner.new(:parallel_each, [1, 2], options, { timeout: 0.3.seconds }) do |i|
+        i
+      end.run
+    end
+
+    assert_equal [[[1, 2], { in_processes: 2 }]], calls
+  end
+
+  test 'the same frozen options and timeout array work for repeated calls and are not changed' do
+    skip 'requires ActiveRecord' unless DeployPin::Database.available?
+
+    timeout = [0.3.seconds, { connected_to: { role: :writing } }.freeze].freeze
+    options = { in_threads: 2, timeout: }.freeze
+    timeouts = []
+    execute_with_timeout = lambda do |given_timeout, **params, &block|
+      timeouts << [given_timeout, params]
+      block.call
+    end
+
+    calls = DeployPin::Database.stub(:execute_with_timeout, execute_with_timeout) do
+      record_parallel_calls(run_blocks: true) do
+        2.times { DeployPin::ParallelWrapper::ParallelRunner.new(:parallel_map, [1], options) { |i| i }.run }
+      end
+    end
+
+    assert_equal [[[1], { in_threads: 2 }]] * 2, calls
+    assert_equal [[0.3.seconds, { connected_to: { role: :writing } }]] * 2, timeouts
+    assert_equal({ in_threads: 2, timeout: [0.3.seconds, { connected_to: { role: :writing } }] }, options)
+  end
+
+  test 'a task calls parallel methods with combined options' do
+    task = DeployPin::Task.new(nil)
+    calls = record_parallel_calls(run_blocks: true) do
+      assert_equal [10, 20], task.parallel_map([1, 2], in_threads: 2, timeout: 0.3.seconds) { |i| i * 10 }
+    end
+
+    assert_equal [[[1, 2], { in_threads: 2 }]], calls
+  end
+
+  private
+
+    # Stubs Parallel.each and Parallel.map: records their arguments, and runs the blocks if asked.
+    def record_parallel_calls(run_blocks: false, &block)
+      calls = []
+      fake = lambda do |items, *rest, &item_block|
+        calls << [items, *rest]
+        items.map { |item| item_block.call(item) } if run_blocks
+      end
+      Parallel.stub(:each, fake) { Parallel.stub(:map, fake, &block) }
+      calls
+    end
 end

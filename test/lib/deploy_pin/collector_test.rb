@@ -109,4 +109,45 @@ class DeployPin::Collector::Test < ActiveSupport::TestCase
       collector.run
     end
   end
+
+  test 'one-off tasks with the same identifier are reported before any task is selected or run' do
+    ::FileUtils.rm_rf(DeployPin.tasks_path, secure: true)
+    ::FileUtils.mkdir(DeployPin.tasks_path)
+    File.write("#{DeployPin.tasks_path}20261124120000_first.rb", "# 20261124120000:I\n\n$ran << 1\n")
+    File.write("#{DeployPin.tasks_path}20261124120000_second.rb", "# 20261124120000:II\n\n$ran << 2\n")
+    $ran = [] # rubocop:disable Style/GlobalVars
+
+    [%w[I], %w[II], %w[I II], %w[20261124120000]].each do |identifiers|
+      collector = DeployPin::Collector.new(identifiers:)
+
+      %i[run list short_list mark_done].each do |command|
+        error = assert_raises(DeployPin::DuplicateIdentifierError, "#{command} #{identifiers}") do
+          collector.public_send(command)
+        end
+        assert_match %r{/20261124120000_first\.rb and \S+/20261124120000_second\.rb have the same identifier},
+                     error.message
+      end
+    end
+
+    assert_empty $ran # rubocop:disable Style/GlobalVars
+    assert_nil DeployPin::Storage.record_class.find_by(uuid: 20_261_124_120_000)
+  end
+
+  test 'recurring tasks may share identifiers, with each other and with one-off tasks' do
+    ::FileUtils.rm_rf(DeployPin.tasks_path, secure: true)
+    ::FileUtils.mkdir(DeployPin.tasks_path)
+    File.write("#{DeployPin.tasks_path}r_5_a.rb", "# 5:I:recurring\n\n$ran << :a\n")
+    File.write("#{DeployPin.tasks_path}r_5_b.rb", "# 5:II:recurring\n\n$ran << :b\n")
+    File.write("#{DeployPin.tasks_path}5_c.rb", "# 5:III\n\n$ran << :c\n")
+    DeployPin.deployment_state_transition({ ongoing: %w[I III], pending: 'II', ttl: 1.second })
+    $ran = [] # rubocop:disable Style/GlobalVars
+
+    DeployPin.stub(:deployment_ongoing!, nil) do
+      DeployPin.stub(:deployment_pending!, nil) do
+        DeployPin.stub(:deployment_over!, nil) { DeployPin::Collector.new(identifiers: DeployPin.groups).run }
+      end
+    end
+
+    assert_equal %i[a b c], $ran # rubocop:disable Style/GlobalVars
+  end
 end

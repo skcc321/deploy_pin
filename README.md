@@ -8,7 +8,7 @@
 [![Rails](https://img.shields.io/badge/rails-7.2%20%E2%80%93%208.x%20or%20none-CC0000)](#requirements)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](MIT-LICENSE)
 
-**Run one-off and recurring tasks around your deployments — data backfills, cache warm-ups, cleanups — in a defined order, exactly once, with database timeouts and resumable progress.**
+**Run one-off and recurring tasks around your deployments — data backfills, cache warm-ups, cleanups — in a defined order, once per task, with database timeouts and resumable progress.**
 
 Migrations are for schema changes. Everything else you need to run during a release (backfill a column, re-index records, call an external API, warm a cache) usually ends up in an ad-hoc rake task that someone has to remember to run. DeployPin keeps these tasks in your repository as plain Ruby files, runs each one once, in the order you define, and remembers what has already run.
 
@@ -178,6 +178,10 @@ User.where(name: nil).find_each { |user| user.update!(name: user.email) }
 | `# task_title:` | Shown by `list` and `run` |
 | `# affected_areas:` | Free text for reviewers: what the task touches |
 
+The header is the comment block at the top of the file, up to `# === task code goes down here ===` (or up to the first line of code in files without that line). DeployPin reads the header lines from there only. Everything after it is the task's code, run exactly as written, so comments and lines such as `# 456:II` inside strings or heredocs are kept and do not change the task.
+
+The generator gives each one-off task an unused identifier: two tasks generated in the same second get consecutive timestamps. One-off tasks must not share an identifier, because they share its completion record. `deploy_pin:run`, `list`, `short_list` and `mark_done` stop with an error naming both files if two do, whatever the selected groups. Give the task that has not run yet a new identifier.
+
 ### Groups and ordering
 
 `groups` defines the steps of your deploy, in order. Group names are up to you, and so is the moment each group runs: you choose it by calling `rake 'deploy_pin:run[<group>]'` at that point of your deploy. You can have as many stages as you need. For example:
@@ -190,7 +194,15 @@ User.where(name: nil).find_each { |user| user.update!(name: user.email) }
 
 Tasks are sorted by **group**, then by **identifier**. Negative identifiers run after the other tasks of their group.
 
-A non-recurring task runs only once. When it finishes, it is marked done in the storage, and later runs skip it. If two tasks have the same code, only the first one runs.
+A non-recurring task runs only once. When it finishes, it is marked done in the storage, and later runs skip it. If two tasks have the same code, only the first one runs. Lines that hold only a comment or nothing don't count, unless they are inside a heredoc or another string.
+
+### Running one executor at a time
+
+DeployPin does not coordinate overlapping runs. Serialize the invocations that change task state against the same storage: run one `deploy_pin:run` at a time, from a designated release job or host, and don't run `deploy_pin:mark_done` while a run is in progress. Two executors that overlap can both select the same pending task and run it.
+
+A task is marked done after it finishes. If the process stops after the task changed something but before it was marked done, the next run runs the task again, so write tasks that can resume (see [progress](#resumable-tasks)) or are safe to run again.
+
+This is about separate DeployPin invocations. Parallel workers inside a single task, with [`parallel_*`](#parallel), are supported.
 
 ### Selecting tasks
 
@@ -219,6 +231,7 @@ rake 'deploy_pin:run[I, !20190401135040]' # group I except one task
 |---|---|
 | `rails g deploy_pin:task <title> -g <group>` | Generate a task and its [test](#testing-tasks). Options: `--parallel`, `--recurring --identifier <n>`, `-a <author>`, `--skip-test`, `--test-framework=rspec` |
 | `deploy_pin install`, `deploy_pin task <title> -g <group>`, `deploy_pin upgrade` | The generators, [without Rails](#without-rails). `--require <file>` loads files first |
+| `rails g deploy_pin:upgrade`, `deploy_pin upgrade` | Only for a `deploy_pins` table created before DeployPin 1.7: a migration that adds the columns for resumable tasks and marks the existing records done. It changes nothing on newer tables, and cannot be rolled back: it raises `ActiveRecord::IrreversibleMigration` instead of removing the columns |
 | `rake deploy_pin:list[...]` | List pending tasks, including their code |
 | `rake deploy_pin:short_list[...]` | List pending tasks by group, without the code |
 | `rake deploy_pin:run[...]` | Run pending tasks |
@@ -376,7 +389,15 @@ DeployPin::Database.execute_with_timeout 30.minutes do
 end
 ```
 
-It also accepts `connected_to:`, to run against a replica or another database. See the [`DeployPin::Database` docs](https://rubydoc.info/gems/deploy_pin/DeployPin/Database).
+It also accepts `connected_to:` with `role:`, `shard:` and `prevent_writes:`, to run against a replica or a shard declared with `connects_to` in your `ApplicationRecord`:
+
+```ruby
+DeployPin::Database.execute_with_timeout 1.minute, connected_to: { role: :reading } do
+  Shipment.count
+end
+```
+
+`connected_to: { database: ... }` is not supported by ActiveRecord 7.2 and later, and raises an `ArgumentError`, as do other options. The timeout is set on the connection the block uses, and that connection's previous timeout is restored afterwards, also when the block raises. See the [`DeployPin::Database` docs](https://rubydoc.info/gems/deploy_pin/DeployPin/Database).
 
 ### Parallel
 
@@ -388,7 +409,7 @@ parallel_each(User.ids.each_slice(1_000).to_a, in_processes: 4, timeout: 5.minut
 end
 ```
 
-See the [`DeployPin::ParallelWrapper` docs](https://rubydoc.info/gems/deploy_pin/DeployPin/ParallelWrapper) for passing timeout options.
+`timeout:` is used by DeployPin, and the other options (`in_processes:`, `in_threads:`, `progress:`…) are passed to Parallel. See the [`DeployPin::ParallelWrapper` docs](https://rubydoc.info/gems/deploy_pin/DeployPin/ParallelWrapper) for passing timeout options.
 
 ### Resumable tasks
 
@@ -404,7 +425,7 @@ end
 
 ### Recurring tasks
 
-Recurring tasks run on every deploy and are never marked done. Their identifier is a number you choose, which sets their order within the group:
+Recurring tasks run on every deploy and are never marked done. Their identifier is an integer you choose (negative ones run last in their group), which sets their order within the group. `--identifier` is required, and the generator writes nothing if it is missing or not an integer:
 
 ```bash
 rails g deploy_pin:task warm_caches -g III --recurring --identifier 5

@@ -197,7 +197,8 @@ module DeployPin
   TASKS_FILE = File.expand_path('tasks/deploy_pin_tasks.rake', __dir__)
 
   # Defines the `deploy_pin:*` rake tasks. Rails apps get them from {Engine};
-  # other apps call this from their Rakefile.
+  # other apps call this from their Rakefile. The tasks are defined once per
+  # Rake application: calling it again does not add their actions twice.
   #
   # The tasks first run the app's `environment` task when it is defined (load
   # the app and connect to the database there), else {load_config}.
@@ -213,6 +214,24 @@ module DeployPin
   def self.load_tasks
     require 'rake'
     load TASKS_FILE
+  end
+
+  # Rake applications that have the `deploy_pin:*` tasks.
+  RAKE_APPLICATIONS = ObjectSpace::WeakMap.new
+  private_constant :RAKE_APPLICATIONS
+
+  # Records that the `deploy_pin:*` tasks are being defined in a Rake
+  # application. Called by {TASKS_FILE}, which {load_tasks} and the Rails
+  # engine load.
+  #
+  # @api private
+  # @param application [Rake::Application]
+  # @return [Boolean] false if the application has the tasks already
+  def self.register_rake_tasks(application = Rake.application)
+    # Rake::Task.clear removes them: define them again then
+    return false if RAKE_APPLICATIONS.key?(application) && application.lookup('deploy_pin:run')
+
+    RAKE_APPLICATIONS[application] = true
   end
 
   # Loads the configuration: the given files, or else the first of
