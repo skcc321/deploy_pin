@@ -48,6 +48,16 @@ class DeployPin::PlainRubyAppTest < ActiveSupport::TestCase
     refute_nil DeployPin::Storage.record_class.find_by(uuid: identifier('task_different.rb')).completed_at
   end
 
+  test "rake 'deploy_pin:run[I, !id]' from the command line skips the excluded task" do
+    add_task_file 'task.rb'
+    add_task_file 'failing_task.rb'
+
+    run! 'rake', "deploy_pin:run[I, !#{identifier('failing_task.rb')}]"
+
+    refute_nil DeployPin::Storage.record_class.find_by(uuid: identifier('task.rb')).completed_at
+    assert_nil DeployPin::Storage.record_class.find_by(uuid: identifier('failing_task.rb'))
+  end
+
   test 'rake deploy_pin:list, short_list and mark_done' do
     add_task_file 'task.rb'
 

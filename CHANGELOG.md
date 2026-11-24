@@ -12,7 +12,7 @@
 * The generators no longer read `DeployPin.fallback_group` when they are loaded, but when they run.
 
 ### Fixed
-* `rake 'deploy_pin:list[...]'`, `short_list[...]` and `mark_done[...]` with an argument crashed when tasks existed: the argument was not split into identifiers.
+* Rake task arguments after the first comma were ignored: `rake 'deploy_pin:run[I, !20190401135040]'` ran all of group I, including the excluded task. All the selectors are read now. `list[...]`, `short_list[...]` and `mark_done[...]` with an argument also crashed when task files existed.
 * `DeployPin::Database.execute_with_timeout` with `connected_to: { role: ... }` falls back to `ActiveRecord::Base` when the app has no `ApplicationRecord`.
 
 # 1.10.0 / 2026-11-24

@@ -68,6 +68,18 @@ class DeployPin::RailsIntegrationTest < ActiveSupport::TestCase
     refute_nil DeployPin::Storage.record_class.find_by(uuid: '75371573753751').completed_at
   end
 
+  test "bin/rails 'deploy_pin:run[I, !id]' skips the excluded task" do
+    FileUtils.mkdir_p(File.join(APP_ROOT, 'lib/deploy_pin'))
+    %w[task.rb failing_task.rb].each do |file|
+      FileUtils.cp(File.join(GEM_ROOT, 'test/support/files', file), File.join(APP_ROOT, 'lib/deploy_pin', file))
+    end
+
+    run!('bin/rails', 'deploy_pin:run[I, !75371573753799]')
+
+    refute_nil DeployPin::Storage.record_class.find_by(uuid: '75371573753751').completed_at
+    assert_nil DeployPin::Storage.record_class.find_by(uuid: '75371573753799')
+  end
+
   test 'the deploy_pin command also works in a Rails app' do
     run!('ruby', File.join(GEM_ROOT, 'exe/deploy_pin'), 'task', 'from_cli', '-g', 'III', '--skip-test',
          '--require', 'config/environment.rb')
