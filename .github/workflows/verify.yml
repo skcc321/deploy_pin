@@ -182,3 +182,21 @@ jobs:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           reviewdog -reporter=github-pr-review -runners=coverage
+
+  docs:
+    name: docs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4.13"
+          bundler-cache: true
+      - name: Build YARD docs
+        run: bundle exec yard doc --fail-on-warning --no-save --no-output
+      - name: Require full documentation coverage
+        run: |
+          bundle exec yard stats --list-undoc | tee yard-stats.txt
+          grep -q "100.00% documented" yard-stats.txt

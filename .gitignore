@@ -17,3 +17,5 @@ task.rb
 *.swp
 *.gem
 .DS_Store
+doc/
+.yardoc/

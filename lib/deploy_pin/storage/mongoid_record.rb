@@ -16,11 +16,18 @@ module DeployPin
     index({ uuid: 1 }, { unique: true })
 
     # Same semantics as ActiveRecord: nil when missing (Mongoid raises by default).
+    #
+    # @param uuid [Integer, String] the task identifier
+    # @return [MongoidRecord, nil]
     def self.find_by(uuid:)
       where(uuid: uuid&.to_s).first
     end
 
     # Atomic, like ActiveRecord's increment!.
+    #
+    # @param attribute [Symbol]
+    # @param by [Integer]
+    # @return [void]
     def increment!(attribute, by = 1)
       inc(attribute => by)
     end
