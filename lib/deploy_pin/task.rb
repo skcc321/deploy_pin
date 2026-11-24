@@ -312,7 +312,9 @@ module DeployPin
         calls = []
         collect_calls(Ripper.sexp(script), calls)
 
-        @explicit_timeout = calls.any? { |_, name| name == 'execute_with_timeout' }
+        @explicit_timeout = calls.any? do |receiver, name|
+          name == 'execute_with_timeout' && database_receiver?(receiver)
+        end
         @parallel = calls.any? { |receiver, name| parallel_receiver?(receiver) || parallel_method?(name) }
       end
 
@@ -327,6 +329,16 @@ module DeployPin
         else nil
         end
         node.each { |child| collect_calls(child, calls) }
+      end
+
+      # `Database`, `DeployPin::Database` or `::DeployPin::Database`.
+      # :reek:UtilityFunction
+      def database_receiver?(receiver)
+        case receiver
+        in [:var_ref, [:@const, 'Database', *]] then true
+        in [:const_path_ref, [:var_ref | :top_const_ref, [:@const, 'DeployPin', *]], [:@const, 'Database', *]] then true
+        else false
+        end
       end
 
       # :reek:UtilityFunction
