@@ -1,22 +1,48 @@
 name: Publish Gem
 
+# Releases to RubyGems.org with trusted publishing (OIDC): no API key is stored
+# in the repository. The trusted publisher on rubygems.org must point at this
+# repository and this workflow file (publish.yml).
+# https://guides.rubygems.org/trusted-publishing/
+
 on:
   push:
     branches:
       - master
 
+concurrency:
+  group: publish-gem
+  cancel-in-progress: false
+
 jobs:
-  build:
+  release:
+    name: Push gem to RubyGems.org
     runs-on: ubuntu-latest
     permissions:
       contents: write # `rake release` pushes the version tag
+      id-token: write # exchanged for a short-lived RubyGems.org token
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Release Gem
-        uses: discourse/publish-rubygems-action@v3
-        env:
-          RUBYGEMS_API_KEY: ${{secrets.RUBYGEMS_API_KEY}}
-          GIT_EMAIL: ci@example.com
-          GIT_NAME: Your CI
+      - name: Check whether this version is already released
+        id: version
+        run: |
+          version=$(sed -n "s/^ *VERSION = '\(.*\)'.*/\1/p" lib/deploy_pin/version.rb)
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null; then
+            echo "v$version is already tagged, nothing to release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Releasing v$version."
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: ruby/setup-ruby@be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18 # v1.343.0
+        if: steps.version.outputs.release == 'true'
+        with:
+          bundler-cache: true
+
+      - uses: rubygems/release-gem@5c53f5308233b7c0f47411f0471b3faae6fa57b2 # v1.4.2
+        if: steps.version.outputs.release == 'true'
