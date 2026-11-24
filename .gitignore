@@ -19,7 +19,7 @@ test/rails/dummy/lib/deploy_pin/
 test/rails/dummy/spec/deploy_pin/
 tmp/
 coverage/*
-task.rb
+/task.rb
 *.swp
 *.gem
 .DS_Store
