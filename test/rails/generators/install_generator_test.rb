@@ -2,6 +2,7 @@
 
 require 'test_helper'
 require 'generators/deploy_pin/install/install_generator'
+require 'deploy_pin/generators/install'
 require 'tmpdir'
 
 class DeployPin::InstallGeneratorTest < Rails::Generators::TestCase
@@ -23,7 +24,9 @@ class DeployPin::InstallGeneratorTest < Rails::Generators::TestCase
   test 'uses timestamped migration numbers by default' do
     run_generator
 
-    assert_match(/\A\d{14}_create_deploy_pins\.rb\z/, File.basename(migration_file_name('db/migrate/create_deploy_pins.rb')))
+    migration = File.basename(migration_file_name('db/migrate/create_deploy_pins.rb'))
+
+    assert_match(/\A\d{14}_create_deploy_pins\.rb\z/, migration)
   end
 
   test 'uses sequential migration numbers when timestamped migrations are off' do
@@ -36,7 +39,7 @@ class DeployPin::InstallGeneratorTest < Rails::Generators::TestCase
     run_generator
     output = run_generator
 
-    assert_match(/identical\s+db\/migrate\/\d+_create_deploy_pins\.rb/, output)
+    assert_match(%r{identical\s+db/migrate/\d+_create_deploy_pins\.rb}, output)
     assert_equal 1, Dir[File.join(destination_root, 'db/migrate/*_create_deploy_pins.rb')].size
   end
 

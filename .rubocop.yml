@@ -19,11 +19,12 @@ Style/ClassAndModuleChildren:
   Exclude:
     - test/**/*_test.rb
 
+Metrics/ClassLength:
+  Exclude:
+    - test/**/*_test.rb
+
 Metrics/BlockLength:
   Exclude:
     - '*.gemspec'
     - lib/tasks/*.rake
-
-Metrics/ClassLength:
-  Exclude:
-    - test/**/*_test.rb
+    - test/support/*_tests.rb
