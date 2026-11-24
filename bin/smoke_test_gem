@@ -64,6 +64,9 @@ grep -q 'needs the activerecord gem' <<<"$output"
 
 bundle add activerecord sqlite3 --quiet
 bundle exec deploy_pin install
+# No Redis here: remove the deployment state, as the README says
+ruby -i -0pe '$_.sub!(/^  deployment_state_transition\(\{.*?\}\)\n/m, "")' config/deploy_pin.rb
+! grep -q deployment_state_transition config/deploy_pin.rb
 mkdir -p db
 cat > config/environment.rb <<'RUBY'
 require 'active_record'

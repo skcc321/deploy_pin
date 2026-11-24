@@ -107,6 +107,8 @@ The `deploy_pin` command runs the same generators as `rails g deploy_pin:*`. Cre
 bundle exec deploy_pin install # --config-path and --migrations-path change where the files go
 ```
 
+The generated configuration turns on [deployment state](#deployment-state), which needs Redis. Remove `deployment_state_transition` from it if you don't use Redis.
+
 Then add the rake tasks to your `Rakefile`. They run your `environment` task first, so define one that loads your app, connects to the database and loads `config/deploy_pin.rb`. Run the migration with your migration tool:
 
 ```ruby
