@@ -64,8 +64,3 @@ Style/Documentation:
     - 'lib/generators/deploy_pin/install/install_generator.rb'
     - 'lib/generators/deploy_pin/task/task_generator.rb'
 
-# Offense count: 2
-Style/MixinUsage:
-  Exclude:
-    - 'test/dummy/bin/setup'
-    - 'test/dummy/bin/update'

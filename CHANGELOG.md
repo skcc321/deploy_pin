@@ -1,6 +1,9 @@
 # Unreleased
 ### Added
 * `rails g deploy_pin:task` generates an RSpec spec for each task that runs it through `rake deploy_pin:run`. The spec goes to `spec/deploy_pin/` by default. RSpec is detected when the `RSpec` constant is loaded. Configure with `test_framework` (`:rspec`, or `false` to turn off) and `tests_path`, or pass `--skip-test` / `--test-framework` to the generator.
+### Fixed
+* Rails 7.1+ apps no longer fail to boot when tasks live in an autoloaded `lib/` directory (`config.autoload_lib`): DeployPin tells Zeitwerk to ignore `tasks_path`.
+* Tasks no longer crash on databases without statement timeouts (e.g. SQLite, the Rails 8 default) or when `statement_timeout` is not set: they run without a timeout, and a warning is printed once for unsupported databases.
 
 # 1.9.0 / 2026-11-24
 ### Added

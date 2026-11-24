@@ -5,7 +5,9 @@ module DeployPin
   module Database
     extend self
 
-    # Runs a block under a database statement timeout.
+    # Runs a block under a database statement timeout. On databases without
+    # statement timeouts (anything but PostgreSQL, MySQL and MariaDB, e.g.
+    # SQLite), the block runs without a timeout and a warning is printed once.
     #
     # @example Use the default {DeployPin.statement_timeout}
     #   # 20190401135040:I
@@ -67,8 +69,20 @@ module DeployPin
       end
 
       def set_max_timeout(timeout)
+        engine = db_engine
+        return warn_unsupported_engine unless engine
+
         timeout_in_milliseconds = timeout.to_f.in_milliseconds.ceil # Make sure is always at least 1. 0 turns this off
-        connection.execute db_engine::TIMEOUT_STATEMENT % connection.quote(timeout_in_milliseconds)
+        connection.execute engine::TIMEOUT_STATEMENT % connection.quote(timeout_in_milliseconds)
+      end
+
+      # Databases without a statement timeout (e.g. SQLite) run the block without one.
+      def warn_unsupported_engine
+        return if @unsupported_engine_warned
+
+        @unsupported_engine_warned = true
+        warn "[DeployPin] Statement timeouts are not supported for the #{connection.adapter_name} adapter; " \
+             'running without a timeout.'
       end
 
       def db_engine
