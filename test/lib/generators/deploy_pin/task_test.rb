@@ -100,7 +100,8 @@ class DeployPin::Generators::TaskTest < DeployPin::GeneratorTestCase
     spec = read("spec/deploy_pin/#{task_name}_spec.rb")
     assert_match "require 'spec_helper'", spec
     assert_match "RSpec.describe 'DeployPin task #{task_name}'", spec
-    assert_match 'DeployPin.load_tasks', spec
+    assert_match 'DeployPin.load_tasks unless', spec
+    assert_no_match 'Rails', spec
     assert_match "Rake::Task['deploy_pin:run'].invoke('#{identifier}')", spec
     assert_match "find_by(uuid: #{identifier})", spec
     assert_match 'is marked as done', spec
@@ -111,7 +112,9 @@ class DeployPin::Generators::TaskTest < DeployPin::GeneratorTestCase
 
     run_generator DeployPin::Generators::Task, %w[backfill_users --group I]
 
-    assert_match "require 'rails_helper'", read(generated('spec/deploy_pin/*_spec.rb').first)
+    spec = read(generated('spec/deploy_pin/*_spec.rb').first)
+    assert_match "require 'rails_helper'", spec
+    assert_match 'Rails.application.load_tasks unless', spec
   end
 
   test 'generates the test for a recurring task' do

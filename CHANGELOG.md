@@ -8,7 +8,7 @@
 * `deploy_pin install` takes `--config-path` and `--migrations-path`.
 
 ### Changed
-* The spec generated for a task requires `spec_helper` outside Rails apps, and loads the rake tasks with `DeployPin.load_tasks`.
+* Outside Rails apps, the spec generated for a task requires `spec_helper` and loads the rake tasks with `DeployPin.load_tasks`. In Rails apps it is unchanged (`rails_helper`, `Rails.application.load_tasks`).
 * The generators no longer read `DeployPin.fallback_group` when they are loaded, but when they run.
 
 ### Fixed

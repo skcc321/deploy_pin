@@ -94,10 +94,12 @@ module DeployPin
           options[:group].presence || DeployPin.fallback_group
         end
 
-        # The helper the spec requires: `rails_helper` in a Rails app (rspec-rails), else `spec_helper`.
-        def spec_helper
-          rails_app = defined?(::Rails::Application) || File.exist?(File.join(destination_root, 'spec/rails_helper.rb'))
-          rails_app ? 'rails_helper' : 'spec_helper'
+        # Whether the spec is for a Rails app: it then requires `rails_helper` (rspec-rails)
+        # and loads the tasks with `Rails.application.load_tasks`, which also loads the
+        # app's own rake files (e.g. hooks on deploy_pin:run). Otherwise it requires
+        # `spec_helper` and uses DeployPin.load_tasks.
+        def rails_app?
+          defined?(::Rails::Application) || File.exist?(File.join(destination_root, 'spec/rails_helper.rb'))
         end
 
         # The task file name without the extension, e.g. `20190401135040_backfill_users`.

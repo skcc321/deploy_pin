@@ -19,11 +19,20 @@ class DeployPin::TaskGeneratorTestFileTest < Rails::Generators::TestCase
 
     assert_file "spec/deploy_pin/#{task_name}_spec.rb" do |spec|
       assert_match "require 'rails_helper'", spec
-      assert_match 'DeployPin.load_tasks', spec
+      assert_match 'Rails.application.load_tasks', spec
       assert_match "RSpec.describe 'DeployPin task #{task_name}'", spec
       assert_match "Rake::Task['deploy_pin:run'].invoke('#{identifier}')", spec
       assert_match "find_by(uuid: #{identifier})", spec
     end
+  end
+
+  test 'generates the same spec as 1.10.0 in a Rails app' do
+    run_generator %w[backfill_users --group I]
+    task_name = File.basename(generated('tmp/*_backfill_users.rb').first, '.rb')
+    spec = File.read(File.join(destination_root, "spec/deploy_pin/#{task_name}_spec.rb"))
+
+    assert_equal render_1_10_0_spec(task_name, task_name.split('_').first, false), spec
+    assert_match "before(:all) { Rails.application.load_tasks unless Rake::Task.task_defined?('deploy_pin:run') }", spec
   end
 
   test 'generates the test for a recurring task' do
@@ -101,6 +110,16 @@ class DeployPin::TaskGeneratorTestFileTest < Rails::Generators::TestCase
   end
 
   private
+
+    # The spec of DeployPin 1.10.0's template (test/support/files/1.10.0).
+    def render_1_10_0_spec(task_name, identifier, recurring)
+      template = File.read(File.expand_path('../../support/files/1.10.0/task_spec.rb.erb', __dir__))
+      context = Object.new
+      context.instance_variable_set(:@identifier, identifier)
+      context.instance_variable_set(:@recurring, recurring)
+      context.define_singleton_method(:task_name) { task_name }
+      ERB.new(template, trim_mode: '-').result(context.instance_eval { binding })
+    end
 
     def generated(pattern)
       Dir[File.join(destination_root, pattern)]

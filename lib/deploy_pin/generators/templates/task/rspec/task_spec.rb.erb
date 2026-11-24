@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require '<%= spec_helper %>'
+require '<%= rails_app? ? 'rails_helper' : 'spec_helper' %>'
 require 'rake'
 
 # Runs the task end to end, the same way a deploy does: `rake 'deploy_pin:run[<%= @identifier %>]'`.
 RSpec.describe 'DeployPin task <%= task_name %>' do
   subject(:run_task) { Rake::Task['deploy_pin:run'].invoke('<%= @identifier %>') }
 
-  before(:all) { DeployPin.load_tasks unless Rake::Task.task_defined?('deploy_pin:run') }
+  before(:all) { <%= rails_app? ? 'Rails.application' : 'DeployPin' %>.load_tasks unless Rake::Task.task_defined?('deploy_pin:run') }
 
   before do
     Rake::Task['deploy_pin:run'].reenable

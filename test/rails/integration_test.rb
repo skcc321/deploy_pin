@@ -29,8 +29,14 @@ class DeployPin::RailsIntegrationTest < ActiveSupport::TestCase
     refute_nil spec_file, output
     assert_match "require 'rails_helper'", File.read(spec_file)
 
-    output = run!('rspec', spec_file.delete_prefix("#{APP_ROOT}/"))
+    hook_file = File.join(APP_ROOT, 'tmp/deploy_pin_hook_ran')
+    FileUtils.rm_f(hook_file)
+    output = run!('rspec', spec_file.delete_prefix("#{APP_ROOT}/"), env: { 'DEPLOY_PIN_HOOK_FILE' => hook_file })
     assert_match '2 examples, 0 failures', output
+    # The spec loads the app's rake files too (Rails.application.load_tasks): its hook on deploy_pin:run ran
+    assert_equal 'hook ran', File.read(hook_file)
+  ensure
+    FileUtils.rm_f(hook_file) if hook_file
   end
 
   test 'rails destroy deploy_pin:task removes the task' do
@@ -93,8 +99,8 @@ class DeployPin::RailsIntegrationTest < ActiveSupport::TestCase
       { 'BUNDLE_GEMFILE' => ENV.fetch('BUNDLE_GEMFILE', File.join(GEM_ROOT, 'Gemfile')), 'RAILS_ENV' => 'test' }
     end
 
-    def run!(*command)
-      output, status = Open3.capture2e(env, 'bundle', 'exec', *command, chdir: APP_ROOT)
+    def run!(*command, env: {})
+      output, status = Open3.capture2e(self.env.merge(env), 'bundle', 'exec', *command, chdir: APP_ROOT)
       assert_predicate status, :success?, "#{command.join(' ')} failed:\n#{output}"
       output
     end
