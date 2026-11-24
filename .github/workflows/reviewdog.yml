@@ -4,6 +4,9 @@ jobs:
   rubocop:
     name: runner / rubocop
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # post review comments
     steps:
       - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1
@@ -18,6 +21,9 @@ jobs:
   reek:
     name: runner / reek
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # post review comments
     steps:
       - uses: actions/checkout@v7
       - uses: ruby/setup-ruby@v1

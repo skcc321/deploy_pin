@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # `rake release` pushes the version tag
 
     steps:
       - uses: actions/checkout@v7
