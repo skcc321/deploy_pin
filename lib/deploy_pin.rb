@@ -100,6 +100,21 @@ require 'colorize'
 #   @param val [Proc, nil] `->(task, task_runner) { ... }`; omit to read the current one
 #   @return [Proc]
 #
+# @!method self.test_framework(val = nil)
+#   Test framework for the test file that `rails g deploy_pin:task` creates
+#   next to each task; `false` turns test generation off. When not set, RSpec
+#   is used if the `RSpec` constant is loaded (e.g. rspec-rails in the
+#   `:development` group); otherwise no test is generated.
+#   @see TaskGenerator::TEST_FRAMEWORKS
+#   @param val [Symbol, false, nil] new value; omit to read the current one
+#   @return [Symbol, false, nil]
+#
+# @!method self.tests_path(val = nil)
+#   Directory for the tests that `rails g deploy_pin:task` creates. When not
+#   set, the test framework's default is used (`spec/deploy_pin` for RSpec).
+#   @param val [String, nil] new value; omit to read the current one
+#   @return [String, nil]
+#
 # @!method self.tasks_path(val = nil)
 #   Directory that holds task files.
 #   @param val [String, nil] new value; omit to read the current one
@@ -123,6 +138,8 @@ module DeployPin
     storage
     task_wrapper
     tasks_path
+    test_framework
+    tests_path
   ].freeze
 
   # Values the options are reset to by {setup_defaults!}.
