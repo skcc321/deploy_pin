@@ -5,7 +5,7 @@
 [![CI](https://github.com/skcc321/deploy_pin/actions/workflows/verify.yml/badge.svg)](https://github.com/skcc321/deploy_pin/actions/workflows/verify.yml)
 [![Docs](https://img.shields.io/badge/docs-rubydoc.info-blue)](https://rubydoc.info/gems/deploy_pin)
 [![Ruby](https://img.shields.io/badge/ruby-%E2%89%A5%203.1-CC342D)](#requirements)
-[![Rails](https://img.shields.io/badge/rails-7.0%20%E2%80%93%208.x%20or%20none-CC0000)](#requirements)
+[![Rails](https://img.shields.io/badge/rails-7.2%20%E2%80%93%208.x%20or%20none-CC0000)](#requirements)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](MIT-LICENSE)
 
 **Run one-off and recurring tasks around your deployments — data backfills, cache warm-ups, cleanups — in a defined order, exactly once, with database timeouts and resumable progress.**
@@ -46,7 +46,7 @@ Migrations are for schema changes. Everything else you need to run during a rele
 | | |
 |---|---|
 | Ruby | ≥ 3.1 (CI runs 3.3, 3.4 and 4.0) |
-| Rails | Optional. ≥ 7.0, < 9 (CI runs 7.0, 7.1, 7.2 and 8.1). Without Rails, ActiveSupport ≥ 7.0 is used |
+| Rails | Optional. ≥ 7.2, < 9 (CI runs 7.2 and 8.1). Without Rails, ActiveSupport ≥ 7.2 is used |
 | Storage | ActiveRecord (PostgreSQL, MySQL, MariaDB, …), Mongoid, or your own record class |
 | Redis | Only for [deployment state](#deployment-state) |
 
@@ -578,7 +578,7 @@ DB_ROLE=pg bin/test rails
 DB_ROLE=pg bin/test test/lib/deploy_pin/task_test.rb -n /parse/ # a single file
 ```
 
-`Gemfile.lock` uses the latest Rails. To run against an older one, use a gemfile from [`gemfiles/`](gemfiles) (Rails 7.0 needs Ruby < 3.4):
+`Gemfile.lock` uses Rails 8.1. To run against Rails 7.2, use its gemfile from [`gemfiles/`](gemfiles):
 
 ```bash
 BUNDLE_GEMFILE=gemfiles/rails_7_2.gemfile bundle install

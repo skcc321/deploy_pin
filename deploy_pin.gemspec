@@ -36,7 +36,7 @@ Gem::Specification.new do |spec|
   spec.bindir = 'exe'
   spec.executables = ['deploy_pin']
 
-  spec.add_dependency 'activesupport', '>= 7.0', '< 9.0'
+  spec.add_dependency 'activesupport', '>= 7.2', '< 9.0'
   spec.add_dependency 'colorize', '~> 1.1'
   spec.add_dependency 'connection_pool', '>= 2.2', '< 4'
   spec.add_dependency 'parallel', '>= 1.23', '< 3'
@@ -45,7 +45,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'ruby-progressbar', '~> 1.13'
   spec.add_dependency 'thor', '>= 1.0', '< 2'
 
-  spec.add_development_dependency 'activerecord', '>= 7.0', '< 9.0'
+  spec.add_development_dependency 'activerecord', '>= 7.2', '< 9.0'
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'minitest'
   spec.add_development_dependency 'minitest-mock'
@@ -53,7 +53,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'mysql2'
   spec.add_development_dependency 'pg'
   spec.add_development_dependency 'pry'
-  spec.add_development_dependency 'rails', '>= 7.0', '< 9.0' # the Rails test suite (test/rails)
+  spec.add_development_dependency 'rails', '>= 7.2', '< 9.0' # the Rails test suite (test/rails)
   spec.add_development_dependency 'redcarpet'
   spec.add_development_dependency 'rspec' # runs the specs the task generator creates
   spec.add_development_dependency 'rubocop'

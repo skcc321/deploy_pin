@@ -20,13 +20,14 @@ jobs:
         ruby: ["3.3.14", "3.4.13", "4.0.10"]
         db: ["mariadb", "mysql", "pg", "mongodb"]
         rails: ["8.1"] # Gemfile.lock
-        # Older Rails (and ActiveSupport/ActiveRecord) through gemfiles/. `rails`
-        # differs from the base matrix, so these add jobs instead of changing them.
+        # The other supported Rails (and ActiveSupport/ActiveRecord), 7.2, through
+        # gemfiles/. `rails` differs from the base matrix, so these add jobs
+        # instead of changing them.
         include:
-          - { ruby: "3.3.14", db: "pg", rails: "7.0", gemfile: "gemfiles/rails_7_0.gemfile" }
-          - { ruby: "3.3.14", db: "mongodb", rails: "7.0", gemfile: "gemfiles/rails_7_0.gemfile" }
-          - { ruby: "3.4.13", db: "mysql", rails: "7.1", gemfile: "gemfiles/rails_7_1.gemfile" }
           - { ruby: "3.4.13", db: "pg", rails: "7.2", gemfile: "gemfiles/rails_7_2.gemfile" }
+          - { ruby: "3.4.13", db: "mysql", rails: "7.2", gemfile: "gemfiles/rails_7_2.gemfile" }
+          - { ruby: "3.4.13", db: "mariadb", rails: "7.2", gemfile: "gemfiles/rails_7_2.gemfile" }
+          - { ruby: "3.4.13", db: "mongodb", rails: "7.2", gemfile: "gemfiles/rails_7_2.gemfile" }
 
     runs-on: ${{ matrix.os || 'ubuntu-latest' }}
 
@@ -228,6 +229,36 @@ jobs:
           ruby-version: "3.4.13"
       - name: Build, install and use the gem
         run: bin/smoke_test_gem
+
+  # A Rails app set up with deploy_pin 1.10.0 from rubygems.org, then switched to
+  # this commit: same initializer, records kept, nothing runs twice.
+  upgrade:
+    name: upgrade from 1.10.0 (Rails ${{ matrix.rails }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        rails: ["8.1", "7.2"]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ${{ env.DB_USERNAME }}
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
+        ports:
+          - "5432:5432"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4.13"
+      - name: Upgrade a Rails app from 1.10.0 to this commit
+        env:
+          DB_USERNAME: ${{ env.DB_USERNAME }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+        run: bin/upgrade_test '~> ${{ matrix.rails }}.0' 1.10.0
 
   docs:
     name: docs
