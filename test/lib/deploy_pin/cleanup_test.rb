@@ -129,10 +129,11 @@ class DeployPin::CleanupTest < ActiveSupport::TestCase
   test 'Runner.cleanup prints the removed files before raising' do
     failing = "#{specs_dir}#{@old_id}_old_spec.rb"
     error = DeployPin::CleanupError.new(removed: ['a.rb'], failures: { failing => Errno::EACCES.new(failing) })
-    collector = Minitest::Mock.new.expect(:cleanup, nil) { raise error }
+    collector = Object.new
+    collector.define_singleton_method(:cleanup) { |**| raise error }
 
     DeployPin::Runner.stub(:test_env?, false) do
-      DeployPin::Collector.stub(:new, collector) do
+      DeployPin::Collector.stub(:new, ->(**) { collector }) do
         assert_output("Removed a.rb\nRemoved 1 file\n") do
           assert_raises(DeployPin::CleanupError) { DeployPin::Runner.cleanup }
         end

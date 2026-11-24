@@ -74,7 +74,8 @@ class DeployPin::PlainRubyAppTest < ActiveSupport::TestCase
     development = { 'APP_ENV' => 'development', 'RACK_ENV' => nil, 'RAILS_ENV' => nil }
 
     output = run!('rake', 'deploy_pin:cleanup[dry_run]', env: development)
-    assert_equal "lib/deploy_pin/#{File.basename(old)}\n", output
+    # run! merges stderr, where Ruby or Bundler may print warnings
+    assert_equal ["lib/deploy_pin/#{File.basename(old)}"], output.lines.map(&:chomp).grep(%r{\Alib/})
     assert_path_exists old
 
     run! 'rake', 'deploy_pin:cleanup'
