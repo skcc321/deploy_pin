@@ -6,3 +6,8 @@ Example:
 
     This will create:
         lib/deploy_pin/{task_id}_some_name_of_task.rb
+        spec/deploy_pin/{task_id}_some_name_of_task_spec.rb
+
+    The test framework comes from DeployPin.test_framework (default: rspec),
+    and the directory from DeployPin.tests_path (default: spec/deploy_pin).
+    Use --skip-test to not create the test, or --test-framework=rspec to pick one.

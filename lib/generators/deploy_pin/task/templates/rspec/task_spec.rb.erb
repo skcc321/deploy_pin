@@ -1,0 +1,37 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+require 'rake'
+
+# Runs the task end to end, the same way a deploy does: `rake 'deploy_pin:run[<%= @identifier %>]'`.
+RSpec.describe 'DeployPin task <%= task_name %>' do
+  subject(:run_task) { Rake::Task['deploy_pin:run'].invoke('<%= @identifier %>') }
+
+  before(:all) { Rails.application.load_tasks unless Rake::Task.task_defined?('deploy_pin:run') }
+
+  before do
+    Rake::Task['deploy_pin:run'].reenable
+    # A failing task must fail the spec, even if continue_on_error is enabled in this environment.
+    allow(DeployPin).to receive(:continue_on_error).and_return(false)
+  end
+
+  it 'runs without errors' do
+    expect { run_task }.not_to raise_error
+  end
+<% unless @recurring -%>
+
+  it 'is marked as done' do
+    run_task
+
+    expect(DeployPin::Storage.record_class.find_by(uuid: <%= @identifier %>)&.completed_at).to be_present
+  end
+<% end -%>
+
+  # Describe what the task changes, for example:
+  #
+  # it 'backfills user names' do
+  #   user = User.create!(email: 'user@example.com', name: nil)
+  #
+  #   expect { run_task }.to change { user.reload.name }.to('user@example.com')
+  # end
+end
