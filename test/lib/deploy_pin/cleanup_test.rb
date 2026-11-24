@@ -26,7 +26,7 @@ class DeployPin::CleanupTest < ActiveSupport::TestCase
   test 'removes old tasks and their tests, whatever their records' do
     removed = cleanup
 
-    assert_equal ["#{tasks_dir}#{@old_id}_old.rb", "#{specs_dir}#{@old_id}_old_spec.rb"], removed
+    assert_equal ["#{specs_dir}#{@old_id}_old_spec.rb", "#{tasks_dir}#{@old_id}_old.rb"], removed
     refute_path_exists @old
     refute_path_exists spec(@old)
     [@recent, @recurring, @not_a_timestamp, @negative].each do |file|
@@ -79,13 +79,65 @@ class DeployPin::CleanupTest < ActiveSupport::TestCase
   end
 
   test 'Runner.cleanup prints each path, and a summary unless it is a dry run' do
-    paths = "#{tasks_dir}#{@old_id}_old.rb\n#{specs_dir}#{@old_id}_old_spec.rb\n"
+    paths = "#{specs_dir}#{@old_id}_old_spec.rb\n#{tasks_dir}#{@old_id}_old.rb\n"
 
     DeployPin::Runner.stub(:test_env?, false) do
       assert_output(paths) { DeployPin::Runner.cleanup(dry_run: true) }
       assert_output("#{paths.gsub(/^/, 'Removed ')}Removed 2 files\n") { DeployPin::Runner.cleanup }
     end
     refute_path_exists @old
+  end
+
+  test 'keeps tasks whose identifier is not exactly a 14-digit timestamp' do
+    invalid = [
+      add_task('extra_digit', "#{@old_id}1".to_i),  # strptime ignores the extra digit
+      add_task('february_30', 20_230_230_120_000),  # strptime turns it into March 2
+      add_task('short', @old_id / 10)
+    ]
+
+    assert_equal 2, cleanup.size
+    invalid.each { |file| assert_path_exists file }
+  end
+
+  test 'removes old tasks of groups that are no longer configured' do
+    retired = add_task('retired', timestamp(40.days.ago), group: 'retired')
+
+    assert_equal [retired, @old].map { |file| file.delete_prefix('./') },
+                 cleanup.grep_v(/_spec\.rb\z/)
+  end
+
+  test 'keeps the task when its test cannot be removed, and reports only removed files' do
+    other_id = timestamp(32.days.ago)
+    other = add_task('other', other_id)
+    failing = "#{specs_dir}#{@old_id}_old_spec.rb"
+    delete = File.method(:delete)
+    deny = ->(path) { path == failing ? raise(Errno::EACCES, path) : delete.call(path) }
+
+    error = File.stub(:delete, deny) { assert_raises(DeployPin::CleanupError) { cleanup } }
+
+    assert_equal ["#{specs_dir}#{other_id}_other_spec.rb", "#{tasks_dir}#{other_id}_other.rb"], error.removed
+    assert_equal [failing], error.failures.keys
+    assert_match failing, error.message
+    refute_path_exists other
+    assert_path_exists @old
+    assert_path_exists failing
+
+    # the next cleanup finds them again
+    assert_equal [failing, "#{tasks_dir}#{@old_id}_old.rb"], cleanup
+  end
+
+  test 'Runner.cleanup prints the removed files before raising' do
+    failing = "#{specs_dir}#{@old_id}_old_spec.rb"
+    error = DeployPin::CleanupError.new(removed: ['a.rb'], failures: { failing => Errno::EACCES.new(failing) })
+    collector = Minitest::Mock.new.expect(:cleanup, nil) { raise error }
+
+    DeployPin::Runner.stub(:test_env?, false) do
+      DeployPin::Collector.stub(:new, collector) do
+        assert_output("Removed a.rb\nRemoved 1 file\n") do
+          assert_raises(DeployPin::CleanupError) { DeployPin::Runner.cleanup }
+        end
+      end
+    end
   end
 
   test 'created_at and cleanable?' do
@@ -109,10 +161,10 @@ class DeployPin::CleanupTest < ActiveSupport::TestCase
     end
 
     # Writes a task and its spec, named like the generator names them.
-    def add_task(title, identifier, recurring: false)
+    def add_task(title, identifier, recurring: false, group: 'I')
       file = "#{TASKS_DIR}#{recurring ? 'r_' : ''}#{identifier}_#{title}.rb"
       File.write(file, <<~RUBY)
-        # #{identifier}:I#{':recurring' if recurring}
+        # #{identifier}:#{group}#{':recurring' if recurring}
         # task_title: #{title}
 
         # === task code goes down here ===

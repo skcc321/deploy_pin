@@ -135,13 +135,17 @@ module DeployPin
     TIMESTAMP_FORMAT = '%Y%m%d%H%M%S'
 
     # When the task was created: its identifier read as a {TIMESTAMP_FORMAT}
-    # timestamp, in the local time zone like the generator writes it.
+    # timestamp, in the local time zone like the generator writes it. The
+    # identifier must be exactly 14 digits and a real time: `Time.strptime`
+    # alone ignores extra digits and turns February 30 into March 2.
     #
     # @return [Time, nil] nil for recurring tasks and identifiers that are not timestamps
     def created_at
-      return if recurring || !identifier&.positive?
+      digits = identifier.to_s
+      return if recurring || !digits.match?(/\A\d{14}\z/)
 
-      Time.strptime(identifier.to_s, TIMESTAMP_FORMAT)
+      time = Time.strptime(digits, TIMESTAMP_FORMAT)
+      time if time.strftime(TIMESTAMP_FORMAT) == digits
     rescue ArgumentError
       nil
     end

@@ -26,16 +26,6 @@ module DeployPin
     end
   end
 
-  # Raised by `rake deploy_pin:cleanup` when {DeployPin.cleanup_safe_time_window}
-  # is not set: cleanup removes nothing until a window is chosen.
-  class CleanupWindowNotSetError < StandardError
-    # @return [String]
-    def message
-      'Set DeployPin.cleanup_safe_time_window to choose how long after its creation a task can be ' \
-        'removed, e.g. `cleanup_safe_time_window 6.months` in DeployPin.setup.'
-    end
-  end
-
   # Loads the task files and the deployment state tasks, selects the ones
   # matching the identifiers, sorts them by group and identifier, and runs or
   # lists them.
@@ -101,27 +91,17 @@ module DeployPin
     # :reek:FeatureEnvy
 
     # Removes the source files and the tests of the one-off tasks created
-    # (see {Task#created_at}) more than {DeployPin.cleanup_safe_time_window}
-    # ago, whatever the selected identifiers. Recurring and built-in tasks are
-    # kept. Only files are removed: the stored records are neither read nor
-    # changed, so a removed file that comes back is not run again where it ran.
+    # more than {DeployPin.cleanup_safe_time_window} ago, whatever the
+    # selected identifiers. See {Cleanup}.
     #
     # @param dry_run [Boolean] only return the files, without removing them
-    # @return [Array<String>] the removed (or, on a dry run, removable) files,
-    #   relative to the current directory when they are in it
+    # @return [Array<String>] the removed (or, on a dry run, removable) files
     # @raise [CleanupWindowNotSetError] if {DeployPin.cleanup_safe_time_window} is not set
     # @raise [DuplicateIdentifierError] if two one-off tasks have the same identifier
-    # :reek:BooleanParameter, :reek:ControlParameter and :reek:TooManyStatements
+    # @raise [CleanupError] if some files could not be removed
+    # :reek:BooleanParameter
     def cleanup(dry_run: false)
-      window = DeployPin.cleanup_safe_time_window
-      raise CleanupWindowNotSetError unless window
-
-      before = Time.current - window
-      paths = all_tasks.sort.select { |task| task.cleanable?(before:) }.flat_map do |task|
-        [task.file, *task.test_files]
-      end
-      FileUtils.rm_f(paths) unless dry_run
-      paths.map { |path| relative_path(path) }
+      DeployPin::Cleanup.new(all_tasks).call(dry_run:)
     end
 
     # The selected tasks without duplicates (tasks whose script is the same as an earlier task's).
@@ -190,13 +170,6 @@ module DeployPin
       def init_tasks
         # check if task is suitable
         all_tasks.select { |task| task_criteria.suitable?(task) }.sort # sort by group position in config
-      end
-
-      # :reek:UtilityFunction
-      def relative_path(path)
-        absolute = File.expand_path(path)
-        root = "#{Dir.pwd}/"
-        absolute.start_with?(root) ? absolute.delete_prefix(root) : path
       end
 
       def task_criteria
