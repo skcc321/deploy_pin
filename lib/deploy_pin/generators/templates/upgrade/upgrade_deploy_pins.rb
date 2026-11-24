@@ -12,8 +12,11 @@ class UpgradeDeployPins < ActiveRecord::Migration[7.0]
     execute "UPDATE #{quote_table_name(:deploy_pins)} SET completed_at = created_at"
   end
 
+  # The columns may predate this migration (it changes nothing on a current
+  # table), and removing them would erase the progress and completion of the tasks.
   def down
-    remove_column :deploy_pins, :completed_at, if_exists: true
-    remove_column :deploy_pins, :progress, if_exists: true
+    raise ActiveRecord::IrreversibleMigration,
+          'UpgradeDeployPins cannot tell whether it added the progress and completed_at columns. ' \
+          'Removing them would lose task progress and completion records; remove them by hand if you are sure.'
   end
 end

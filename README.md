@@ -194,13 +194,21 @@ The generator gives each one-off task an unused identifier: two tasks generated 
 
 Tasks are sorted by **group**, then by **identifier**. Negative identifiers run after the other tasks of their group.
 
-A non-recurring task runs only once. When it finishes, it is marked done in the storage, and later runs skip it. If two tasks have the same code, only the first one runs.
+A non-recurring task runs only once. When it finishes, it is marked done in the storage, and later runs skip it. If two tasks have the same code, only the first one runs. Lines that hold only a comment or nothing don't count, unless they are inside a heredoc or another string.
 
-### One run at a time
+### Overlapping runs
 
-Run only one `deploy_pin:run` at a time against the same storage: one deploy, from one server. DeployPin does not lock tasks. A run selects the pending tasks before it runs them, so two runs that overlap can both run the same pending task. With several app servers, run DeployPin from one of them only (e.g. a release phase, a pre-deploy hook, or a single `primary` role), and don't start a deploy while another one is still running its tasks.
+Two `deploy_pin:run`s that overlap, e.g. from two servers of the same deploy, run each pending one-off task once. A run claims a task before it runs it, and keeps the claim until the task has finished and is marked done, or has failed. A run that finds the task claimed waits (`Task … is claimed by another runner, waiting for it`), then checks again: if the other run completed the task, it skips it; if the other run failed, it runs the task, resuming from its saved [progress](#resumable-tasks).
 
-If a run stops after a task changed something but before the task was marked done (it failed, or the process was killed), the next run runs the task again. Write tasks so that running them again is safe, for example by saving [progress](#resumable-tasks) and skipping finished work.
+| Storage | Claim | When the runner holding it dies |
+|---|---|---|
+| ActiveRecord on PostgreSQL, MySQL or MariaDB | A session advisory lock, on a database connection of its own | The database releases it with the connection |
+| Mongoid | A document in the `deploy_pin_claims` collection, renewed while the task runs | The others wait until it expires, up to 60 seconds |
+| Other ActiveRecord databases (e.g. SQLite), or a record class of your own | None | — |
+
+The claims need no migration or index. Without a claim, run only one `deploy_pin:run` at a time against the same storage. Tasks selected with `!` (e.g. `deploy_pin:run[20190401135040!]`) wait for the claim too, but then run even if the other run completed them. Recurring tasks are not claimed: each run runs them.
+
+A claim protects against overlapping runs, not against crashes. If a run stops after a task changed something but before the task was marked done (it failed, or the process was killed), the next run runs the task again. Write tasks so that running them again is safe, for example by saving [progress](#resumable-tasks) and skipping finished work.
 
 ### Selecting tasks
 
@@ -229,7 +237,7 @@ rake 'deploy_pin:run[I, !20190401135040]' # group I except one task
 |---|---|
 | `rails g deploy_pin:task <title> -g <group>` | Generate a task and its [test](#testing-tasks). Options: `--parallel`, `--recurring --identifier <n>`, `-a <author>`, `--skip-test`, `--test-framework=rspec` |
 | `deploy_pin install`, `deploy_pin task <title> -g <group>`, `deploy_pin upgrade` | The generators, [without Rails](#without-rails). `--require <file>` loads files first |
-| `rails g deploy_pin:upgrade`, `deploy_pin upgrade` | Only for a `deploy_pins` table created before DeployPin 1.7: a migration that adds the columns for resumable tasks and marks the existing records done. It changes nothing on newer tables |
+| `rails g deploy_pin:upgrade`, `deploy_pin upgrade` | Only for a `deploy_pins` table created before DeployPin 1.7: a migration that adds the columns for resumable tasks and marks the existing records done. It changes nothing on newer tables, and cannot be rolled back: it raises `ActiveRecord::IrreversibleMigration` instead of removing the columns |
 | `rake deploy_pin:list[...]` | List pending tasks, including their code |
 | `rake deploy_pin:short_list[...]` | List pending tasks by group, without the code |
 | `rake deploy_pin:run[...]` | Run pending tasks |
@@ -470,7 +478,7 @@ Task records are kept by a storage provider, set with `storage`:
 | `:active_record` (default) | `DeployPin::Record` | `deploy_pins` table |
 | `:mongoid` | `DeployPin::MongoidRecord` | `deploy_pins` collection |
 
-You can also set `storage` to a class of your own, for example a Sequel or ROM model. It must respond to `.find_by(uuid:)` and `.create(uuid:)`, and its records to `#progress`, `#completed_at`, `#update(attributes)` and `#increment!(attribute, by)`. See the [`DeployPin::Storage` docs](https://rubydoc.info/gems/deploy_pin/DeployPin/Storage).
+You can also set `storage` to a class of your own, for example a Sequel or ROM model. It must respond to `.find_by(uuid:)` and `.create(uuid:)`, and its records to `#progress`, `#completed_at`, `#update(attributes)` and `#increment!(attribute, by)`. An ActiveRecord or Mongoid model of your own gets the same [claims](#overlapping-runs) as the built-in ones; other classes get none, so run one `deploy_pin:run` at a time with them. See the [`DeployPin::Storage` docs](https://rubydoc.info/gems/deploy_pin/DeployPin/Storage).
 
 `DeployPin::Storage.record_class` returns the model of the configured provider. Statement timeouts and the parallel timeout rely on ActiveRecord. Without it, tasks run without a timeout.
 

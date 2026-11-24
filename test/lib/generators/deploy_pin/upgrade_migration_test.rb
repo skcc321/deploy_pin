@@ -53,6 +53,21 @@ class DeployPin::UpgradeMigrationTest < ActiveSupport::TestCase
     assert_equal completed_at.to_i, DeployPin::Record.find_by(uuid: '2').completed_at.to_i
   end
 
+  test 'cannot be rolled back: a rollback after it ran on a current table keeps the columns and records' do
+    completed_at = 1.day.ago.change(usec: 0)
+    DeployPin::Record.create!(uuid: '1', progress: 42, completed_at: nil)
+    DeployPin::Record.create!(uuid: '2', progress: 7, completed_at:)
+    before = records
+
+    migrate
+    assert_raises(ActiveRecord::IrreversibleMigration) { migrate(:down) }
+
+    DeployPin::Record.reset_column_information
+    assert column?(:progress)
+    assert column?(:completed_at)
+    assert_equal before, records
+  end
+
   test 'on a table with progress but without completed_at, adds completed_at and keeps progress' do
     @connection.remove_column :deploy_pins, :completed_at
     DeployPin::Record.reset_column_information
@@ -67,10 +82,10 @@ class DeployPin::UpgradeMigrationTest < ActiveSupport::TestCase
 
   private
 
-    def migrate
+    def migrate(direction = :up)
       namespace = Module.new
       namespace.module_eval(File.read(TEMPLATE), TEMPLATE)
-      namespace::UpgradeDeployPins.new.migrate(:up)
+      namespace::UpgradeDeployPins.new.migrate(direction)
       DeployPin::Record.reset_column_information
     end
 

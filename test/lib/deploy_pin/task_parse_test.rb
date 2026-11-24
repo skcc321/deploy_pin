@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'test_helper'
+require 'benchmark'
 
 # Metadata comes from the header only; the code after it is kept as written.
 class DeployPin::TaskParseTest < ActiveSupport::TestCase
@@ -97,10 +98,71 @@ class DeployPin::TaskParseTest < ActiveSupport::TestCase
     first = parse("# 1:I\n# task_title: first\n\n# === task code goes down here ===\na = 1\n\na\n")
     second = parse("# 2:II\n# task_title: second\n# affected_areas: x\n" \
                    "# === task code goes down here ===\n\na = 1\n\na")
-    different = parse("# 3:I\n# === task code goes down here ===\na = 1\n# a comment\na\n")
+    different = parse("# 3:I\n# === task code goes down here ===\na = 2\na\n")
 
     assert first.eql?(second)
     refute first.eql?(different)
+  end
+
+  test 'tasks that differ only in standalone comments and blank lines are duplicates, as in 2.0.0' do
+    first = parse("# 1:I\n# === task code goes down here ===\na = 1\na\n")
+    second = parse("# 2:I\n# === task code goes down here ===\n# set a\na = 1\n\n  # then read it\n\na\n" \
+                   "=begin\nnotes\n=end\n")
+
+    assert first.eql?(second)
+    assert_equal "a = 1\na", second.executable_source
+    assert_equal "# set a\na = 1\n\n  # then read it\n\na\n=begin\nnotes\n=end\n", second.script
+  end
+
+  test 'a comment after code on the same line is code for duplicates, as in 2.0.0' do
+    first = parse("# 1:I\n# === task code goes down here ===\na = 1\n")
+    second = parse("# 2:I\n# === task code goes down here ===\na = 1 # one\n")
+
+    refute first.eql?(second)
+  end
+
+  test 'tasks whose heredocs differ are not duplicates, even in blank or comment-like lines' do
+    heredoc = ->(id, body) { parse("# #{id}:I\n# === task code goes down here ===\nx = <<~TEXT\n#{body}TEXT\nx\n") }
+    base = heredoc.call(1, "  a\n  b\n")
+
+    assert base.eql?(heredoc.call(2, "  a\n  b\n"))
+    refute base.eql?(heredoc.call(3, "  a\n\n  b\n"))
+    refute base.eql?(heredoc.call(4, "  a\n  # b\n  b\n"))
+    refute base.eql?(heredoc.call(5, "  a\n  c\n"))
+    assert_equal "x = <<~TEXT\n  a\n  # b\n  b\nTEXT\nx", heredoc.call(6, "  a\n  # b\n  b\n").executable_source
+  end
+
+  test 'a multi-line string keeps its blank and comment-like lines for duplicates' do
+    first = parse("# 1:I\n# === task code goes down here ===\nx = 'a\n\n# b'\nx\n")
+    second = parse("# 2:I\n# === task code goes down here ===\nx = 'a\n# b'\nx\n")
+
+    refute first.eql?(second)
+  end
+
+  test 'a header line with a trailing colon, as 2.0.0 accepted' do
+    task = parse("# 3:I:\n# task_title: trailing colon\n# === task code goes down here ===\n1\n")
+
+    assert_equal [3, 'I', nil], [task.identifier, task.group, task.recurring]
+    assert DeployPin::TaskCriteria.new(identifiers: %w[I]).suitable?(task)
+    assert DeployPin::TaskCriteria.new(identifiers: %w[3]).suitable?(task)
+    assert_equal [3], DeployPin::Collector.new(identifiers: %w[I]).executable.map(&:identifier)
+  end
+
+  test 'the code delimiter: generated forms, other comments, and a long run of = in linear time' do
+    {
+      "# === task code goes down here ===\n" => true,
+      "# === parallel task code goes down here ===\n" => true,
+      "#==\n" => true,
+      "# = = text\n" => false,
+      "# == a = b ==\n" => false,
+      "# =\n" => false,
+      "# just a comment\n" => false
+    }.each do |line, delimiter|
+      assert_equal delimiter, DeployPin::Task.new('x').send(:delimiter?, line), line
+    end
+
+    long = "# #{'=' * 100_000}x\n"
+    assert_in_delta 0, Benchmark.realtime { DeployPin::Task.new('x').send(:delimiter?, long) }, 0.5
   end
 
   test 'explicit timeout and parallel are detected from calls, not from comments or strings' do

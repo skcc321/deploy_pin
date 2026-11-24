@@ -135,11 +135,9 @@ module DeployPin
       !explicit_timeout? && !parallel?
     end
 
-    # The line that ends the header in generated task files, e.g.
-    # `# === task code goes down here ===`.
-    CODE_DELIMITER = /\A#\s*=+[^=]*=+\s*\z/
-    # The `# <identifier>:<group>[:recurring]` header line.
-    IDENTIFIER_LINE = /\A#\s*(-?\d+):(\w+)(?::(recurring))?\s*\z/
+    # The `# <identifier>:<group>[:recurring]` header line. Like DeployPin
+    # 2.0.0, it matches the start of the line, so `# 3:I:` is task 3 of group I.
+    IDENTIFIER_LINE = /\A#\s*(-?\d+):(\w+):?(recurring)?/
     # The `# task_title:` header line.
     TITLE_LINE = /\A#\s*task_title:(.*)\z/
     # The `# affected_areas:` header line.
@@ -185,12 +183,34 @@ module DeployPin
     end
 
     # Whether another task has the same code but a different identifier.
+    # The code is compared without its standalone comments and blank lines
+    # (see {#executable_source}).
     #
     # @param other [Task]
     # @return [Boolean]
     def eql?(other)
       # same script & different identifier
-      script.strip == other.script.strip && identifier != other.identifier
+      executable_source == other.executable_source && identifier != other.identifier
+    end
+
+    # Ruby tokens that are neither code nor part of a literal.
+    NON_CODE_TOKENS = %i[on_sp on_nl on_ignored_nl on_comment on_embdoc_beg on_embdoc on_embdoc_end].freeze
+
+    # The {#script} without the lines that hold only comments or whitespace
+    # outside literals: what {#eql?} compares. Lines inside heredocs and other
+    # multi-line literals are kept, even blank or comment-like ones.
+    #
+    # @return [String]
+    def executable_source
+      @executable_source ||= begin
+        lines = script.lines
+        code_lines = Ripper.lex(script).each_with_object(Set.new) do |((line, _), type, token), covered|
+          next if NON_CODE_TOKENS.include?(type)
+
+          covered.merge(line..(line + token.chomp.count("\n")))
+        end
+        lines.select.with_index(1) { |_, number| code_lines.include?(number) }.join.strip
+      end
     end
 
     # @return [Integer] a timestamp a year ahead, used to sort negative identifiers last
@@ -249,8 +269,25 @@ module DeployPin
         stripped.empty? || stripped.start_with?('#')
       end
 
+      # The line that ends the header in generated task files, e.g.
+      # `# === task code goes down here ===`: a comment of a run of `=`, any
+      # text without `=`, then another run of `=`. Checked without a regular
+      # expression, in linear time.
       def delimiter?(line)
-        CODE_DELIMITER.match?(line.strip)
+        text = line.strip
+        return false unless text.start_with?('#')
+
+        body = text.delete_prefix('#').lstrip
+        head = leading_equals(body)
+        return false if head.zero?
+        return body.length >= 2 if head == body.length
+
+        tail = leading_equals(body.reverse)
+        tail.positive? && !body[head...-tail].include?('=')
+      end
+
+      def leading_equals(text)
+        text.each_char.take_while { |char| char == '=' }.size
       end
 
       # :reek:TooManyStatements

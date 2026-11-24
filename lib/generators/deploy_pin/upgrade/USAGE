@@ -2,7 +2,8 @@ Description:
     Upgrades a deploy_pins table created before DeployPin 1.7: adds the
     progress and completed_at columns for resumable tasks, and marks the
     existing records as completed. On a table that already has those columns
-    (created by DeployPin 1.7 or later) the migration changes nothing.
+    (created by DeployPin 1.7 or later) the migration changes nothing. It
+    cannot be rolled back, so a rollback never removes task state.
     Outside Rails, run `deploy_pin upgrade`.
 
 Example:
