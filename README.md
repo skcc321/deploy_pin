@@ -1,154 +1,325 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Gem Version](https://badge.fury.io/rb/deploy_pin.svg)](https://badge.fury.io/rb/deploy_pin)
-![](https://ruby-gem-downloads-badge.herokuapp.com/deploy_pin)
-[![Verification](https://github.com/skcc321/deploy_pin/actions/workflows/verify.yml/badge.svg)](https://github.com/skcc321/deploy_pin/actions/workflows/verify.yml)
-[![Publish Gem](https://github.com/skcc321/deploy_pin/actions/workflows/publish.yml/badge.svg)](https://github.com/skcc321/deploy_pin/actions/workflows/publish.yml)
-
 # DeployPin
 
-Deploying applications often involves the need to execute a series of specific commands or tasks either before or after the deployment process. While you might typically turn to migrations for such operations, these tasks aren't always migration-related. Additionally, there are situations where you need to execute code before or after a migration without causing the main thread to block.
+[![Gem Version](https://img.shields.io/gem/v/deploy_pin?color=CC342D)](https://rubygems.org/gems/deploy_pin)
+[![Downloads](https://img.shields.io/gem/dt/deploy_pin)](https://rubygems.org/gems/deploy_pin)
+[![CI](https://github.com/skcc321/deploy_pin/actions/workflows/verify.yml/badge.svg)](https://github.com/skcc321/deploy_pin/actions/workflows/verify.yml)
+[![Docs](https://img.shields.io/badge/docs-rubydoc.info-blue)](https://rubydoc.info/gems/deploy_pin)
+[![Ruby](https://img.shields.io/badge/ruby-%E2%89%A5%203.1-CC342D)](#requirements)
+[![Rails](https://img.shields.io/badge/rails-7.0%20%E2%80%93%208.x-CC0000)](#requirements)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](MIT-LICENSE)
 
-Introducing deploy_pins – your go-to solution for streamlined task management during the deployment process. This Ruby library allows you to seamlessly orchestrate tasks before, after, or independently of migrations, offering the flexibility you need to maintain a smooth and efficient deployment workflow. With deploy_pins, you can take control of your deployment tasks and ensure that your application operates flawlessly in any environment.
+**Run one-off and recurring tasks around your deployments — data backfills, cache warm-ups, cleanups — in a defined order, exactly once, with database timeouts and resumable progress.**
 
-## Usage
+Migrations are for schema changes. Everything else you need to run during a release (backfill a column, re-index records, call an external API, warm a cache) usually ends up in an ad-hoc rake task that someone has to remember to run. DeployPin keeps these tasks in your repository as plain Ruby files, runs each one once, in the order you define, and remembers what has already run.
 
-![DeployPin](deploy_pin.gif)
+## Contents
 
-To generate a new task template file:
-```bash
-rails g deploy_pin:task some_task_title
-# or
-rails g deploy_pin:task some_task_title --parallel
-```
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [How it works](#how-it-works)
+- [Commands](#commands)
+- [Hooking into your deploy](#hooking-into-your-deploy)
+- [Features in depth](#features-in-depth)
+- [Configuration reference](#configuration-reference)
+- [Development](#development)
+- [Contributing](#contributing)
+- [Similar gems](#similar-gems)
+- [License](#license)
 
-You can also specify the author:
-```bash
-rails g deploy_pin:task some_task_title -a author_name
-```
+## Features
 
-To list all pending tasks:
-```bash
-rake deploy_pin:list
-```
+- 📌 **Run once:** each task's completion is stored, so it never runs twice. You can still re-run it on purpose.
+- 🗂 **Groups and ordering:** run tasks before or after migrations, or at any other step of your deploy.
+- ⏱ **Statement timeouts:** tasks run under a database statement timeout (PostgreSQL, MySQL, MariaDB).
+- ⚡ **Parallel:** a [Parallel](https://github.com/grosser/parallel) wrapper that applies the timeout in every worker.
+- 🔁 **Resumable:** save progress so a long task continues where it stopped.
+- ♻️ **Recurring tasks:** tasks that run on every deploy.
+- 🚦 **Deployment state:** `DeployPin.ongoing_deployment?` lets your app behave differently while a deploy is in progress.
+- 🍃 **ActiveRecord or Mongoid** storage.
 
-To run all pending tasks:
-```bash
-rake deploy_pin:run
-```
+## Requirements
 
-## Grouped Tasks
+| | |
+|---|---|
+| Ruby | ≥ 3.1 (CI runs 3.3, 3.4 and 4.0) |
+| Rails | ≥ 7.0, < 9 (CI runs 8.1) |
+| Storage | ActiveRecord (PostgreSQL, MySQL, MariaDB, …) or Mongoid |
+| Redis | Only for [deployment state](#deployment-state) |
 
-To define allowed groups, navigate to `config/initializers/deploy_pin.rb`. You can group tasks around the "allowed_group" like this:
-```bash
-rails g deploy_pin:task task_title -g allowed_group
-# or
-rails g deploy_pin:task task_title -g allowed_group --parallel
-```
-
-To list all pending tasks within the "allowed_group":
-```bash
-rake deploy_pin:list[allowed_group]
-```
-
-To run all pending tasks within the "allowed_group":
-```bash
-rake deploy_pin:run[allowed_group]
-```
-
-## Run by Identifier
-
-To execute a specific task using its identifier:
-```bash
-rake deploy_pin:run['identifier_1, identifier_2']
-```
-
-Alternatively, you can combine an identifier and a group:
-```bash
-rake deploy_pin:run['identifier, allowed_group']
-```
-
-If you wish to rerun a task, add an exclamation mark at the end of the identifier:
-```bash
-rake deploy_pin:run['identifier_1!, identifier_2!']
-```
+Statement timeouts need ActiveRecord with PostgreSQL, MySQL or MariaDB. With other setups, tasks run without a timeout.
 
 ## Installation
 
-Add this line to your application's Gemfile:
+Add the gem to your Gemfile and install it:
 
-```ruby
-gem 'deploy_pin'
-```
-
-Then execute:
 ```bash
-$ bundle
+bundle add deploy_pin
 ```
 
-You can also install it manually with:
-```bash
-$ gem install deploy_pin
-```
+Then generate the initializer and the migration, and migrate:
 
-Afterward, generate the configuration file:
 ```bash
 rails g deploy_pin:install
+rails db:migrate
 ```
 
-Finally, run the migration:
+<details>
+<summary>Using Mongoid?</summary>
+
+Generate the initializer with Mongoid storage (no migration is created), then create the indexes:
+
 ```bash
-rake db:migrate
+rails g deploy_pin:install --storage=mongoid
+rails db:mongoid:create_indexes
 ```
 
-Using Mongoid instead of ActiveRecord? See [Storage](#storage).
+Mongoid is not a dependency of deploy_pin, so it has to be in your Gemfile. See [Storage](#storage).
 
-## Database Timeout
+</details>
 
-By default, deploy_pin runs all non-parallel tasks under a database statement timeout. To set a default value, you should define it in the deploy_pin initializer, for example:
+The generated `config/initializers/deploy_pin.rb` starts like this:
 
 ```ruby
-# config/initializers/deploy_pin.rb
 DeployPin.setup do
-  statement_timeout 0.2.seconds # 200 ms
+  tasks_path 'lib/deploy_pin'
+  groups %w[pre I II III]
+  fallback_group 'III'
+  statement_timeout 10.minutes
+  # ...formatters and deployment state, see below
 end
 ```
 
-If you want to use a different value than the default, you need to specify it explicitly in the task, as shown below:
+## Quick start
+
+```bash
+# 1. Generate a task in a group
+rails g deploy_pin:task backfill_user_names -g I
+
+# 2. Write the code in lib/deploy_pin/<timestamp>_backfill_user_names.rb
+
+# 3. See what is pending
+rake deploy_pin:list
+
+# 4. Run it (normally from your deploy script)
+rake deploy_pin:run
+```
+
+## How it works
+
+### Task files
+
+A task is a Ruby file in `tasks_path`. The generator writes the header for you:
 
 ```ruby
-# Some deploy_pin task
 # 20190401135040:I
-# task_title: Execute some query with timeout
-# affected_areas: none
+# task_title: Backfill user names
+# affected_areas: users
 
 # === task code goes down here ===
-DeployPin::Database::execute_with_timeout do
- ActiveRecord::Base.connection.execute("select * from shipments;")
+User.where(name: nil).find_each { |user| user.update!(name: user.email) }
+```
+
+| Header line | Meaning |
+|---|---|
+| `# 20190401135040:I` | `<identifier>:<group>`. The identifier is a timestamp for one-off tasks. |
+| `# 20190401135040:I:recurring` | A [recurring task](#recurring-tasks) that runs on every deploy |
+| `# task_title:` | Shown by `list` and `run` |
+| `# affected_areas:` | Free text for reviewers: what the task touches |
+
+### Groups and ordering
+
+`groups` defines the steps of your deploy, in order. For example, `pre` runs before migrations and `I`, `II` and `III` run after them. Tasks are sorted by **group**, then by **identifier**. Negative identifiers run after the other tasks of their group.
+
+A non-recurring task runs only once. When it finishes, it is marked done in the storage, and later runs skip it. If two tasks have the same code, only the first one runs.
+
+### Selecting tasks
+
+Every command takes an optional, comma-separated list of groups and identifiers:
+
+| Argument | Selects |
+|---|---|
+| *(none)* | All pending tasks in all groups |
+| `I` | Pending tasks in group `I` |
+| `20190401135040` | That task, if it is pending |
+| `20190401135040!` or `I!` | Re-run: selects matching tasks even if they are done |
+| `!20190401135040` or `!II` | Skips matching tasks |
+
+```bash
+rake 'deploy_pin:run[I, II]'
+rake 'deploy_pin:run[20190401135040!]'   # re-run one task
+rake 'deploy_pin:run[I, !20190401135040]' # group I except one task
+```
+
+> [!TIP]
+> Quote the task name (`'deploy_pin:run[...]'`). Shells such as zsh treat the square brackets as glob patterns.
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `rails g deploy_pin:task <title> -g <group>` | Generate a task. Options: `--parallel`, `--recurring --identifier <n>`, `-a <author>` |
+| `rake deploy_pin:list[...]` | List pending tasks, including their code |
+| `rake deploy_pin:short_list[...]` | List pending tasks by group, without the code |
+| `rake deploy_pin:run[...]` | Run pending tasks |
+| `rake deploy_pin:mark_done[...]` | Mark tasks as done without running them. For example, in `db/seeds.rb` for a fresh database, or for a new environment |
+
+## Hooking into your deploy
+
+Run the `pre` group before migrations and the rest after them. A deploy step usually looks like this:
+
+```bash
+bundle exec rake 'deploy_pin:run[pre]' db:migrate 'deploy_pin:run[I, II, III]'
+```
+
+<details>
+<summary>Heroku</summary>
+
+```
+# Procfile
+release: bundle exec rake 'deploy_pin:run[pre]' db:migrate 'deploy_pin:run[I, II, III]'
+```
+
+</details>
+
+<details>
+<summary>Capistrano</summary>
+
+```ruby
+# lib/capistrano/tasks/deploy_pin.rake
+namespace :deploy_pin do
+  %w[pre post].each do |step|
+    task step do
+      groups = step == 'pre' ? 'pre' : 'I, II, III'
+
+      on primary(:db) do
+        within release_path do
+          with rails_env: fetch(:rails_env) do
+            execute :rake, "'deploy_pin:run[#{groups}]'"
+          end
+        end
+      end
+    end
+  end
+end
+
+# config/deploy.rb
+before 'deploy:migrate', 'deploy_pin:pre'
+after 'deploy:migrate', 'deploy_pin:post'
+```
+
+</details>
+
+<details>
+<summary>Kamal</summary>
+
+After `kamal deploy`, run the tasks in the new container:
+
+```bash
+kamal app exec --primary --reuse "bin/rails 'deploy_pin:run[I, II, III]'"
+```
+
+</details>
+
+## Features in depth
+
+### Database timeout
+
+Tasks run under `statement_timeout` from the initializer. To use a different timeout, wrap the code in `DeployPin::Database.execute_with_timeout`. The default timeout is then not applied to that task.
+
+```ruby
+# === task code goes down here ===
+DeployPin::Database.execute_with_timeout 30.minutes do
+  ActiveRecord::Base.connection.execute('UPDATE shipments SET ...')
 end
 ```
 
-For more information about the parameters, please refer to the [`DeployPin::Database` documentation](https://rubydoc.info/gems/deploy_pin/DeployPin/Database).
+It also accepts `connected_to:`, to run against a replica or another database. See the [`DeployPin::Database` docs](https://rubydoc.info/gems/deploy_pin/DeployPin/Database).
 
-## Parallel
+### Parallel
 
-To run parallel tasks using a timeout, you need to use the parallel wrapper, which mimics the parallel interface but adds the timeout option. In a deploy_pin task, instead of using `Parallel.each(1..2, in_processes: 2)`, use:
+Generate the task with `--parallel`. Inside it, prefix any [Parallel](https://github.com/grosser/parallel) method with `parallel_`. Each block call gets its own connection and runs under the timeout:
 
 ```ruby
-parallel_each(1..2, in_processes: 2, timeout: 0.3.seconds) do |i|
-  # ActiveRecord::Base.connection_pool.with_connection is already included in the parallel wrapper.
-  puts "Item: #{i}, Worker: #{Parallel.worker_number}"
-  ActiveRecord::Base.connection.execute("<some db query>")
+parallel_each(User.ids.each_slice(1_000).to_a, in_processes: 4, timeout: 5.minutes) do |ids|
+  User.where(id: ids).update_all(active: true)
 end
 ```
 
-Check the [`DeployPin::ParallelWrapper` documentation](https://rubydoc.info/gems/deploy_pin/DeployPin/ParallelWrapper) for more details.
+See the [`DeployPin::ParallelWrapper` docs](https://rubydoc.info/gems/deploy_pin/DeployPin/ParallelWrapper) for passing timeout options.
 
-## Formatting
+### Resumable tasks
 
-`run_formatter` is used to format the output of a `run` task, `list_formatter` for the `list` task and `short_list_formatter` is used to format the output of a `short_list` task. To set a default value, you should define it in the deploy_pin initializer:
+Long tasks can save progress in their record and pick up from there on the next run. Use `progress`, `save_progress!(value)` and `increment_progress!(by)`:
 
 ```ruby
-# config/initializers/deploy_pin.rb
+# === task code goes down here ===
+User.where('id > ?', progress).find_each do |user|
+  user.recalculate_stats!
+  save_progress!(user.id) # resume after the last processed id
+end
+```
+
+### Recurring tasks
+
+Recurring tasks run on every deploy and are never marked done. Their identifier is a number you choose, which sets their order within the group:
+
+```bash
+rails g deploy_pin:task warm_caches -g III --recurring --identifier 5
+```
+
+> [!NOTE]
+> Identifiers `0` and `-10` are used by the built-in [deployment state](#deployment-state) tasks. Don't use them.
+
+### Deployment state
+
+DeployPin can store in Redis whether a deploy is in progress, so your code can check it:
+
+```ruby
+DeployPin.setup do
+  groups %w[I II III post rollback]
+  deployment_state_transition({
+    ongoing: %w[I III],  # "ongoing" from the start of I until the end of III
+    pending: 'rollback', # "pending" from the start of rollback
+    ttl: 20.seconds,     # how long to cache the state in memory
+    redis_url: 'redis://localhost:6379'
+  })
+end
+
+DeployPin.ongoing_deployment? # => true while groups I..III run
+DeployPin.pending_deployment? # => true after rollback started
+```
+
+### Continue on error
+
+By default, a failing task stops the run. With `continue_on_error`, the error is logged, the task is marked done, and the run continues. This can be useful in CI, where external services may be unavailable:
+
+```ruby
+DeployPin.setup do
+  continue_on_error ENV.fetch('DEPLOY_PIN_CONTINUE_ON_ERROR', 'false') == 'true'
+end
+```
+
+### Storage
+
+Task records are kept by a storage provider, set with `storage`:
+
+| Provider | Model | Where |
+|---|---|---|
+| `:active_record` (default) | `DeployPin::Record` | `deploy_pins` table |
+| `:mongoid` | `DeployPin::MongoidRecord` | `deploy_pins` collection |
+
+`DeployPin::Storage.record_class` returns the model of the configured provider. Statement timeouts and the parallel timeout rely on ActiveRecord. Without it, tasks run without a timeout.
+
+### Output formatting
+
+`run_formatter`, `list_formatter` and `short_list_formatter` control what the rake tasks print. The install generator writes working defaults into the initializer.
+
+<details>
+<summary>Default formatters</summary>
+
+```ruby
 DeployPin.setup do
   run_formatter(
     lambda do |index, task_count, task, executable, start, duration = nil|
@@ -164,202 +335,103 @@ DeployPin.setup do
   list_formatter(
     lambda do |index, task|
       puts("======= Task ##{index} ========".blue.bold)
-
-      # Print details
-      task.details.each do |key, value|
-        puts("#{key}:\t\t#{value}")
-      end
-
+      task.details.each { |key, value| puts("#{key}:\t\t#{value}") }
       puts("\n<<<\n#{task.script.strip.green}\n>>>\n\n")
     end
   )
   short_list_formatter(
     lambda do |group, tasks, start_index|
-      puts(" Group: #{group} ".center(38, "=").light_cyan.bold)
-      puts("\n")
-
+      puts(" Group: #{group} ".center(38, '=').light_cyan.bold)
       tasks.each.with_index(start_index) do |task, index|
-        puts(" Task ##{index} ".center(38, "=").blue.bold)
-        # print details
-        task.details.each do |key, value|
-          key_aligned = "#{key}:".ljust(20)
-          puts("#{key_aligned}#{value}")
-        end
-
-        puts("\n")
+        puts(" Task ##{index} ".center(38, '=').blue.bold)
+        task.details.each { |key, value| puts("#{key}:".ljust(20) + value.to_s) }
+        puts
       end
     end
   )
 end
 ```
 
-To use a different formatting value than the default, you need to specify it explicitly in the task, similar to the database timeout configuration.
+</details>
 
-## Resumable Tasks
+## Configuration reference
 
-When working with long-running code that processes a large dataset, it makes sense to store progress in the database to allow resuming the task later. You can do this by using the `DeployPin::Task` instance methods: `#progress`, `#save_progress!(num)` and `#increment_progress!(num)`.
+All options are set in `DeployPin.setup`. See the [API docs](https://rubydoc.info/gems/deploy_pin/DeployPin) for details.
 
-Here is an example of how to use these methods:
+| Option | Default | Description |
+|---|---|---|
+| `tasks_path` | — | Directory with task files (`'lib/deploy_pin'` in the generated initializer) |
+| `groups` | — | Ordered list of groups |
+| `fallback_group` | — | Group for `deploy_pin:task` when `-g` is not given |
+| `statement_timeout` | — | Default database statement timeout |
+| `storage` | `:active_record` | `:active_record` or `:mongoid` |
+| `continue_on_error` | `false` | Log failed tasks and continue instead of stopping |
+| `task_wrapper` | runs the task | `->(task, task_runner) { ... }` around every task, e.g. for logging or error reporting |
+| `deployment_state_transition` | off | See [Deployment state](#deployment-state) |
+| `run_formatter`, `list_formatter`, `short_list_formatter` | — | See [Output formatting](#output-formatting) |
 
-```ruby
-# Some DeployPin task
-...
-# === task code goes here ===
+## Development
 
-# The progress is 0 by default
-Users.where(id: progress..).find_each do |user|
-  # Do some work
-  increment_progress!(1) # Increment progress by 1 and store it in the database so you can resume the task from this point
-  # or save_progress!(user.id) # Save the progress as the user id
-end
-```
-
-This allows your task to resume from where it left off, minimizing the risk of repeating work.
-
-
-## Recurring Tasks
-If you want to generate a recurring task, you can use the `--recurring` option. Make sure to set a correct `--identifier`, which should be a numeric value. Positive and negative numbers are possible here. The identifier affects the order of task execution, allowing you to customize the sequence as desired.
-
-Please note that two identifiers, 0 and -10, are already reserved for deployment state tracking. Avoid using these identifiers.
+You need Ruby (see [`.ruby-version`](.ruby-version)) and Docker. The `pg` and `mysql2` gems compile against the PostgreSQL and MySQL client libraries, so install those first (on macOS: `brew install libpq mysql-client`, then make sure `pg_config` and `mysql_config` are on your `PATH`).
 
 ```bash
-rails g deploy_pin:task some_task_title --recurring --identifier 5
-# or
-rails g deploy_pin:task some_task_title --parallel --recurring --identifier 5
+git clone https://github.com/skcc321/deploy_pin.git && cd deploy_pin
+bundle install
+
+# Start the databases (credentials come from .env)
+docker compose up -d
+set -a; source .env; set +a
+export RAILS_ENV=test
 ```
 
-## Mark Tasks as Done
+Run the tests against one database at a time. `DB_ROLE` is `pg`, `mysql`, `mariadb` or `mongodb`:
 
 ```bash
-rake deploy_pin:mark_done['identifier_1, identifier_2'] # marks specific tasks as done 
-rake deploy_pin:mark_done # marks all tasks as done. useful in seed file
+DB_ROLE=pg bin/rails db:prepare # not needed for mongodb
+DB_ROLE=pg bin/test
+DB_ROLE=pg bin/test test/lib/deploy_pin/task_test.rb # a single file
 ```
 
-## DeploymentStateTrack
-In the initializer
-```ruby
-DeployPin.setup do
-  groups %w[I II III post rollback]
-  ...
-  deployment_state_transition({
-    ongoing: %w[I III],
-    pending: "rollback", # enters to pending step before "rollback"
-    ttl: 20.second, # memoize the state to avoid Redis spam
-    redis_url: "redis://localhost:6379"
-  })
-end
-
-# enabled next methods
-DeployPin.ongoing_deployment?
-DeployPin.pending_deployment?
-```
-
-Around the deployment
-```bash
-bundle exec rake deploy_pin:run[I, II, III] - # enters to ongoing state before "I" and leaves it after "III" so all tasks in I, II, III have DeployPin.ongoing_deployment? == true
-bundle exec rake deploy_pin:run[rollback] - # enters "pending state"
-```
-## Continue on Error
-
-By default, if a task raises an error, the entire deploy pin run is aborted. You can configure `continue_on_error` to rescue failures, log them, and still mark the task as done. This is useful in CI environments where external services may be unavailable.
-
-```ruby
-# config/initializers/deploy_pin.rb
-DeployPin.setup do
-  continue_on_error true
-end
-```
-
-Or conditionally via environment variable:
-
-```ruby
-DeployPin.setup do
-  continue_on_error ENV.fetch("DEPLOY_PIN_CONTINUE_ON_ERROR", "false") == "true"
-end
-```
-
-When enabled, failed tasks will log the error and continue to the next task without halting execution.
-
-## Storage
-
-DeployPin keeps track of executed tasks in a storage provider. It is set with the `storage` setting and defaults to `:active_record`, which uses the `deploy_pins` table created by the install generator.
-
-```ruby
-# config/initializers/deploy_pin.rb
-DeployPin.setup do
-  storage :active_record # default, can be omitted
-end
-```
-
-Existing setups don't need any changes: the default keeps using the same `DeployPin::Record` model and `deploy_pins` table, so already executed tasks stay marked as done.
-
-### Mongoid
-
-Apps using [Mongoid](https://github.com/mongodb/mongoid) can store task records in a `deploy_pins` collection (`DeployPin::MongoidRecord`). Mongoid is not a dependency of deploy_pin, so it has to be in your Gemfile.
-
-Generate the initializer with the Mongoid storage (no migration is created):
-```bash
-rails g deploy_pin:install --storage=mongoid
-rails db:mongoid:create_indexes
-```
-
-Or set it in an existing initializer:
-```ruby
-DeployPin.setup do
-  storage :mongoid
-end
-```
-
-Supported providers: `:active_record`, `:mongoid`.
-
-The record model of the configured provider is available via `DeployPin::Storage.record_class`. An unknown provider raises an `ArgumentError` listing the supported ones.
-
-Note: [Database Timeout](#database-timeout) and the timeout of the [Parallel](#parallel) wrapper rely on ActiveRecord connections. When ActiveRecord is not loaded, tasks run without a statement timeout.
-
-## API Documentation
-
-The API documentation is published at [rubydoc.info](https://rubydoc.info/gems/deploy_pin). To build it locally into `doc/`, run:
+Linting and docs, also checked on CI:
 
 ```bash
-bundle exec rake yard
+bundle exec rubocop
+gem install reek && reek lib
+bundle exec rake yard # builds doc/, must stay 100% documented
 ```
 
-## Similar Gems
-- https://github.com/ilyakatz/data-migrate
-- https://github.com/Shopify/maintenance_tasks
-- https://github.com/theSteveMitchell/after_party
+<details>
+<summary>Run the CI workflow locally with <code>act</code></summary>
 
-## Contributing
-Contribution directions go here.
-
-### Running Tests Locally
-
-To ensure your changes meet the required standards and pass all tests before submitting a pull request, you can simulate the GitHub Actions workflow locally using the [`act`](https://github.com/nektos/act) tool.
-
-#### Prerequisites
-
-1. **Install `act`**
-   Follow the installation guide provided in the official [`act` documentation](https://nektosact.com/installation/index.html).
-
-2. **Docker**
-   Ensure Docker is installed and running on your machine.
-
-#### Running the Workflow
-
-Use the following command to simulate the workflow locally:
+With [`act`](https://nektosact.com/installation/index.html) and Docker:
 
 ```bash
 act pull_request --secret-file .env --container-architecture linux/amd64 -W .github/workflows -j test
 ```
 
-This command does the following:
-- `pull_request`: Runs the pull_request workflow defined in your .github/workflows directory.
-- `--secret-file .env`: Uses the .env file provided in the repository to load environment variables.
-- `--container-architecture linux/amd64`: Ensures compatibility with GitHub Actions runners.
-- `-W .github/workflows`: Specifies the directory containing the workflow files.
-- `-j rspec`: Runs the `rspec` job defined in the workflow.
+</details>
 
-For more details on customizing this command, refer to the [act documentation](https://nektosact.com/).
+## Contributing
+
+Bug reports and pull requests are welcome.
+
+1. For bigger changes, open an [issue](https://github.com/skcc321/deploy_pin/issues) first to discuss them.
+2. Fork the repo and create a branch from `master`.
+3. Add tests, and run them on at least one SQL database and on `mongodb` if you touch storage.
+4. Make sure `rubocop` passes and new public methods have YARD docs.
+5. Add a line under `# Unreleased` in [CHANGELOG.md](CHANGELOG.md).
+6. Open a pull request. The template asks what changed, why, and how you tested it.
+
+Please report security issues privately. See [SECURITY.md](SECURITY.md).
+
+## Similar gems
+
+- [data-migrate](https://github.com/ilyakatz/data-migrate): data migrations that run alongside schema migrations.
+- [maintenance_tasks](https://github.com/Shopify/maintenance_tasks): a Rails engine with a web UI for running data tasks on demand.
+- [after_party](https://github.com/theSteveMitchell/after_party): one-off post-deploy rake tasks.
+
+DeployPin sits between them: tasks are tied to the steps of your deploy (groups), with statement timeouts, parallel helpers and deployment state.
 
 ## License
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+
+Released under the [MIT License](MIT-LICENSE).
