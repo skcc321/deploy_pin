@@ -6,7 +6,6 @@
   Rails apps keep working as before: the engine loads the rake tasks, and `rails g deploy_pin:*` runs the same generators.
 * `storage` accepts a record class of your own, e.g. for Sequel or ROM.
 * `deploy_pin install` (and `rails g deploy_pin:install`) takes `--config-path` and `--migrations-path`.
-* `rails g deploy_pin:task` generates an RSpec spec for each task that runs it through `rake deploy_pin:run`. The spec goes to `spec/deploy_pin/` by default. RSpec is detected when the `RSpec` constant is loaded. Configure with `test_framework` (`:rspec`, or `false` to turn off) and `tests_path`, or pass `--skip-test` / `--test-framework` to the generator.
 
 ### Changed
 * The spec generated for a task requires `spec_helper` outside Rails apps, and loads the rake tasks with `DeployPin.load_tasks`.
@@ -15,6 +14,11 @@
 ### Fixed
 * `rake 'deploy_pin:list[...]'`, `short_list[...]` and `mark_done[...]` with an argument crashed when tasks existed: the argument was not split into identifiers.
 * `DeployPin::Database.execute_with_timeout` with `connected_to: { role: ... }` falls back to `ActiveRecord::Base` when the app has no `ApplicationRecord`.
+
+# 1.10.0 / 2026-11-24
+### Added
+* `rails g deploy_pin:task` generates an RSpec spec for each task that runs it through `rake deploy_pin:run`. The spec goes to `spec/deploy_pin/` by default. RSpec is detected when the `RSpec` constant is loaded. Configure with `test_framework` (`:rspec`, or `false` to turn off) and `tests_path`, or pass `--skip-test` / `--test-framework` to the generator.
+### Fixed
 * Rails 7.1+ apps no longer fail to boot when tasks live in an autoloaded `lib/` directory (`config.autoload_lib`): DeployPin tells Zeitwerk to ignore `tasks_path`.
 * Tasks no longer crash on databases without statement timeouts (e.g. SQLite, the Rails 8 default) or when `statement_timeout` is not set: they run without a timeout, and a warning is printed once for unsupported databases.
 
