@@ -17,7 +17,7 @@ class DeployPin::ParallelWrapper::Test < ActiveSupport::TestCase
         task.run
       end
 
-      assert_match(/statement (timeout|execution)/, error.message)
+      assert_match(/statement (timeout|execution)|execution time limit/, error.message)
     end
   end
 

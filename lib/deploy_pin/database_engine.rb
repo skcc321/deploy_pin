@@ -18,8 +18,8 @@ module DeployPin
 
     # MariaDB settings.
     module MariaDB
-      # SQL that sets the timeout, in milliseconds.
-      TIMEOUT_STATEMENT = 'SET SESSION max_statement_time = %s'
+      # SQL that sets the timeout, in milliseconds: `max_statement_time` is in seconds.
+      TIMEOUT_STATEMENT = 'SET SESSION max_statement_time = %s / 1000'
     end
 
     # Engine modules by key.
