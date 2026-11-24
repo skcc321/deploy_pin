@@ -29,24 +29,16 @@ module DeployPin
     # @param task [Task] a parsed task
     # @return [Boolean] whether the task is selected
     def suitable?(task)
-      return false if covered?(task, SKIP_REGEXEP)
-      return true if covered?(task, FORCE_REGEXP)
-
-      covered?(task, COMMON_REGEXP) && !task.done?
-    end
-
-    # @param task [Task] a parsed task
-    # @return [Boolean] whether the task is selected with `!` (to run even if it is done)
-    def forced?(task)
-      !covered?(task, SKIP_REGEXEP) && covered?(task, FORCE_REGEXP)
-    end
-
-    private
-
-      def covered?(task, regexp)
+      task_cover = lambda { |task, regexp|
         items = identifiers.flat_map { |x| x.to_s.scan(regexp) }.flatten
 
-        items.intersect?([task.group, task.identifier.to_s])
-      end
+        items & [task.group, task.identifier.to_s]
+      }
+
+      return false if task_cover.call(task, SKIP_REGEXEP).any?
+      return true if task_cover.call(task, FORCE_REGEXP).any?
+
+      task_cover.call(task, COMMON_REGEXP).any? && !task.done?
+    end
   end
 end

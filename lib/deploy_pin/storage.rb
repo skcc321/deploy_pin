@@ -16,10 +16,6 @@ module DeployPin
   # A record class must respond to `.find_by(uuid:)` (returning a record or
   # nil) and `.create(uuid:)`. Its instances must respond to `#progress`,
   # `#completed_at`, `#update(attributes)` and `#increment!(attribute, by)`.
-  #
-  # Overlapping runs are coordinated by a {Claim} for ActiveRecord models (on
-  # PostgreSQL, MySQL and MariaDB) and Mongoid models, built-in or your own.
-  # Other record classes get no claim: run one `deploy_pin:run` at a time with them.
   module Storage
     # Record classes by storage name. They are resolved lazily, so only the
     # configured ORM has to be installed.
@@ -38,16 +34,6 @@ module DeployPin
         raise ArgumentError,
               "Unknown DeployPin storage #{DeployPin.storage.inspect}. Supported: #{PROVIDERS.keys.join(', ')}"
       end.call
-    end
-
-    # Runs the block without the record class's query cache, if it has one,
-    # so it reads what other runners stored.
-    #
-    # @yield
-    # @return [Object] the result of the block
-    def self.uncached(&)
-      record_class = self.record_class
-      record_class.respond_to?(:uncached) ? record_class.uncached(&) : yield
     end
   end
 end

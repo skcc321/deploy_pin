@@ -1,6 +1,8 @@
 # Unreleased
+### Documented
+* Run one DeployPin executor at a time per storage: DeployPin does not coordinate overlapping `deploy_pin:run`s or a `deploy_pin:mark_done` during a run, which can run the same pending task twice. See "Running one executor at a time" in the README.
+
 ### Fixed
-* Overlapping `deploy_pin:run`s no longer both run the same pending one-off task. A run claims each task (an advisory lock on PostgreSQL, MySQL and MariaDB; a `deploy_pin_claims` document with Mongoid) until the task is marked done or has failed; a run that waits for the claim skips the task if the other one completed it. No migration is needed. Custom record classes that are not ActiveRecord or Mongoid models are not claimed. See "Overlapping runs" in the README.
 * Tasks generated within the same second no longer get the same identifier, which made the second one be skipped once the first was done. One-off tasks with the same identifier now stop `run`, `list`, `short_list` and `mark_done` with an error naming both files, whichever groups are selected.
 * Task code is kept as written: comments and blank lines, e.g. in heredocs, are no longer removed. Header lines are read from the header only, so `# 456:II` in the code no longer changes the task's identifier and group. Code that only mentions `parallel` or `execute_with_timeout` in a string or comment keeps the default timeout. Tasks that differ only in standalone comments and blank lines are still duplicates, while differences inside heredocs and strings count, and headers such as `# 3:I:` still work.
 * The upgrade migration (`deploy_pin upgrade`, `rails g deploy_pin:upgrade`) only marks records done when it adds `completed_at` to a pre-1.7 table. On a newer table it no longer marks unfinished tasks done or overwrites completion times. It cannot be rolled back (`ActiveRecord::IrreversibleMigration`), since a rollback would remove the columns and the task state in them.

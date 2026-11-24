@@ -44,10 +44,6 @@ module DeployPin
     # Runs the selected tasks through {DeployPin.task_wrapper}. A task whose
     # script duplicates an earlier one is marked done but not run.
     #
-    # Each one-off task runs under a {Claim}: a run that finds a task claimed
-    # by an overlapping run waits for it, then skips the task if that run
-    # completed it (unless the task was selected with `!`).
-    #
     # @return [void]
     # @raise [StandardError] a task's error, unless {DeployPin.continue_on_error} is set
     # @raise [DuplicateIdentifierError] if two one-off tasks have the same identifier
@@ -88,10 +84,8 @@ module DeployPin
     def mark_done
       tasks = init_tasks
       tasks.each do |task|
-        claimed(task) do
-          task.prepare
-          task.mark
-        end
+        task.prepare
+        task.mark
       end
     end
     # :reek:FeatureEnvy
@@ -116,46 +110,23 @@ module DeployPin
       # :reek:FeatureEnvy
       # :reek:TooManyStatements
       def process(tasks, task, index)
-        claimed(task) do
-          next skip_completed(task) if completed_meanwhile?(task)
+        # run only uniq tasks
+        executable = tasks[0..index].none? { |other_task| task.eql?(other_task) }
 
-          # run only uniq tasks
-          executable = tasks[0..index].none? { |other_task| task.eql?(other_task) }
+        DeployPin.run_formatter.call(index, tasks.count, task, executable, true)
 
-          DeployPin.run_formatter.call(index, tasks.count, task, executable, true)
+        task.prepare
 
-          task.prepare
-
-          # run if executable
-          if executable
-            duration = execution_duration { run_task_safely(task) }
-            DeployPin.run_formatter.call(index, tasks.count, task, executable, false, duration)
-          end
-
-          task.mark # mark each task as done
+        # run if executable
+        if executable
+          duration = execution_duration { run_task_safely(task) }
+          DeployPin.run_formatter.call(index, tasks.count, task, executable, false, duration)
         end
+
+        task.mark # mark each task as done
       end
       # :reek:TooManyStatements
       # :reek:FeatureEnvy
-
-      # Recurring tasks run on every deployment, so they are not claimed.
-      def claimed(task, &)
-        return yield if task.recurring
-
-        DeployPin::Claim.hold(task.identifier, &)
-      end
-
-      # Another run may have completed the task between its selection and its claim.
-      def completed_meanwhile?(task)
-        return false if task.recurring || task_criteria.forced?(task)
-
-        DeployPin::Storage.uncached { task.done? }
-      end
-
-      # :reek:UtilityFunction
-      def skip_completed(task)
-        DeployPin::Runner.print("[DeployPin] Task #{task.identifier} was completed by another run, skipping it")
-      end
 
       def run_task_safely(task)
         run_with_timeout(task) { task.run }
