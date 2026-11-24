@@ -37,6 +37,13 @@ class DeployPin::StorageTest < ActiveSupport::TestCase
     assert_equal DeployPin::Storage::PROVIDERS.fetch(@storage.to_sym).call, DeployPin::Storage.record_class
   end
 
+  test 'uses a record class set as storage' do
+    record_class = Class.new
+    DeployPin.storage record_class
+
+    assert_same record_class, DeployPin::Storage.record_class
+  end
+
   test 'raises on unknown provider' do
     DeployPin.storage :unknown
 

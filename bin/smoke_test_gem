@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# Builds the gem from a clean checkout of HEAD (only committed files), installs
+# it into an empty gem home, and uses it the way an app would:
+#   - the `deploy_pin` command (install, task) in a plain Ruby app,
+#   - DeployPin.load_tasks,
+#   - loading the `rails g deploy_pin:*` generators (with railties installed).
+# Run from the repository root. Needs network access to install dependencies.
+set -euo pipefail
+
+root=$(pwd)
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+
+mkdir -p "$work/src"
+git -C "$root" archive HEAD | tar -x -C "$work/src"
+(cd "$work/src" && gem build deploy_pin.gemspec --output "$work/deploy_pin.gem" >/dev/null)
+
+export GEM_HOME="$work/gems" GEM_PATH="$work/gems" PATH="$work/gems/bin:$PATH"
+unset BUNDLE_GEMFILE RUBYOPT
+gem install --no-document --quiet "$work/deploy_pin.gem" railties >/dev/null
+
+app="$work/app"
+mkdir -p "$app" && cd "$app"
+
+deploy_pin version
+deploy_pin install --storage=mongoid
+cat >> config/deploy_pin.rb <<'RUBY'
+DeployPin.setup { test_framework false }
+RUBY
+deploy_pin task smoke_test -g I
+ls lib/deploy_pin/*_smoke_test.rb >/dev/null
+
+ruby -e '
+  require "deploy_pin"
+  abort "Rails was loaded" if defined?(Rails)
+  DeployPin.load_tasks
+  abort "deploy_pin:run is not defined" unless Rake::Task.task_defined?("deploy_pin:run")
+'
+
+ruby -e '
+  require "rails"
+  require "deploy_pin"
+  %w[install task upgrade].each { |name| require "generators/deploy_pin/#{name}/#{name}_generator" }
+  [DeployPin::InstallGenerator, DeployPin::TaskGenerator, DeployPin::UpgradeGenerator].each(&:desc)
+'
+
+echo "installed gem passed: $(gem list deploy_pin | head -1)"
+
+# The README quick start without Rails, in a new bundle: first with DeployPin only,
+# then with ActiveRecord and SQLite.
+quick_start="$work/quick_start"
+mkdir -p "$quick_start" && cd "$quick_start"
+cat > Gemfile <<RUBY
+source 'https://rubygems.org'
+gem 'deploy_pin', path: '$work/src'
+RUBY
+bundle install --quiet
+
+bundle exec ruby -e 'require "deploy_pin"; DeployPin.load_tasks; abort "no rake tasks" unless Rake::Task.task_defined?("deploy_pin:run")'
+if output=$(bundle exec deploy_pin install 2>&1); then
+  echo "deploy_pin install without activerecord should fail"; exit 1
+fi
+grep -q 'needs the activerecord gem' <<<"$output"
+
+bundle add activerecord sqlite3 --quiet
+bundle exec deploy_pin install
+# No Redis here: remove the deployment state, as the README says
+ruby -i -0pe '$_.sub!(/^  deployment_state_transition\(\{.*?\}\)\n/m, "")' config/deploy_pin.rb
+! grep -q deployment_state_transition config/deploy_pin.rb
+mkdir -p db
+cat > config/environment.rb <<'RUBY'
+require 'active_record'
+require 'deploy_pin'
+ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: 'db/app.sqlite3')
+require_relative 'deploy_pin'
+RUBY
+cat > Rakefile <<'RUBY'
+require 'deploy_pin'
+DeployPin.load_tasks
+
+task :environment do
+  require_relative 'config/environment'
+end
+
+task migrate: :environment do
+  ActiveRecord::MigrationContext.new('db/migrate').migrate
+end
+RUBY
+bundle exec rake migrate
+bundle exec deploy_pin task say_hello -g I --require config/environment.rb
+echo 'File.write("ran.txt", File.exist?("ran.txt") ? "twice" : "once")' >> lib/deploy_pin/*_say_hello.rb
+sed -i.bak 's/^20.times.*$//' lib/deploy_pin/*_say_hello.rb # skip the template's progress bar demo
+bundle exec rake 'deploy_pin:run[I, II]' >/dev/null
+bundle exec rake deploy_pin:run >/dev/null
+[ "$(cat ran.txt)" = once ] || { echo "the task did not run exactly once: $(cat ran.txt 2>/dev/null)"; exit 1; }
+
+echo "quick start passed"

@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Generators for DeployPin tasks, the configuration and the migrations.
+# Run `deploy_pin help` for the commands.
+require 'deploy_pin/cli'
+
+DeployPin::CLI.start(ARGV)

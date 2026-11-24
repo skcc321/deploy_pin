@@ -1,4 +1,24 @@
-# Unreleased
+# Unreleased (2.0.0)
+### Breaking changes
+* Requires Rails (or, without Rails, ActiveSupport) 7.2 or later. Rails 7.0 and 7.1 are end-of-life: apps on them stay on deploy_pin 1.10. CI runs Rails 7.2 and 8.1.
+* deploy_pin no longer depends on `rails`, but on `activesupport`, `thor` and `rake`. Rails apps already have them.
+
+### Added
+* DeployPin works without Rails. Rails is no longer a dependency (ActiveSupport and Thor are). In other Ruby apps:
+  * the `deploy_pin` command runs the generators: `deploy_pin install` (creates `config/deploy_pin.rb`), `deploy_pin task` and `deploy_pin upgrade`. It loads `config/deploy_pin.rb` first, or the files given with `--require`;
+  * `DeployPin.load_tasks` adds the `deploy_pin:*` rake tasks to a Rakefile. They run the app's `environment` task first when there is one, else `DeployPin.load_config`.
+  Rails apps keep working as before: the engine loads the rake tasks, `rails g deploy_pin:task` runs the same task generator, and `rails g deploy_pin:install`/`upgrade` keep Rails' migration numbering. Both share the templates.
+* `storage` accepts a record class of your own, e.g. for Sequel or ROM.
+* `deploy_pin install` takes `--config-path` and `--migrations-path`.
+
+### Changed
+* Outside Rails apps, the spec generated for a task requires `spec_helper` and loads the rake tasks with `DeployPin.load_tasks`. In Rails apps it is unchanged (`rails_helper`, `Rails.application.load_tasks`).
+* The generators no longer read `DeployPin.fallback_group` when they are loaded, but when they run.
+
+### Fixed
+* The statement timeout on MariaDB was 1000 times too long: `max_statement_time` is in seconds, and DeployPin set it in milliseconds.
+* Rake task arguments after the first comma were ignored: `rake 'deploy_pin:run[I, !20190401135040]'` ran all of group I, including the excluded task. All the selectors are read now. `list[...]`, `short_list[...]` and `mark_done[...]` with an argument also crashed when task files existed.
+* `DeployPin::Database.execute_with_timeout` with `connected_to: { role: ... }` falls back to `ActiveRecord::Base` when the app has no `ApplicationRecord`.
 
 # 1.10.0 / 2026-11-24
 ### Added

@@ -1,4 +1,6 @@
-test:
+<% %w[development test].each do |env| %>
+<%= env %>:
   clients:
     default:
-      uri: <%= ENV.fetch('MONGODB_URI', "mongodb://127.0.0.1:27017/#{ENV.fetch('DB_NAME', 'deploy_pin')}_test") %>
+      uri: <%= ENV.fetch('MONGODB_URI', "mongodb://127.0.0.1:27017/#{ENV.fetch('DB_NAME', 'deploy_pin')}_#{env}") %>
+<% end %>

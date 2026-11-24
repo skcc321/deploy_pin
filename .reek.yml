@@ -12,4 +12,4 @@ directories:
       enabled: false
 
 exclude_paths:
-  - lib/generators/deploy_pin/**/templates/**/*.rb
+  - lib/deploy_pin/generators/templates/**/*.rb

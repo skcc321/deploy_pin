@@ -19,8 +19,20 @@ jobs:
         # Due to https://github.com/actions/runner/issues/849, we have to use quotes for '3.0'
         ruby: ["3.3.14", "3.4.13", "4.0.10"]
         db: ["mariadb", "mysql", "pg", "mongodb"]
+        rails: ["8.1"] # Gemfile.lock
+        # The other supported Rails (and ActiveSupport/ActiveRecord), 7.2, through
+        # gemfiles/. `rails` differs from the base matrix, so these add jobs
+        # instead of changing them.
+        include:
+          - { ruby: "3.4.13", db: "pg", rails: "7.2", gemfile: "gemfiles/rails_7_2.gemfile" }
+          - { ruby: "3.4.13", db: "mysql", rails: "7.2", gemfile: "gemfiles/rails_7_2.gemfile" }
+          - { ruby: "3.4.13", db: "mariadb", rails: "7.2", gemfile: "gemfiles/rails_7_2.gemfile" }
+          - { ruby: "3.4.13", db: "mongodb", rails: "7.2", gemfile: "gemfiles/rails_7_2.gemfile" }
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
+
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/${{ matrix.gemfile || 'Gemfile' }}
 
     services:
       mongodb:
@@ -126,17 +138,20 @@ jobs:
       - name: Setup test database
         if: ${{ matrix.db != 'mongodb' }}
         env:
+          APP_ENV: test
           RAILS_ENV: test
           DB_NAME: ${{ env.DB_NAME }}
           DB_USERNAME: ${{ env.DB_USERNAME }}
           DB_PASSWORD: ${{ env.DB_PASSWORD }}
           DB_ROLE: ${{ matrix.db }}
         run: |
+          bundle exec rake db:prepare
           bin/rails db:prepare
 
-      - name: Run tests
+      # DeployPin in a plain Ruby app (test/dummy): no Rails loaded
+      - name: Run tests (plain Ruby app)
         env:
-          RAILS_ENV: test
+          APP_ENV: test
           DB_ROLE: ${{ matrix.db }}
           DB_NAME: ${{ env.DB_NAME }}
           DB_USERNAME: ${{ env.DB_USERNAME }}
@@ -144,9 +159,21 @@ jobs:
         run: |
           bin/test
 
+      # DeployPin in a Rails app (test/rails/dummy): engine, rake tasks, rails g
+      - name: Run tests (Rails app)
+        env:
+          RAILS_ENV: test
+          DB_ROLE: ${{ matrix.db }}
+          DB_NAME: ${{ env.DB_NAME }}
+          DB_USERNAME: ${{ env.DB_USERNAME }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+        run: |
+          bin/test rails
+
       # ActiveRecord and Mongoid runs cover different code paths; the coverage job merges both.
+      # Each upload holds both suites (plain Ruby and Rails), which SimpleCov merges.
       - name: Upload coverage
-        if: ${{ (matrix.db == 'pg' || matrix.db == 'mongodb') && matrix.ruby == '3.4.13' }}
+        if: ${{ (matrix.db == 'pg' || matrix.db == 'mongodb') && matrix.ruby == '3.4.13' && matrix.rails == '8.1' }}
         uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ matrix.db }}
@@ -187,6 +214,51 @@ jobs:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           reviewdog -reporter=github-pr-review -runners=coverage
+
+  # Builds the gem from the committed files only, installs it into an empty gem
+  # home, and runs the `deploy_pin` command and the Rails generators from it.
+  package:
+    name: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4.13"
+      - name: Build, install and use the gem
+        run: bin/smoke_test_gem
+
+  # A Rails app set up with deploy_pin 1.10.0 from rubygems.org, then switched to
+  # this commit: same initializer, records kept, nothing runs twice.
+  upgrade:
+    name: upgrade from 1.10.0 (Rails ${{ matrix.rails }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        rails: ["8.1", "7.2"]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ${{ env.DB_USERNAME }}
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
+        ports:
+          - "5432:5432"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4.13"
+      - name: Upgrade a Rails app from 1.10.0 to this commit
+        env:
+          DB_USERNAME: ${{ env.DB_USERNAME }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+        run: bin/upgrade_test '~> ${{ matrix.rails }}.0' 1.10.0
 
   docs:
     name: docs

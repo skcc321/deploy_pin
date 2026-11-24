@@ -1,5 +1,5 @@
 Description:
-    Creates tasks for execution on deployment
+    Creates tasks for execution on deployment. Outside Rails, run `deploy_pin task`.
 
 Example:
     rails generate deploy_pin:task some_name_of_task -a author -g I

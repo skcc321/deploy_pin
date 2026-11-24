@@ -8,6 +8,11 @@ module DeployPin
   #     storage :active_record # default, or :mongoid
   #   end
   #
+  # @example Your own record class, e.g. for Sequel or ROM
+  #   DeployPin.setup do
+  #     storage DeployPinRecord
+  #   end
+  #
   # A record class must respond to `.find_by(uuid:)` (returning a record or
   # nil) and `.create(uuid:)`. Its instances must respond to `#progress`,
   # `#completed_at`, `#update(attributes)` and `#increment!(attribute, by)`.
@@ -19,10 +24,13 @@ module DeployPin
       mongoid: -> { DeployPin::MongoidRecord }
     }.freeze
 
-    # @return [Class] {Record} or {MongoidRecord}
-    # @raise [ArgumentError] if {DeployPin.storage} is not one of {PROVIDERS}
+    # @return [Class] {Record}, {MongoidRecord}, or the class set as {DeployPin.storage}
+    # @raise [ArgumentError] if {DeployPin.storage} is neither a class nor one of {PROVIDERS}
     def self.record_class
-      PROVIDERS.fetch(DeployPin.storage.to_sym) do
+      storage = DeployPin.storage
+      return storage if storage.is_a?(Module)
+
+      PROVIDERS.fetch(storage.to_sym) do
         raise ArgumentError,
               "Unknown DeployPin storage #{DeployPin.storage.inspect}. Supported: #{PROVIDERS.keys.join(', ')}"
       end.call

@@ -5,7 +5,7 @@
 [![CI](https://github.com/skcc321/deploy_pin/actions/workflows/verify.yml/badge.svg)](https://github.com/skcc321/deploy_pin/actions/workflows/verify.yml)
 [![Docs](https://img.shields.io/badge/docs-rubydoc.info-blue)](https://rubydoc.info/gems/deploy_pin)
 [![Ruby](https://img.shields.io/badge/ruby-%E2%89%A5%203.1-CC342D)](#requirements)
-[![Rails](https://img.shields.io/badge/rails-7.0%20%E2%80%93%208.x-CC0000)](#requirements)
+[![Rails](https://img.shields.io/badge/rails-7.2%20%E2%80%93%208.x%20or%20none-CC0000)](#requirements)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](MIT-LICENSE)
 
 **Run one-off and recurring tasks around your deployments — data backfills, cache warm-ups, cleanups — in a defined order, exactly once, with database timeouts and resumable progress.**
@@ -17,6 +17,7 @@ Migrations are for schema changes. Everything else you need to run during a rele
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
+  - [Without Rails](#without-rails)
 - [Quick start](#quick-start)
 - [How it works](#how-it-works)
 - [Commands](#commands)
@@ -37,15 +38,16 @@ Migrations are for schema changes. Everything else you need to run during a rele
 - 🔁 **Resumable:** save progress so a long task continues where it stopped.
 - ♻️ **Recurring tasks:** tasks that run on every deploy.
 - 🚦 **Deployment state:** `DeployPin.ongoing_deployment?` lets your app behave differently while a deploy is in progress.
-- 🍃 **ActiveRecord or Mongoid** storage.
+- 🍃 **ActiveRecord or Mongoid** storage, or a record class of your own.
+- 🧩 **Rails or plain Ruby:** a Rails engine and `rails g` generators, or the `deploy_pin` command and `DeployPin.load_tasks` in any other Ruby app (Sinatra, Hanami, Roda, scripts…).
 
 ## Requirements
 
 | | |
 |---|---|
 | Ruby | ≥ 3.1 (CI runs 3.3, 3.4 and 4.0) |
-| Rails | ≥ 7.0, < 9 (CI runs 8.1) |
-| Storage | ActiveRecord (PostgreSQL, MySQL, MariaDB, …) or Mongoid |
+| Rails | Optional. ≥ 7.2, < 9 (CI runs 7.2 and 8.1). Without Rails, ActiveSupport ≥ 7.2 is used. For Rails 7.0 and 7.1, use deploy_pin 1.10 |
+| Storage | ActiveRecord (PostgreSQL, MySQL, MariaDB, …), Mongoid, or your own record class |
 | Redis | Only for [deployment state](#deployment-state) |
 
 Statement timeouts need ActiveRecord with PostgreSQL, MySQL or MariaDB. With other setups, tasks run without a timeout.
@@ -90,6 +92,53 @@ DeployPin.setup do
   # ...formatters and deployment state, see below
 end
 ```
+
+### Without Rails
+
+DeployPin works in any Ruby app. Add it together with a storage gem and your database adapter, for example ActiveRecord with SQLite (use `pg` or `mysql2` for other databases, or `mongoid` instead of `activerecord`):
+
+```bash
+bundle add deploy_pin activerecord sqlite3
+```
+
+The `deploy_pin` command runs the same generators as `rails g deploy_pin:*`. Create `config/deploy_pin.rb` and the `deploy_pins` migration (with `--storage=mongoid`, only the configuration):
+
+```bash
+bundle exec deploy_pin install # --config-path and --migrations-path change where the files go
+```
+
+The generated configuration turns on [deployment state](#deployment-state), which needs Redis. Remove `deployment_state_transition` from it if you don't use Redis.
+
+Then add the rake tasks to your `Rakefile`. They run your `environment` task first, so define one that loads your app, connects to the database and loads `config/deploy_pin.rb`. Run the migration with your migration tool:
+
+```ruby
+# Rakefile
+require 'deploy_pin'
+DeployPin.load_tasks
+
+task :environment do
+  require_relative 'config/environment'
+end
+```
+
+```ruby
+# config/environment.rb
+require 'active_record'
+require 'deploy_pin'
+ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: 'db/app.sqlite3')
+require_relative 'deploy_pin'
+```
+
+Without an `environment` task, the rake tasks only load `config/deploy_pin.rb`.
+
+Generate tasks with `deploy_pin task`. It loads `config/deploy_pin.rb` first, or the files given with `--require`. Then run them with rake:
+
+```bash
+bundle exec deploy_pin task backfill_user_names -g I --require config/environment.rb
+bundle exec rake deploy_pin:run
+```
+
+The rest of this README uses the Rails commands. Replace `rails g deploy_pin:<command>` with `deploy_pin <command>`, and `config/initializers/deploy_pin.rb` with `config/deploy_pin.rb`. [`bin/smoke_test_gem`](bin/smoke_test_gem) runs these steps on CI.
 
 ## Quick start
 
@@ -169,6 +218,7 @@ rake 'deploy_pin:run[I, !20190401135040]' # group I except one task
 | Command | Description |
 |---|---|
 | `rails g deploy_pin:task <title> -g <group>` | Generate a task and its [test](#testing-tasks). Options: `--parallel`, `--recurring --identifier <n>`, `-a <author>`, `--skip-test`, `--test-framework=rspec` |
+| `deploy_pin install`, `deploy_pin task <title> -g <group>`, `deploy_pin upgrade` | The generators, [without Rails](#without-rails). `--require <file>` loads files first |
 | `rake deploy_pin:list[...]` | List pending tasks, including their code |
 | `rake deploy_pin:short_list[...]` | List pending tasks by group, without the code |
 | `rake deploy_pin:run[...]` | Run pending tasks |
@@ -401,6 +451,8 @@ Task records are kept by a storage provider, set with `storage`:
 | `:active_record` (default) | `DeployPin::Record` | `deploy_pins` table |
 | `:mongoid` | `DeployPin::MongoidRecord` | `deploy_pins` collection |
 
+You can also set `storage` to a class of your own, for example a Sequel or ROM model. It must respond to `.find_by(uuid:)` and `.create(uuid:)`, and its records to `#progress`, `#completed_at`, `#update(attributes)` and `#increment!(attribute, by)`. See the [`DeployPin::Storage` docs](https://rubydoc.info/gems/deploy_pin/DeployPin/Storage).
+
 `DeployPin::Storage.record_class` returns the model of the configured provider. Statement timeouts and the parallel timeout rely on ActiveRecord. Without it, tasks run without a timeout.
 
 ### Testing tasks
@@ -423,6 +475,8 @@ end
 ```
 
 The spec turns off `continue_on_error`, so a failing task always fails its spec.
+
+The spec requires `rails_helper` in a Rails app, and `spec_helper` otherwise, so make sure that helper loads your app.
 
 RSpec is the only supported framework for now. It is detected automatically when the `RSpec` constant is loaded, which is the case when `rspec-rails` is in the `:development` group, as rspec-rails recommends. If nothing is detected, the generator skips the test and says so. Set the framework and the directory, or turn test generation off, in the initializer:
 
@@ -487,7 +541,7 @@ All options are set in `DeployPin.setup`. See the [API docs](https://rubydoc.inf
 | `groups` | — | Ordered list of groups |
 | `fallback_group` | — | Group for `deploy_pin:task` when `-g` is not given |
 | `statement_timeout` | — | Default database statement timeout |
-| `storage` | `:active_record` | `:active_record` or `:mongoid` |
+| `storage` | `:active_record` | `:active_record`, `:mongoid`, or a record class |
 | `continue_on_error` | `false` | Log failed tasks and continue instead of stopping |
 | `test_framework` | detected (`:rspec` if `RSpec` is loaded) | Test framework for generated task tests; `false` to skip them. See [Testing tasks](#testing-tasks) |
 | `tests_path` | `'spec/deploy_pin'` | Directory for generated task tests |
@@ -506,15 +560,29 @@ bundle install
 # Start the databases (credentials come from .env)
 docker compose up -d
 set -a; source .env; set +a
-export RAILS_ENV=test
+export APP_ENV=test RAILS_ENV=test
 ```
 
-Run the tests against one database at a time. `DB_ROLE` is `pg`, `mysql`, `mariadb` or `mongodb`:
+There are two test suites, and CI runs both:
+
+- `bin/test` runs DeployPin in a plain Ruby app, [`test/dummy`](test/dummy), without Rails: the library, the `deploy_pin` command, the rake tasks and the generated specs.
+- `bin/test rails` runs it in a Rails app, [`test/rails/dummy`](test/rails/dummy): the engine, `rails g deploy_pin:*`, `bin/rails deploy_pin:run` and the generated specs.
+
+Run them against one database at a time. `DB_ROLE` is `pg`, `mysql`, `mariadb` or `mongodb`:
 
 ```bash
-DB_ROLE=pg bin/rails db:prepare # not needed for mongodb
+DB_ROLE=pg bundle exec rake db:prepare # not needed for mongodb
+DB_ROLE=pg bin/rails db:prepare        # the Rails app shares the database
 DB_ROLE=pg bin/test
-DB_ROLE=pg bin/test test/lib/deploy_pin/task_test.rb # a single file
+DB_ROLE=pg bin/test rails
+DB_ROLE=pg bin/test test/lib/deploy_pin/task_test.rb -n /parse/ # a single file
+```
+
+`Gemfile.lock` uses Rails 8.1. To run against Rails 7.2, use its gemfile from [`gemfiles/`](gemfiles):
+
+```bash
+BUNDLE_GEMFILE=gemfiles/rails_7_2.gemfile bundle install
+BUNDLE_GEMFILE=gemfiles/rails_7_2.gemfile DB_ROLE=pg bin/test rails
 ```
 
 Linting and docs, also checked on CI:

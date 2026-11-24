@@ -65,3 +65,38 @@ class DeployPin::Runner::Test < ActiveSupport::TestCase
     end
   end
 end
+
+# Runner.print is silent in the app's test environment.
+class DeployPin::Runner::TestEnvTest < ActiveSupport::TestCase
+  VARIABLES = DeployPin::Runner::ENV_VARIABLES
+
+  test 'test_env? is true in the test environment of a plain Ruby app' do
+    assert(with_env('APP_ENV' => 'test') { DeployPin::Runner.test_env? })
+    assert(with_env('RACK_ENV' => 'test') { DeployPin::Runner.test_env? })
+    assert(with_env('RAILS_ENV' => 'test') { DeployPin::Runner.test_env? })
+  end
+
+  test 'test_env? uses the first variable that is set' do
+    refute(with_env('RAILS_ENV' => 'production', 'APP_ENV' => 'test') { DeployPin::Runner.test_env? })
+    assert(with_env('RAILS_ENV' => '', 'APP_ENV' => 'test') { DeployPin::Runner.test_env? })
+  end
+
+  test 'test_env? is false without an environment' do
+    refute(with_env({}) { DeployPin::Runner.test_env? })
+  end
+
+  test 'print prints outside of the test environment' do
+    assert_output("hello\n") { with_env('APP_ENV' => 'production') { DeployPin::Runner.print('hello') } }
+    assert_output('') { with_env('APP_ENV' => 'test') { DeployPin::Runner.print('hello') } }
+  end
+
+  private
+
+    def with_env(values)
+      saved = VARIABLES.to_h { |name| [name, ENV.fetch(name, nil)] }
+      VARIABLES.each { |name| ENV[name] = values[name] }
+      yield
+    ensure
+      saved.each { |name, value| ENV[name] = value }
+    end
+end

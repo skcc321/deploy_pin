@@ -47,7 +47,7 @@ module DeployPin
 
       return call_block_under_timeout(timeout, &blk) unless params.key? :connected_to
 
-      klass = params[:connected_to].key?(:database) ? ActiveRecord::Base : ::ApplicationRecord
+      klass = params[:connected_to].key?(:database) ? ActiveRecord::Base : application_record
       klass.connected_to(**params[:connected_to]) do
         call_block_under_timeout(timeout, &blk)
       end
@@ -83,6 +83,11 @@ module DeployPin
         @unsupported_engine_warned = true
         warn "[DeployPin] Statement timeouts are not supported for the #{connection.adapter_name} adapter; " \
              'running without a timeout.'
+      end
+
+      # The app's ApplicationRecord, which holds `connects_to` in Rails apps, or ActiveRecord::Base.
+      def application_record
+        defined?(::ApplicationRecord) ? ::ApplicationRecord : ActiveRecord::Base
       end
 
       def db_engine

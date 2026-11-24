@@ -1,8 +1,19 @@
 # frozen_string_literal: true
 
-# Add your own tasks in files placed in lib/tasks ending in .rake,
-# for example lib/tasks/capistrano.rake, and they will automatically be available to Rake.
+require_relative 'config/boot'
+require 'deploy_pin'
 
-require_relative 'config/application'
+# The deploy_pin:* tasks run the `environment` task first.
+DeployPin.load_tasks
 
-Rails.application.load_tasks
+task :environment do
+  require_relative 'config/environment'
+end
+
+namespace :db do
+  desc 'Create the database of DB_ROLE (unless mongodb) and run the migrations'
+  task :prepare do
+    require_relative 'config/environment'
+    Dummy::Database.prepare unless Dummy.mongoid?
+  end
+end

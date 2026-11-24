@@ -1,12 +1,20 @@
 # frozen_string_literal: true
 
+require 'rails/generators'
+require 'rails/generators/migration'
+require 'deploy_pin/generators/base'
+
 module DeployPin
   # `rails g deploy_pin:install [--storage=mongoid]`: creates the initializer
-  # and, for ActiveRecord, the `deploy_pins` migration.
+  # and, for ActiveRecord, the `deploy_pins` migration. Outside Rails,
+  # `deploy_pin install` ({Generators::Install}) does the same.
   class InstallGenerator < Rails::Generators::Base
     include Rails::Generators::Migration
 
-    source_root File.expand_path('templates', __dir__)
+    # Rails' own migration action, so numbering (timestamped or sequential) and
+    # re-runs behave like other Rails generators. The templates are shared with
+    # {Generators::Install}, which `deploy_pin install` runs outside Rails.
+    source_root File.join(DeployPin::Generators::Base::TEMPLATES_ROOT, 'install')
     desc 'Add the migration & initializer for DeployPin'
 
     class_option :storage, type: :string, default: 'active_record', enum: %w[active_record mongoid],

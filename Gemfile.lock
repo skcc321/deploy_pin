@@ -2,12 +2,14 @@ PATH
   remote: .
   specs:
     deploy_pin (1.10.0)
+      activesupport (>= 7.2, < 9.0)
       colorize (~> 1.1)
       connection_pool (>= 2.2, < 4)
       parallel (>= 1.23, < 3)
-      rails (>= 7.0, < 9.0)
+      rake (>= 12)
       redis (>= 4.0, < 7)
       ruby-progressbar (~> 1.13)
+      thor (>= 1.0, < 2)
 
 GEM
   remote: https://rubygems.org/
@@ -97,6 +99,7 @@ GEM
     connection_pool (3.0.3)
     crass (1.0.8)
     date (3.6.0)
+    diff-lcs (1.6.2)
     drb (2.2.3)
     erb (6.0.7)
     erubi (1.13.1)
@@ -237,6 +240,19 @@ GEM
     regexp_parser (2.13.4)
     reline (0.7.0)
       io-console (~> 0.5)
+    rspec (3.13.2)
+      rspec-core (~> 3.13.0)
+      rspec-expectations (~> 3.13.0)
+      rspec-mocks (~> 3.13.0)
+    rspec-core (3.13.7)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.6)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.9)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-support (3.13.8)
     rubocop (1.92.3)
       json (>= 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -284,6 +300,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  activerecord (>= 7.2, < 9.0)
   bundler
   deploy_pin!
   minitest
@@ -292,7 +309,9 @@ DEPENDENCIES
   mysql2
   pg
   pry
+  rails (>= 7.2, < 9.0)
   redcarpet
+  rspec
   rubocop
   rubocop-minitest
   simplecov

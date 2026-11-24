@@ -82,7 +82,9 @@ class DeployPin::Database::Test < ActiveSupport::TestCase
   end
 
   def timeout_exception_klass
-    return ActiveRecord::StatementTimeout if mysql? || mariadb?
+    # ActiveRecord raises a generic StatementInvalid for MariaDB's "execution time limit exceeded"
+    return ActiveRecord::StatementInvalid if mariadb?
+    return ActiveRecord::StatementTimeout if mysql?
 
     ActiveRecord::QueryCanceled if pg?
   end

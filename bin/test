@@ -1,7 +1,26 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-$LOAD_PATH << File.expand_path('../test', __dir__)
-
+# Runs a test suite:
+#
+#   bin/test                        # the plain Ruby suite (test/lib, test/integration)
+#   bin/test rails                  # the Rails suite (test/rails)
+#   bin/test test/lib/deploy_pin/task_test.rb -n /parse/   # some files, with Minitest options
 require 'bundler/setup'
-require 'rails/plugin/test'
+
+root = File.expand_path('..', __dir__)
+suites = {
+  'plain' => { load_path: 'test', files: 'test/{lib,integration}/**/*_test.rb' },
+  'rails' => { load_path: 'test/rails', files: 'test/rails/**/*_test.rb' }
+}
+
+suite = suites.key?(ARGV.first) ? ARGV.shift : nil
+paths, options = ARGV.partition { |arg| File.exist?(File.expand_path(arg, root)) }
+ARGV.replace(options)
+suite ||= paths.any? && paths.all? { |path| path.start_with?('test/rails') } ? 'rails' : 'plain'
+settings = suites.fetch(suite)
+
+$LOAD_PATH.unshift(File.join(root, settings[:load_path]), File.join(root, 'lib'))
+paths = [settings[:files]] if paths.empty?
+paths.flat_map { |path| File.directory?(path) ? Dir["#{path}/**/*_test.rb"] : Dir[File.expand_path(path, root)] }
+     .sort.each { |file| require File.expand_path(file, root) }
