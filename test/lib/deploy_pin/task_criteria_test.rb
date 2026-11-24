@@ -30,4 +30,23 @@ class DeployPin::TaskCriteria::Test < ActiveSupport::TestCase
     refute(@criteria.suitable?(@task_3))
     refute(@criteria.suitable?(@task_1))
   end
+
+  test 'forces a done task by a single-character group' do
+    assert(DeployPin::TaskCriteria.new(identifiers: ['I!']).suitable?(@task_1))
+  end
+
+  test 'skips a task by a single-character group or identifier' do
+    pending_task = Struct.new(:group, :identifier, :done?).new('I', 7, false)
+
+    assert(DeployPin::TaskCriteria.new(identifiers: ['I']).suitable?(pending_task))
+    refute(DeployPin::TaskCriteria.new(identifiers: %w[I !I]).suitable?(pending_task))
+    refute(DeployPin::TaskCriteria.new(identifiers: %w[I !7]).suitable?(pending_task))
+  end
+
+  test 'forces a done task by a single-character identifier' do
+    done_task = Struct.new(:group, :identifier, :done?).new('III', 7, true)
+
+    refute(DeployPin::TaskCriteria.new(identifiers: ['7']).suitable?(done_task))
+    assert(DeployPin::TaskCriteria.new(identifiers: ['7!']).suitable?(done_task))
+  end
 end

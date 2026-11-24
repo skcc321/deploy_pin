@@ -3,8 +3,8 @@
 # check task criteria
 module DeployPin
   class TaskCriteria
-    SKIP_REGEXEP = /\A!(.+[^!])\z/
-    FORCE_REGEXP = /\A([^!].+)!\z/
+    SKIP_REGEXEP = /\A!([^!]+)\z/
+    FORCE_REGEXP = /\A([^!]+)!\z/
     COMMON_REGEXP = /(^[^!]?.+[^!]?$)/
 
     attr_reader :identifiers

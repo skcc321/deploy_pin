@@ -1,4 +1,5 @@
 # Unreleased
+* Fix the `!` force and skip syntax for one-character groups and identifiers (e.g. `I!`, `!I`), which matched nothing before.
 * Add `storage` setting (defaults to `:active_record`) and `DeployPin::Storage` to resolve the record model, preparing for additional storage providers. Existing configs and `deploy_pins` records are unaffected.
 * Load ActiveRecord models lazily and skip statement timeouts when ActiveRecord is not loaded.
 * Add Mongoid storage provider (`storage :mongoid`) and `--storage` option for `rails g deploy_pin:install`.
