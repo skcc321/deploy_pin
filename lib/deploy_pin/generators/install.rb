@@ -22,6 +22,8 @@ module DeployPin
       def copy_migrations
         return if mongoid?
 
+        # Fail before writing any file: Thor creates the file before rendering the template.
+        @activerecord_migration_class = activerecord_migration_class
         migration_template 'create_deploy_pins.rb', 'create_deploy_pins'
       end
 
@@ -46,6 +48,8 @@ module DeployPin
         # Used by the migration template.
         # @raise [Thor::Error] if ActiveRecord is not installed
         def activerecord_migration_class
+          return @activerecord_migration_class if @activerecord_migration_class
+
           require 'active_record/version'
           "ActiveRecord::Migration[#{::ActiveRecord::VERSION::STRING.to_f}]"
         rescue LoadError

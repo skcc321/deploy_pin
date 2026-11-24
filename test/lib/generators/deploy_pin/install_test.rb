@@ -104,6 +104,19 @@ class DeployPin::Generators::InstallTest < DeployPin::GeneratorTestCase
     assert_empty generated('**/*.rb')
   end
 
+  test 'writes no file when ActiveRecord is not installed' do
+    missing = ->(*) { raise LoadError, 'cannot load such file -- active_record/version' }
+    generator = build_generator(DeployPin::Generators::Install)
+
+    capture_io do
+      generator.stub(:require, missing) do
+        assert_raises(Thor::Error) { generator.invoke_all }
+      end
+    end
+
+    assert_empty generated('**/*')
+  end
+
   test 'fails with a hint when ActiveRecord is not installed' do
     generator = build_generator(DeployPin::Generators::Install)
     missing = ->(*) { raise LoadError, 'cannot load such file -- active_record/version' }

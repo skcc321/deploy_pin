@@ -6,6 +6,7 @@ PATH
       colorize (~> 1.1)
       connection_pool (>= 2.2, < 4)
       parallel (>= 1.23, < 3)
+      rake (>= 12)
       redis (>= 4.0, < 7)
       ruby-progressbar (~> 1.13)
       thor (>= 1.0, < 2)
@@ -309,7 +310,6 @@ DEPENDENCIES
   pg
   pry
   rails (>= 7.0, < 9.0)
-  rake
   redcarpet
   rspec
   rubocop
