@@ -1,4 +1,4 @@
-# Unreleased
+# 2.0.1 / 2026-11-24
 ### Documented
 * Run one DeployPin executor at a time per storage: DeployPin does not coordinate overlapping `deploy_pin:run`s or a `deploy_pin:mark_done` during a run, which can run the same pending task twice. See "Running one executor at a time" in the README.
 
