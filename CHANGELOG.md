@@ -1,4 +1,7 @@
 # Unreleased
+### Added
+* `rake deploy_pin:cleanup` removes the files and generated tests of one-off tasks created more than `cleanup_safe_time_window` ago (for example, `cleanup_safe_time_window 6.months`), so the tasks directory doesn't keep growing. A task's creation time is the timestamp in its identifier. Recurring and built-in tasks are kept, and stored records are not read or changed. `deploy_pin:cleanup[dry_run]` (or `DRY_RUN=1`) lists the files, one per line, without removing them. Without `cleanup_safe_time_window`, cleanup removes nothing ([#58](https://github.com/skcc321/deploy_pin/issues/58)).
+
 ### Documented
 * Run one DeployPin executor at a time per storage: DeployPin does not coordinate overlapping `deploy_pin:run`s or a `deploy_pin:mark_done` during a run, which can run the same pending task twice. See "Running one executor at a time" in the README.
 

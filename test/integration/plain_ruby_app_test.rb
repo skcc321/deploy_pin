@@ -68,6 +68,20 @@ class DeployPin::PlainRubyAppTest < ActiveSupport::TestCase
     refute_nil DeployPin::Storage.record_class.find_by(uuid: identifier('task.rb')).completed_at
   end
 
+  test "rake 'deploy_pin:cleanup[dry_run]' lists old task files, and deploy_pin:cleanup removes them" do
+    old = add_app_task("#{31.days.ago.strftime('%Y%m%d%H%M%S')}_old.rb")
+    recent = add_app_task("#{1.day.ago.strftime('%Y%m%d%H%M%S')}_recent.rb")
+    development = { 'APP_ENV' => 'development', 'RACK_ENV' => nil, 'RAILS_ENV' => nil }
+
+    output = run!('rake', 'deploy_pin:cleanup[dry_run]', env: development)
+    assert_equal "lib/deploy_pin/#{File.basename(old)}\n", output
+    assert_path_exists old
+
+    run! 'rake', 'deploy_pin:cleanup'
+    refute_path_exists old
+    assert_path_exists recent
+  end
+
   test 'rake prints the summary outside of the test environment' do
     development = { 'APP_ENV' => 'development', 'RACK_ENV' => nil, 'RAILS_ENV' => nil }
     output = run!('rake', 'deploy_pin:short_list', env: development)
@@ -127,6 +141,15 @@ class DeployPin::PlainRubyAppTest < ActiveSupport::TestCase
       FileUtils.mkdir_p(File.dirname(path))
       FileUtils.cp(File.join(GEM_ROOT, 'test/support/files', fixture), path)
       @app_files << path
+    end
+
+    # A task file named like the generator names it, with the identifier from its name.
+    def add_app_task(name)
+      path = File.join(APP_ROOT, 'lib/deploy_pin', name)
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, "# #{name.to_i}:I\n# task_title: #{name}\n\n# === task code goes down here ===\n:ok\n")
+      @app_files << path
+      path
     end
 
     def identifier(fixture)

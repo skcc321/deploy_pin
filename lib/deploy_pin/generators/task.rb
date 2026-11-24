@@ -14,17 +14,13 @@ module DeployPin
     #   deploy_pin task backfill_users -g I --skip-test
     #   deploy_pin task backfill_users -g I --test-framework=rspec
     class Task < Base # rubocop:disable Metrics/ClassLength
-      # Supported test frameworks: the default directory for the tests (used
-      # when {DeployPin.tests_path} is not set) and the test file name, where
-      # `%<task>s` is the task file name without `.rb`.
-      TEST_FRAMEWORKS = {
-        rspec: { path: 'spec/deploy_pin', file: '%<task>s_spec.rb' }
-      }.freeze
+      # Supported test frameworks; see {DeployPin::TestFiles::FRAMEWORKS}.
+      TEST_FRAMEWORKS = DeployPin::TestFiles::FRAMEWORKS
 
       # The identifiers a task header accepts.
       IDENTIFIER_FORMAT = /\A-?\d+\z/
       # Format of one-off task identifiers: a timestamp.
-      TIMESTAMP_FORMAT = '%Y%m%d%H%M%S'
+      TIMESTAMP_FORMAT = DeployPin::Task::TIMESTAMP_FORMAT
 
       # Printed when no test framework is configured and none is detected.
       UNDETECTED_TEST_FRAMEWORK = 'test for the task: no test framework detected. ' \
@@ -121,10 +117,7 @@ module DeployPin
 
         # The test file in {DeployPin.tests_path}, or in the framework's default directory.
         def test_file_path(framework)
-          settings = TEST_FRAMEWORKS.fetch(framework)
-          directory = DeployPin.tests_path.presence || settings[:path]
-
-          File.join(directory.to_s, format(settings[:file], task: task_name))
+          DeployPin::TestFiles.path(framework, task_name)
         end
 
         # The --test-framework flag or DeployPin.test_framework, else the detected one.

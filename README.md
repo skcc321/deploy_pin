@@ -37,6 +37,7 @@ Migrations are for schema changes. Everything else you need to run during a rele
 - ⚡ **Parallel:** a [Parallel](https://github.com/grosser/parallel) wrapper that applies the timeout in every worker.
 - 🔁 **Resumable:** save progress so a long task continues where it stopped.
 - ♻️ **Recurring tasks:** tasks that run on every deploy.
+- 🧹 **Cleanup:** remove the files of old one-off tasks, so the tasks directory doesn't keep growing.
 - 🚦 **Deployment state:** `DeployPin.ongoing_deployment?` lets your app behave differently while a deploy is in progress.
 - 🍃 **ActiveRecord or Mongoid** storage, or a record class of your own.
 - 🧩 **Rails or plain Ruby:** a Rails engine and `rails g` generators, or the `deploy_pin` command and `DeployPin.load_tasks` in any other Ruby app (Sinatra, Hanami, Roda, scripts…).
@@ -236,6 +237,7 @@ rake 'deploy_pin:run[I, !20190401135040]' # group I except one task
 | `rake deploy_pin:short_list[...]` | List pending tasks by group, without the code |
 | `rake deploy_pin:run[...]` | Run pending tasks |
 | `rake deploy_pin:mark_done[...]` | Mark tasks as done without running them. For example, in `db/seeds.rb` for a fresh database, or for a new environment |
+| `rake deploy_pin:cleanup` | Remove the files and tests of one-off tasks created more than [`cleanup_safe_time_window`](#cleaning-up-old-tasks) ago. `deploy_pin:cleanup[dry_run]` (or `DRY_RUN=1`) only lists them |
 
 ## Hooking into your deploy
 
@@ -434,6 +436,29 @@ rails g deploy_pin:task warm_caches -g III --recurring --identifier 5
 > [!NOTE]
 > Identifiers `0` and `-10` are used by the built-in [deployment state](#deployment-state) tasks. Don't use them.
 
+### Cleaning up old tasks
+
+Once a one-off task has run in every environment, its file is no longer needed. `deploy_pin:cleanup` removes the files of one-off tasks created more than `cleanup_safe_time_window` ago, together with their [tests](#testing-tasks). A task's creation time is the timestamp in its identifier. Set the window to your deployment cycle, from generating a task to running it in every environment, plus a safety buffer:
+
+```ruby
+DeployPin.setup do
+  cleanup_safe_time_window 6.months
+end
+```
+
+Run it in your repository and commit the result:
+
+```bash
+bundle exec rake 'deploy_pin:cleanup[dry_run]' # lists the files it would remove, one per line
+bundle exec rake deploy_pin:cleanup            # removes them
+git commit -am 'Remove old DeployPin tasks'
+```
+
+- Without `cleanup_safe_time_window`, cleanup removes nothing and fails with a message saying how to set it.
+- Only source files are removed. Cleanup doesn't read or change the stored records, so it doesn't need access to your production database. If a removed file comes back, environments where it already ran skip it, because its record is still there.
+- Recurring tasks, the built-in deployment state tasks and tasks whose identifier isn't a timestamp are never removed.
+- An environment that hasn't deployed within the window will never run the removed tasks. Pick a window longer than the time between deploys of your slowest environment.
+
 ### Deployment state
 
 DeployPin can store in Redis whether a deploy is in progress, so your code can check it:
@@ -563,6 +588,7 @@ All options are set in `DeployPin.setup`. See the [API docs](https://rubydoc.inf
 | `fallback_group` | — | Group for `deploy_pin:task` when `-g` is not given |
 | `statement_timeout` | — | Default database statement timeout |
 | `storage` | `:active_record` | `:active_record`, `:mongoid`, or a record class |
+| `cleanup_safe_time_window` | not set | How long after its creation `deploy_pin:cleanup` may remove a one-off task's file. See [Cleaning up old tasks](#cleaning-up-old-tasks) |
 | `continue_on_error` | `false` | Log failed tasks and continue instead of stopping |
 | `test_framework` | detected (`:rspec` if `RSpec` is loaded) | Test framework for generated task tests; `false` to skip them. See [Testing tasks](#testing-tasks) |
 | `tests_path` | `'spec/deploy_pin'` | Directory for generated task tests |
