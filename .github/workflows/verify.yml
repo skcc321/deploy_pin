@@ -203,6 +203,21 @@ jobs:
         run: |
           reviewdog -reporter=github-pr-review -runners=coverage
 
+  # Builds the gem from the committed files only, installs it into an empty gem
+  # home, and runs the `deploy_pin` command and the Rails generators from it.
+  package:
+    name: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4.13"
+      - name: Build, install and use the gem
+        run: bin/smoke_test_gem
+
   docs:
     name: docs
     runs-on: ubuntu-latest

@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Builds the gem from a clean checkout of HEAD (only committed files), installs
+# it into an empty gem home, and uses it the way an app would:
+#   - the `deploy_pin` command (install, task) in a plain Ruby app,
+#   - DeployPin.load_tasks,
+#   - loading the `rails g deploy_pin:*` generators (with railties installed).
+# Run from the repository root. Needs network access to install dependencies.
+set -euo pipefail
+
+root=$(pwd)
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+
+mkdir -p "$work/src"
+git -C "$root" archive HEAD | tar -x -C "$work/src"
+(cd "$work/src" && gem build deploy_pin.gemspec --output "$work/deploy_pin.gem" >/dev/null)
+
+export GEM_HOME="$work/gems" GEM_PATH="$work/gems" PATH="$work/gems/bin:$PATH"
+unset BUNDLE_GEMFILE RUBYOPT
+gem install --no-document --quiet "$work/deploy_pin.gem" railties >/dev/null
+
+app="$work/app"
+mkdir -p "$app" && cd "$app"
+
+deploy_pin version
+deploy_pin install --storage=mongoid
+cat >> config/deploy_pin.rb <<'RUBY'
+DeployPin.setup { test_framework false }
+RUBY
+deploy_pin task smoke_test -g I
+ls lib/deploy_pin/*_smoke_test.rb >/dev/null
+
+ruby -e '
+  require "deploy_pin"
+  abort "Rails was loaded" if defined?(Rails)
+  DeployPin.load_tasks
+  abort "deploy_pin:run is not defined" unless Rake::Task.task_defined?("deploy_pin:run")
+'
+
+ruby -e '
+  require "rails"
+  require "deploy_pin"
+  %w[install task upgrade].each { |name| require "generators/deploy_pin/#{name}/#{name}_generator" }
+  [DeployPin::InstallGenerator, DeployPin::TaskGenerator, DeployPin::UpgradeGenerator].each(&:desc)
+'
+
+echo "smoke test passed: $(gem list deploy_pin | head -1)"
