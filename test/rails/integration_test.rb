@@ -90,7 +90,7 @@ class DeployPin::RailsIntegrationTest < ActiveSupport::TestCase
   private
 
     def env
-      { 'BUNDLE_GEMFILE' => File.join(GEM_ROOT, 'Gemfile'), 'RAILS_ENV' => 'test' }
+      { 'BUNDLE_GEMFILE' => ENV.fetch('BUNDLE_GEMFILE', File.join(GEM_ROOT, 'Gemfile')), 'RAILS_ENV' => 'test' }
     end
 
     def run!(*command)

@@ -7,6 +7,7 @@ class DeployPin::UpgradeGeneratorTest < Rails::Generators::TestCase
   tests DeployPin::UpgradeGenerator
   destination Rails.root.join('tmp/generators')
   setup :prepare_destination
+  setup { skip 'requires ActiveRecord' unless DeployPin::Database.available? }
 
   test 'creates the upgrade migration' do
     run_generator

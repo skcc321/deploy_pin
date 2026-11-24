@@ -1,0 +1,9 @@
+# frozen_string_literal: true
+
+# The Rails test suite against Rails 7.1: BUNDLE_GEMFILE=gemfiles/rails_7_1.gemfile bin/test rails
+source 'https://rubygems.org'
+
+gemspec path: '..'
+
+gem 'minitest', '~> 5.0' # Rails < 8.1 does not support Minitest 6
+gem 'rails', '~> 7.1.0'

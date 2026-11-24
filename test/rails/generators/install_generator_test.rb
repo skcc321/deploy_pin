@@ -11,6 +11,7 @@ class DeployPin::InstallGeneratorTest < Rails::Generators::TestCase
   setup :prepare_destination
 
   test 'creates the initializer and the migration' do
+    require_active_record!
     run_generator
 
     assert_migration 'db/migrate/create_deploy_pins.rb', /class CreateDeployPins < ActiveRecord::Migration\[\d+\.\d+\]/
@@ -22,6 +23,7 @@ class DeployPin::InstallGeneratorTest < Rails::Generators::TestCase
   end
 
   test 'uses timestamped migration numbers by default' do
+    require_active_record!
     run_generator
 
     migration = File.basename(migration_file_name('db/migrate/create_deploy_pins.rb'))
@@ -30,12 +32,14 @@ class DeployPin::InstallGeneratorTest < Rails::Generators::TestCase
   end
 
   test 'uses sequential migration numbers when timestamped migrations are off' do
+    require_active_record!
     ActiveRecord.stub(:timestamped_migrations, false) { run_generator }
 
     assert_file 'db/migrate/001_create_deploy_pins.rb'
   end
 
   test 'a second run reports the migration as identical' do
+    require_active_record!
     run_generator
     output = run_generator
 
@@ -52,6 +56,7 @@ class DeployPin::InstallGeneratorTest < Rails::Generators::TestCase
   end
 
   test 'rails destroy removes the initializer and the migration' do
+    require_active_record!
     run_generator
     run_generator [], behavior: :revoke
 
@@ -60,6 +65,7 @@ class DeployPin::InstallGeneratorTest < Rails::Generators::TestCase
   end
 
   test 'renders the same files as deploy_pin install' do
+    require_active_record!
     run_generator
     Dir.mktmpdir do |cli_root|
       capture(:stdout) { DeployPin::Generators::Install.start([], destination_root: cli_root) }
@@ -70,4 +76,11 @@ class DeployPin::InstallGeneratorTest < Rails::Generators::TestCase
                    File.read(migration_file_name('db/migrate/create_deploy_pins.rb'))
     end
   end
+
+  private
+
+    # The ActiveRecord migration needs ActiveRecord, which the Mongoid app does not load.
+    def require_active_record!
+      skip 'requires ActiveRecord' unless DeployPin::Database.available?
+    end
 end

@@ -58,11 +58,17 @@ class DeployPin::DatabaseConnectedToTest < ActiveSupport::TestCase
 
   test 'runs the block connected to a role through ActiveRecord::Base without an ApplicationRecord' do
     refute defined?(::ApplicationRecord)
-
-    role = DeployPin::Database.execute_with_timeout(1, connected_to: { role: :writing }) do
-      ActiveRecord::Base.current_role
+    connected = []
+    connected_to = lambda do |**options, &block|
+      connected << options
+      block.call
     end
 
-    assert_equal :writing, role
+    result = ActiveRecord::Base.stub(:connected_to, connected_to) do
+      DeployPin::Database.execute_with_timeout(1, connected_to: { role: :writing }) { :done }
+    end
+
+    assert_equal :done, result
+    assert_equal [{ role: :writing }], connected
   end
 end

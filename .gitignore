@@ -25,3 +25,4 @@ coverage/*
 .DS_Store
 doc/
 .yardoc/
+gemfiles/*.gemfile.lock

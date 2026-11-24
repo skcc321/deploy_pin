@@ -46,7 +46,7 @@ Migrations are for schema changes. Everything else you need to run during a rele
 | | |
 |---|---|
 | Ruby | ≥ 3.1 (CI runs 3.3, 3.4 and 4.0) |
-| Rails | Optional. ≥ 7.0, < 9 (CI runs 8.1). Without Rails, ActiveSupport ≥ 7.0 is used |
+| Rails | Optional. ≥ 7.0, < 9 (CI runs 7.0, 7.1, 7.2 and 8.1). Without Rails, ActiveSupport ≥ 7.0 is used |
 | Storage | ActiveRecord (PostgreSQL, MySQL, MariaDB, …), Mongoid, or your own record class |
 | Redis | Only for [deployment state](#deployment-state) |
 
@@ -576,6 +576,13 @@ DB_ROLE=pg bin/rails db:prepare        # the Rails app shares the database
 DB_ROLE=pg bin/test
 DB_ROLE=pg bin/test rails
 DB_ROLE=pg bin/test test/lib/deploy_pin/task_test.rb -n /parse/ # a single file
+```
+
+`Gemfile.lock` uses the latest Rails. To run against an older one, use a gemfile from [`gemfiles/`](gemfiles) (Rails 7.0 needs Ruby < 3.4):
+
+```bash
+BUNDLE_GEMFILE=gemfiles/rails_7_2.gemfile bundle install
+BUNDLE_GEMFILE=gemfiles/rails_7_2.gemfile DB_ROLE=pg bin/test rails
 ```
 
 Linting and docs, also checked on CI:

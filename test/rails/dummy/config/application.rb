@@ -26,7 +26,12 @@ module Dummy
 
     # Autoload lib/ like a new Rails app does. DeployPin must keep its task
     # files in lib/deploy_pin out of Zeitwerk (see DeployPin::Engine).
-    config.autoload_lib(ignore: %w[assets tasks])
+    if config.respond_to?(:autoload_lib)
+      config.autoload_lib(ignore: %w[assets tasks])
+    else # Rails 7.0
+      config.autoload_paths << config.root.join('lib')
+      config.eager_load_paths << config.root.join('lib')
+    end
 
     # The dummy ApplicationRecord is ActiveRecord-only.
     Rails.autoloaders.main.ignore(config.root.join('app/models/application_record.rb')) if MONGOID_STORAGE
