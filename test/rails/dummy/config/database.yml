@@ -1,37 +1,25 @@
-# frozen_string_literal: true
-
+# Only the database of DB_ROLE (pg, mysql or mariadb): Rails prepares and checks
+# every database of the environment, and CI runs one engine per job.
+<%
+  role = ENV.fetch('DB_ROLE', 'pg')
+  mysql = %w[mysql mariadb].include?(role)
+%>
 default: &default
+  adapter: <%= mysql ? 'mysql2' : 'postgresql' %>
   encoding: utf8
   host: 127.0.0.1
-  username: <%= ENV['DB_USERNAME'] %>
+  port: <%= { 'mysql' => 3306, 'mariadb' => 3307 }.fetch(role, 5432) %>
+  username: <%= mysql ? 'root' : ENV['DB_USERNAME'] %>
   password: <%= ENV['DB_PASSWORD'] %>
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  database: <%= ENV['DB_NAME'] %>
-
-pg: &pg
-  <<: *default
-  adapter: postgresql
-
-mysql: &mysql
-  <<: *default
-  username: root
-  adapter: mysql2
+  pool: <%= ENV.fetch('DB_POOL', 5) %>
+  schema_dump: <%= role == 'pg' ? 'schema.rb' : "#{role}_schema.rb" %>
 
 development:
-  pg:
-    <<: *pg
-  mariadb:
-    <<: *mysql
-  mysql:
-    <<: *mysql
+  <%= role %>:
+    <<: *default
+    database: <%= ENV['DB_NAME'] %>
 
 test:
-  pg:
-    <<: *pg
-    database: <%= ENV["DB_NAME"] %>_test
-  mariadb:
-    <<: *mysql
-    database: <%= ENV["DB_NAME"] %>_test
-  mysql:
-    <<: *mysql
-    database: <%= ENV["DB_NAME"] %>_test
+  <%= role %>:
+    <<: *default
+    database: <%= ENV['DB_NAME'] %>_test
