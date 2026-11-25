@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    deploy_pin (2.0.1)
+    deploy_pin (2.1.0)
       activesupport (>= 7.2, < 9.0)
       colorize (~> 1.1)
       connection_pool (>= 2.2, < 4)

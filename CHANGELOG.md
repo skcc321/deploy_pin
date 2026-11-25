@@ -1,6 +1,9 @@
-# Unreleased
+# 2.1.0 / 2026-11-25
 ### Added
 * `rake deploy_pin:cleanup` removes the files and generated tests of one-off tasks created more than `cleanup_safe_time_window` ago (for example, `cleanup_safe_time_window 6.months`), so the tasks directory doesn't keep growing. A task's creation time is the timestamp in its identifier. Recurring and built-in tasks are kept, and stored records are not read or changed. `deploy_pin:cleanup[dry_run]` (or `DRY_RUN=1`) lists the files, one per line, without removing them. Without `cleanup_safe_time_window`, cleanup removes nothing ([#58](https://github.com/skcc321/deploy_pin/issues/58)).
+
+### Documented
+* Explain how task deduplication lets development rerun a job after fixes while production runs the stabilized job once when both matching tasks are selected together ([#169](https://github.com/skcc321/deploy_pin/pull/169)).
 
 # 2.0.1 / 2026-11-24
 ### Documented
